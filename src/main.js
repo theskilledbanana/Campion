@@ -7,7 +7,7 @@ const itemsGrid = document.getElementById('items-grid');
 const categoriesNav = document.getElementById('categories-nav');
 const searchInput = document.getElementById('search-input');
 const playerOverlay = document.getElementById('player-overlay');
-const gameIframe = document.getElementById('game-iframe');
+const gameIframe = document.getElementById('game-area');
 const playerTitle = document.getElementById('player-title');
 const playerCategory = document.getElementById('player-category');
 const closePlayerBtn = document.getElementById('close-player');
@@ -16,7 +16,7 @@ const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 
 async function init() {
     try {
-        const response = await fetch('src/entries.json');
+        const response = await fetch('entries.json');
         allEntries = await response.json();
         renderCategories();
         renderItems();
