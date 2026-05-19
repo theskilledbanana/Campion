@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { X, Maximize2, RotateCcw } from "lucide-react";
 
-export function GamePlayer({ game, onClose }) {
+export function ItemPlayer({ item, onClose }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -18,8 +18,8 @@ export function GamePlayer({ game, onClose }) {
             <X className="w-6 h-6" />
           </button>
           <div>
-            <h2 className="text-xl font-bold text-white leading-tight">{game.title}</h2>
-            <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest">{game.category}</span>
+            <h2 className="text-xl font-bold text-white leading-tight">{item.title}</h2>
+            <span className="text-xs font-mono text-cyan-400 uppercase tracking-widest">{item.category}</span>
           </div>
         </div>
         
@@ -40,9 +40,9 @@ export function GamePlayer({ game, onClose }) {
       
       <div className="flex-1 relative bg-[#050505]">
         <iframe
-          src={game.iframeUrl}
+          src={item.iframeUrl}
           className="w-full h-full border-none"
-          title={game.title}
+          title={item.title}
           allow="fullscreen; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin"
         />
