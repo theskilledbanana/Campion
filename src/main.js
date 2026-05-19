@@ -11,19 +11,23 @@ const gameIframe = document.getElementById('game-area');
 const playerTitle = document.getElementById('player-title');
 const playerCategory = document.getElementById('player-category');
 const closePlayerBtn = document.getElementById('close-player');
+const mobileBackButton = document.getElementById('mobile-back-button');
 const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 
 async function init() {
     try {
-        const response = await fetch('entries.json');
+        console.log('Fetching entries.json...');
+        const response = await fetch('./entries.json');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         allEntries = await response.json();
+        console.log('Entries loaded:', allEntries);
         renderCategories();
         renderItems();
         setupEventListeners();
     } catch (error) {
         console.error('Failed to load entries:', error);
-        itemsGrid.innerHTML = `<div class="col-span-full py-20 text-center text-zinc-500">Error loading content. Please refresh.</div>`;
+        itemsGrid.innerHTML = `<div class="col-span-full py-20 text-center text-zinc-500">Error loading content (entries.json). Please verify the file exists in the correct location.</div>`;
     }
 }
 
@@ -120,6 +124,60 @@ function setupEventListeners() {
     });
 
     closePlayerBtn.onclick = closePlayer;
+    if (mobileBackButton) {
+        mobileBackButton.onclick = closePlayer;
+        
+        // Simple drag functionality for the mobile back button
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        mobileBackButton.addEventListener("mousedown", dragStart);
+        mobileBackButton.addEventListener("touchstart", dragStart);
+        document.addEventListener("mousemove", drag);
+        document.addEventListener("touchmove", drag);
+        document.addEventListener("mouseup", dragEnd);
+        document.addEventListener("touchend", dragEnd);
+
+        function dragStart(e) {
+            if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+            if (e.target === mobileBackButton || mobileBackButton.contains(e.target)) {
+                isDragging = true;
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                if (e.type === "touchmove") {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+                xOffset = currentX;
+                yOffset = currentY;
+                mobileBackButton.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+            }
+        }
+
+        function dragEnd() {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+    }
     
     refreshPlayerBtn.onclick = () => {
         const src = gameIframe.src;
