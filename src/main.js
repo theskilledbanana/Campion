@@ -5,7 +5,7 @@ const allEntries = [
     "title": "BitLife",
     "iframeUrl": "https://paxvax.github.io/bitlife/",
     "thumbnail": "https://i.ibb.co/WN05w1Mr/bitlife.png",
-    "category": "Strategy",
+    "category": "Simulation",
     "description": "Live your virtual life and make choices that determine your destiny."
   },
   {
@@ -13,7 +13,7 @@ const allEntries = [
     "title": "Retro Bowl",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-24",
     "thumbnail": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?q=80&w=400&h=300&auto=format&fit=crop",
-    "category": "Games",
+    "category": "Sport",
     "description": "The ultimate retro-style American football management sim. Call the plays, manage your roster, and lead your team to victory in this addictive pixel-art classic."
   }
 ];
