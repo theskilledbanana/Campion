@@ -114,6 +114,13 @@ function renderItems() {
 function openPlayer(item) {
     playerTitle.textContent = item.title;
     playerCategory.textContent = item.category;
+    
+    // Set fallback link href
+    const fallbackLink = document.getElementById('external-link');
+    if (fallbackLink) {
+        fallbackLink.href = item.iframeUrl;
+    }
+
     gameIframe.src = item.iframeUrl;
     playerOverlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
