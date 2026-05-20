@@ -138,7 +138,8 @@ function openPlayer(item) {
     clearTimeout(loadTimer);
     loadTimer = setTimeout(() => {
         loadErrorFallback.classList.remove('hidden');
-    }, 6000); // 6 seconds before showing fallback
+        iframeLoader.querySelector('.animate-spin')?.classList.add('hidden');
+    }, 8000); // 8 seconds before showing fallback
 
     gameIframe.src = item.iframeUrl;
     playerOverlay.classList.remove('hidden');
