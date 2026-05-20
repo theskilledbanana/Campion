@@ -9,12 +9,12 @@ const allEntries = [
     "description": "Live your virtual life and make choices that determine your destiny."
   },
   {
-    "id": "vault-game",
-    "title": "Vault Discovery",
-    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-74",
-    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&h=300&auto=format&fit=crop",
+    "id": "retro-bowl",
+    "title": "Retro Bowl",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-24",
+    "thumbnail": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?q=80&w=400&h=300&auto=format&fit=crop",
     "category": "Games",
-    "description": "Dive into deep exploration with this curated interactive experience."
+    "description": "Manage your team, call the plays, and lead your franchise to glory in this retro-styled American football simulator."
   }
 ];
 
