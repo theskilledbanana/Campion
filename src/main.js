@@ -18,7 +18,15 @@ const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 async function init() {
     try {
         console.log('Fetching entries.json...');
-        const response = await fetch('./entries.json');
+        // Try fetching from root first
+        let response = await fetch('./entries.json');
+        
+        // If that fails, try public folder (common for raw repository hosting)
+        if (!response.ok) {
+            console.log('Root entries.json not found, trying public/entries.json...');
+            response = await fetch('./public/entries.json');
+        }
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         allEntries = await response.json();
         console.log('Entries loaded:', allEntries);
