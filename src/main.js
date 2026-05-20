@@ -23,6 +23,14 @@ const allEntries = [
     "thumbnail": "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=400&h=300&auto=format&fit=crop",
     "categories": ["Skill", "Trending Games"],
     "description": "Jump, fly, and flip your way through dangerous passages and spiky obstacles in this high-intensity rhythm-based action platformer."
+  },
+  {
+    "id": "neon-tunnel",
+    "title": "Neon Tunnel",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-26",
+    "thumbnail": "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=400&h=300&auto=format&fit=crop",
+    "categories": ["Skill", "Trending Games"],
+    "description": "Test your reflexes in this high-speed obstacle course. Navigate through a shifting neon world where one wrong move ends the run."
   }
 ];
 
