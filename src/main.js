@@ -15,6 +15,14 @@ const allEntries = [
     "thumbnail": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?q=80&w=400&h=300&auto=format&fit=crop",
     "categories": ["Sport", "Trending Games"],
     "description": "The ultimate retro-style American football management sim. Call the plays, manage your roster, and lead your team to victory in this addictive pixel-art classic."
+  },
+  {
+    "id": "geometry-dash",
+    "title": "Geometry Dash",
+    "iframeUrl": "https://web-dashers.github.io/",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&h=300&auto=format&fit=crop",
+    "categories": ["Skill", "Trending Games"],
+    "description": "Jump, fly, and flip your way through dangerous passages and spiky obstacles in this high-intensity rhythm-based action platformer."
   }
 ];
 
