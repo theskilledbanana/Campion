@@ -13,9 +13,14 @@
             --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
         }
         body {
-            background-color: #09090b;
+            background-color: #0d0d12;
             color: #f4f4f5;
             font-family: var(--font-sans);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -25,11 +30,19 @@
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
+            background: rgba(39, 39, 42, 0.5);
             border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #3f3f46;
+            background: rgba(63, 63, 70, 0.8);
+        }
+        .glass-gradient {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .neon-glow {
+            box-shadow: 0 0 20px -5px rgba(34, 211, 238, 0.3);
         }
         #mobile-back-button {
             position: absolute;
@@ -37,44 +50,57 @@
             left: 1rem;
             z-index: 60;
             cursor: grab;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.8));
+        }
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .animate-subtle {
+            animation: subtle-pulse 3s ease-in-out infinite;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">
     <!-- Header -->
-    <header class="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div class="flex items-center gap-3">
-                <div class="bg-cyan-500 p-2 rounded-xl shadow-lg shadow-cyan-500/20">
-                    <i class="bi bi-play-fill text-black text-2xl"></i>
+    <header class="sticky top-0 z-40 bg-zinc-950/60 backdrop-blur-2xl border-b border-white/5 px-6 py-5">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div class="flex items-center gap-4">
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-indigo-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                    <div class="relative bg-zinc-900 border border-white/10 p-2.5 rounded-2xl shadow-2xl">
+                        <i class="bi bi-pentagon-fill text-cyan-400 text-2xl"></i>
+                    </div>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black text-white tracking-tighter uppercase italic">
-                        Vault<span class="text-cyan-400">Portal</span>
+                    <h1 class="text-2xl font-black text-white tracking-tight uppercase">
+                        Vault<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Portal</span>
                     </h1>
-                    <p class="text-xs font-mono text-zinc-500 uppercase tracking-widest leading-none">Content Access Alpha</p>
+                    <div class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+                        <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] font-bold leading-none">Access Node 04</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex flex-1 max-w-xl items-center relative">
-                <i class="bi bi-search absolute left-4 text-zinc-500"></i>
+            <div class="flex flex-1 max-w-xl items-center relative group">
+                <i class="bi bi-search absolute left-4 text-zinc-500 group-focus-within:text-cyan-400 transition-colors"></i>
                 <input
                     type="text"
                     id="search-input"
-                    placeholder="Search for a title..."
-                    class="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl py-3 pl-12 pr-4 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all font-medium"
+                    placeholder="Search curated content..."
+                    class="w-full bg-zinc-900/30 border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500/30 transition-all font-medium backdrop-blur-md"
                 >
             </div>
         </div>
     </header>
 
-    <main class="flex-1 max-w-7xl mx-auto w-full p-6 pb-20">
+    <main class="flex-1 max-w-7xl mx-auto w-full p-6 pb-32">
         <!-- Category Navigation -->
-        <section id="categories-nav" class="mb-10 flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
-            <div class="flex items-center gap-2 pr-4 border-r border-zinc-800 mr-2">
-                <svg class="w-4 h-4 text-zinc-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                <span class="text-sm font-bold text-zinc-500 uppercase tracking-wider">Genres</span>
+        <section id="categories-nav" class="mb-12 flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar">
+            <div class="flex items-center gap-3 pr-6 border-r border-white/5 mr-3">
+                <i class="bi bi-filter-left text-zinc-500 text-xl"></i>
+                <span class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Filter</span>
             </div>
             <!-- Categories will be injected here -->
         </section>
@@ -86,15 +112,21 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-zinc-900 py-10 px-6 mt-auto">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-            <p class="text-zinc-600 text-sm font-medium">
-                &copy; 2024 Vault Portal. Hand-curated simple web content.
-            </p>
-            <div class="flex items-center gap-6">
-                <a href="#" class="text-zinc-500 hover:text-cyan-400 text-sm font-mono transition-colors">PRIVACY</a>
-                <a href="#" class="text-zinc-500 hover:text-cyan-400 text-sm font-mono transition-colors">TERMS</a>
-                <a href="#" class="text-zinc-500 hover:text-cyan-400 text-sm font-mono transition-colors">SUPPORT</a>
+    <footer class="border-t border-white/5 py-16 px-6 mt-20 bg-zinc-950/20 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
+            <div>
+                <h4 class="text-white font-black uppercase tracking-tighter text-lg mb-2">Vault<span class="text-cyan-400">Portal</span></h4>
+                <p class="text-zinc-600 text-sm font-medium leading-relaxed max-w-sm">
+                    A premium interface for the digital frontier. Curating the best interactive modules for specialized environments.
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center md:justify-end gap-x-10 gap-y-4">
+                <a href="#" class="text-zinc-500 hover:text-cyan-400 text-[10px] font-black tracking-[0.2em] transition-all uppercase">Archive</a>
+                <a href="#" class="text-zinc-500 hover:text-cyan-400 text-[10px] font-black tracking-[0.2em] transition-all uppercase">Protocol</a>
+                <a href="#" class="text-zinc-500 hover:text-cyan-400 text-[10px] font-black tracking-[0.2em] transition-all uppercase">Relay</a>
+                <div class="w-full md:w-auto pt-6 md:pt-0 border-t md:border-t-0 border-white/5">
+                    <p class="text-zinc-700 text-[10px] font-mono uppercase tracking-widest">&copy; 2024 V-P SYSTEM</p>
+                </div>
             </div>
         </div>
     </footer>

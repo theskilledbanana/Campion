@@ -58,10 +58,10 @@ function renderCategories() {
 
     categories.forEach(category => {
         const btn = document.createElement('button');
-        btn.className = `whitespace-nowrap px-6 py-2 rounded-xl text-sm font-bold transition-all border ${
+        btn.className = `whitespace-nowrap px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${
             currentCategory === category 
-            ? 'bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20' 
-            : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800 hover:text-white'
+            ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)] translate-y-[-1px]' 
+            : 'bg-white/5 text-zinc-500 border-white/5 hover:bg-white/10 hover:text-zinc-300 hover:border-white/10'
         }`;
         btn.textContent = category;
         btn.onclick = () => {
@@ -85,11 +85,14 @@ function renderItems() {
 
     if (filtered.length === 0) {
         itemsGrid.innerHTML = `
-            <div class="col-span-full py-20 text-center">
-                <div class="inline-block p-6 bg-zinc-900 rounded-3xl border border-dashed border-zinc-700">
-                    <svg class="w-12 h-12 text-zinc-700 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                    <h3 class="text-xl font-bold text-zinc-300">No content found</h3>
-                    <p class="text-zinc-500 mt-2">Try a different search term or category.</p>
+            <div class="col-span-full py-32 text-center">
+                <div class="inline-block p-10 bg-zinc-900/20 rounded-[3rem] border border-dashed border-white/5 backdrop-blur-sm">
+                    <div class="w-16 h-16 bg-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-white/5">
+                        <i class="bi bi-grid-3x3-gap text-zinc-700 text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-white tracking-tight uppercase">Void Detected</h3>
+                    <p class="text-zinc-500 mt-2 font-medium max-w-xs mx-auto">No interactive modules match your current decryption parameters.</p>
+                    <button onclick="currentSearch=''; searchInput.value=''; renderItems();" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
                 </div>
             </div>`;
         return;
@@ -97,22 +100,27 @@ function renderItems() {
 
     filtered.forEach(item => {
         const card = document.createElement('div');
-        card.className = "group relative bg-zinc-900 rounded-xl overflow-hidden cursor-pointer border border-zinc-800 hover:border-cyan-500/50 transition-all shadow-xl hover:-translate-y-1";
+        card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" referrerpolicy="no-referrer">
-                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <div class="bg-cyan-500 p-3 rounded-full shadow-lg shadow-cyan-500/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="black" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
+                <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                    <div class="bg-white text-black px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-tighter shadow-2xl flex items-center gap-2">
+                        <span>Launch Entry</span>
+                        <i class="bi bi-arrow-right-short text-xl"></i>
                     </div>
                 </div>
             </div>
-            <div class="p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-mono text-cyan-400 px-2 py-1 bg-cyan-400/10 rounded uppercase tracking-wider">${item.categories[0]}</span>
+            <div class="p-5">
+                <div class="flex items-center gap-2 mb-3">
+                    ${item.categories.map(cat => `
+                        <span class="text-[10px] font-bold text-cyan-400/80 px-2 py-0.5 bg-cyan-400/5 border border-cyan-400/10 rounded uppercase tracking-[0.1em] font-mono">${cat}</span>
+                    `).join('')}
                 </div>
-                <h3 class="text-zinc-100 font-bold text-lg group-hover:text-cyan-400 transition-colors">${item.title}</h3>
-                <p class="text-zinc-400 text-sm line-clamp-2 mt-1">${item.description}</p>
+                <h3 class="text-zinc-100 font-extrabold text-xl tracking-tight leading-tight group-hover:text-cyan-400 transition-colors">${item.title}</h3>
+                <p class="text-zinc-500 text-sm line-clamp-2 mt-2 font-medium leading-relaxed">${item.description}</p>
             </div>
         `;
         card.onclick = () => openPlayer(item);
