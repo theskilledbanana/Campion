@@ -132,11 +132,12 @@ function openPlayer(item) {
     playerTitle.textContent = item.title;
     playerCategory.textContent = item.categories.join(' / ');
     
-    // Set fallback link href
+    // Set fallback links href
     const fallbackLink = document.getElementById('external-link');
-    if (fallbackLink) {
-        fallbackLink.href = item.iframeUrl;
-    }
+    const loaderLink = document.getElementById('loader-external-link');
+    
+    if (fallbackLink) fallbackLink.href = item.iframeUrl;
+    if (loaderLink) loaderLink.href = item.iframeUrl;
 
     // Reset loader state
     iframeLoader.classList.remove('hidden');
