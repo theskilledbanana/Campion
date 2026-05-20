@@ -54,6 +54,7 @@ const howToPlayBtn = document.getElementById('how-to-play-btn');
 const instructionsModal = document.getElementById('instructions-modal');
 const instructionsContainer = document.getElementById('instructions-container');
 const closeInstructionsBtn = document.getElementById('close-instructions');
+const loaderHowToPlayBtn = document.getElementById('loader-how-to-play');
 
 function init() {
     renderCategories();
@@ -262,17 +263,18 @@ function setupEventListeners() {
     }
 
     // Modal Logic
-    if (howToPlayBtn) {
-        howToPlayBtn.onclick = () => {
-            instructionsModal.classList.remove('hidden');
-            setTimeout(() => {
-                instructionsModal.classList.remove('opacity-0');
-                instructionsContainer.classList.remove('scale-95');
-                instructionsContainer.classList.add('scale-100');
-            }, 10);
-            document.body.style.overflow = 'hidden';
-        };
-    }
+    const openInstructions = () => {
+        instructionsModal.classList.remove('hidden');
+        setTimeout(() => {
+            instructionsModal.classList.remove('opacity-0');
+            instructionsContainer.classList.remove('scale-95');
+            instructionsContainer.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    if (howToPlayBtn) howToPlayBtn.onclick = openInstructions;
+    if (loaderHowToPlayBtn) loaderHowToPlayBtn.onclick = openInstructions;
 
     const closeInstructions = () => {
         instructionsModal.classList.add('opacity-0');
