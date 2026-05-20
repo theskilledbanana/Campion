@@ -12,7 +12,7 @@ const allEntries = [
     "id": "retro-bowl",
     "title": "Retro Bowl",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-24",
-    "thumbnail": "/src/assets/images/retro_bowl_thumbnail_1779264835997.png",
+    "thumbnail": "retro-bowl.png",
     "category": "Games",
     "description": "The ultimate retro-style American football management sim. Call the plays, manage your roster, and lead your team to victory in this addictive pixel-art classic."
   }
