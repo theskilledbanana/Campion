@@ -148,6 +148,7 @@ function openPlayer(item) {
     iframeLoader.classList.remove('hidden');
     loaderContent.classList.remove('hidden');
     failedToLoadContent.classList.add('hidden');
+    failedToLoadContent.classList.remove('animate-scale-up');
     gameIframe.classList.add('opacity-0');
 
     // Clear any existing timeout
@@ -157,6 +158,7 @@ function openPlayer(item) {
     loadTimeout = setTimeout(() => {
         loaderContent.classList.add('hidden');
         failedToLoadContent.classList.remove('hidden');
+        failedToLoadContent.classList.add('animate-scale-up');
     }, 8000);
 
     gameIframe.src = item.iframeUrl;
