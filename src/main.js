@@ -20,15 +20,15 @@ const allEntries = [
     "id": "geometry-dash",
     "title": "Geometry Dash",
     "iframeUrl": "https://web-dashers.github.io/",
-    "thumbnail": "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=400&h=300&auto=format&fit=crop",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&h=300&auto=format&fit=crop",
     "categories": ["Skill", "Trending Games"],
     "description": "Jump, fly, and flip your way through dangerous passages and spiky obstacles in this high-intensity rhythm-based action platformer."
   },
   {
-    "id": "neon-tunnel",
-    "title": "Neon Tunnel",
+    "id": "slope",
+    "title": "Slope",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-26",
-    "thumbnail": "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=400&h=300&auto=format&fit=crop",
+    "thumbnail": "https://images.unsplash.com/photo-1481831331758-29471d4766eb?q=80&w=400&h=300&auto=format&fit=crop",
     "categories": ["Skill", "Trending Games"],
     "description": "Test your reflexes in this high-speed obstacle course. Navigate through a shifting neon world where one wrong move ends the run."
   }
