@@ -101,6 +101,14 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <button id="how-to-play-btn" class="flex items-center gap-2.5 px-5 py-3 bg-zinc-900/50 border border-white/10 hover:border-cyan-500/40 hover:bg-zinc-800/80 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-cyan-400 group active:scale-95 shadow-[0_0_20px_-10px_rgba(34,211,238,0.2)]">
+                    <i class="bi bi-info-circle text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span>How to Play</span>
+                </button>
+                <a href="mailto:jackcampell608@gmail.com?subject=Feedback" class="flex items-center gap-2.5 px-5 py-3 bg-zinc-900/50 border border-white/10 hover:border-cyan-500/40 hover:bg-zinc-800/80 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-cyan-400 group active:scale-95 shadow-[0_0_20px_-10px_rgba(34,211,238,0.2)]">
+                    <i class="bi bi-chat-left-dots text-lg group-hover:-translate-y-0.5 transition-transform duration-300"></i>
+                    <span>Feedback</span>
+                </a>
                 <a href="mailto:jackcampell608@gmail.com?subject=Game Request" class="flex items-center gap-2.5 px-5 py-3 bg-zinc-900/50 border border-white/10 hover:border-cyan-500/40 hover:bg-zinc-800/80 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-cyan-400 group active:scale-95 shadow-[0_0_20px_-10px_rgba(34,211,238,0.2)]">
                     <i class="bi bi-plus-circle text-lg group-hover:rotate-90 transition-transform duration-300"></i>
                     <span>Request Games</span>
@@ -216,6 +224,61 @@
                 allow="fullscreen; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; microphone; camera; midi; geolocation" 
                 referrerpolicy="no-referrer">
             </iframe>
+        </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div id="instructions-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-zinc-950 border border-white/10 rounded-3xl p-8 max-w-lg w-full shadow-2xl relative scale-95 transition-transform duration-300" id="instructions-container">
+            <button id="close-instructions" class="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+            
+            <div class="mb-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="bi bi-controller text-cyan-400 text-2xl"></i>
+                    <h2 class="text-2xl font-black text-white tracking-widest uppercase italic">Operational Intel</h2>
+                </div>
+                <p class="text-zinc-500 text-xs font-mono uppercase tracking-widest">Protocol 1.0: How to Play</p>
+            </div>
+
+            <div class="space-y-6">
+                <div class="flex gap-4">
+                    <span class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 text-xs font-black shrink-0 font-mono">01</span>
+                    <div>
+                        <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Target Selection</h4>
+                        <p class="text-zinc-500 text-[11px] leading-relaxed">Choose the game you want to play from the dashboard (e.g. Retro Bowl, Geometry Dash).</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <span class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 text-xs font-black shrink-0 font-mono">02</span>
+                    <div>
+                        <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Bridge Connection</h4>
+                        <p class="text-zinc-500 text-[11px] leading-relaxed">Wait for the portal to load the secure assets and establish the link.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <span class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 text-xs font-black shrink-0 font-mono">03</span>
+                    <div>
+                        <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Extraction Request</h4>
+                        <p class="text-zinc-500 text-[11px] leading-relaxed">The option will appear to <span class="text-cyan-400 font-bold">Launch Secure Mirror</span>. Click it to proceed.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <span class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 text-xs font-black shrink-0 font-mono">04</span>
+                    <div>
+                        <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Execute Session</h4>
+                        <p class="text-zinc-500 text-[11px] leading-relaxed">Once the mirror is open or manually dismissed, the game session will launch automatically.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 pt-8 border-t border-white/5">
+                <p class="text-zinc-500 text-[10px] uppercase font-bold tracking-[0.15em] leading-relaxed text-center">
+                    Experiencing anomalies? Contact technical support via the 
+                    <a href="mailto:jackcampell608@gmail.com?subject=Feedback" class="text-cyan-400 hover:underline">Feedback Tab</a>.
+                </p>
+            </div>
         </div>
     </div>
 

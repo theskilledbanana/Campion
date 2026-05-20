@@ -50,6 +50,10 @@ const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 const iframeLoader = document.getElementById('iframe-loader');
 const dismissLoaderBtn = document.getElementById('dismiss-loader');
+const howToPlayBtn = document.getElementById('how-to-play-btn');
+const instructionsModal = document.getElementById('instructions-modal');
+const instructionsContainer = document.getElementById('instructions-container');
+const closeInstructionsBtn = document.getElementById('close-instructions');
 
 function init() {
     renderCategories();
@@ -257,9 +261,44 @@ function setupEventListeners() {
         };
     }
 
+    // Modal Logic
+    if (howToPlayBtn) {
+        howToPlayBtn.onclick = () => {
+            instructionsModal.classList.remove('hidden');
+            setTimeout(() => {
+                instructionsModal.classList.remove('opacity-0');
+                instructionsContainer.classList.remove('scale-95');
+                instructionsContainer.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        };
+    }
+
+    const closeInstructions = () => {
+        instructionsModal.classList.add('opacity-0');
+        instructionsContainer.classList.remove('scale-100');
+        instructionsContainer.classList.add('scale-95');
+        setTimeout(() => {
+            instructionsModal.classList.add('hidden');
+            if (playerOverlay.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        }, 300);
+    };
+
+    if (closeInstructionsBtn) closeInstructionsBtn.onclick = closeInstructions;
+    if (instructionsModal) {
+        instructionsModal.onclick = (e) => {
+            if (e.target === instructionsModal) closeInstructions();
+        };
+    }
+
     // Close on Escape
     window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closePlayer();
+        if (e.key === 'Escape') {
+            closePlayer();
+            closeInstructions();
+        }
     });
 
     // Handle iframe load
