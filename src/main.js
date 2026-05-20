@@ -20,7 +20,6 @@ const allEntries = [
 
 let currentCategory = 'All';
 let currentSearch = '';
-let loadTimeout;
 
 const itemsGrid = document.getElementById('items-grid');
 const categoriesNav = document.getElementById('categories-nav');
@@ -34,8 +33,6 @@ const mobileBackButton = document.getElementById('mobile-back-button');
 const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 const iframeLoader = document.getElementById('iframe-loader');
-const loaderContent = document.getElementById('loader-content');
-const failedToLoadContent = document.getElementById('failed-to-load-content');
 
 function init() {
     renderCategories();
@@ -138,28 +135,13 @@ function openPlayer(item) {
     // Set fallback links href
     const fallbackLink = document.getElementById('external-link');
     const loaderLink = document.getElementById('loader-external-link');
-    const failedLink = document.getElementById('failed-external-link');
     
     if (fallbackLink) fallbackLink.href = item.iframeUrl;
     if (loaderLink) loaderLink.href = item.iframeUrl;
-    if (failedLink) failedLink.href = item.iframeUrl;
 
     // Reset loader state
     iframeLoader.classList.remove('hidden');
-    loaderContent.classList.remove('hidden');
-    failedToLoadContent.classList.add('hidden');
-    failedToLoadContent.classList.remove('animate-scale-up');
     gameIframe.classList.add('opacity-0');
-
-    // Clear any existing timeout
-    if (loadTimeout) clearTimeout(loadTimeout);
-
-    // Set a timeout to show failed state if not loaded in 8 seconds
-    loadTimeout = setTimeout(() => {
-        loaderContent.classList.add('hidden');
-        failedToLoadContent.classList.remove('hidden');
-        failedToLoadContent.classList.add('animate-scale-up');
-    }, 8000);
 
     gameIframe.src = item.iframeUrl;
     playerOverlay.classList.remove('hidden');
@@ -167,7 +149,6 @@ function openPlayer(item) {
 }
 
 function closePlayer() {
-    if (loadTimeout) clearTimeout(loadTimeout);
     playerOverlay.classList.add('hidden');
     gameIframe.src = '';
     gameIframe.classList.add('opacity-0');
@@ -259,7 +240,6 @@ function setupEventListeners() {
 
     // Handle iframe load
     gameIframe.onload = () => {
-        if (loadTimeout) clearTimeout(loadTimeout);
         iframeLoader.classList.add('hidden');
         gameIframe.classList.remove('opacity-0');
     };
