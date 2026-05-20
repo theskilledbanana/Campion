@@ -59,11 +59,35 @@ const updateSiteBtn = document.getElementById('update-site-btn');
 const updateModal = document.getElementById('update-modal');
 const updateContainer = document.getElementById('update-container');
 const closeUpdateBtn = document.getElementById('close-update');
+const disclaimerModal = document.getElementById('disclaimer-modal');
+const disclaimerContainer = document.getElementById('disclaimer-container');
+const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
 
 function init() {
     renderCategories();
     renderItems();
     setupEventListeners();
+    showDisclaimer();
+}
+
+function showDisclaimer() {
+    if (!disclaimerModal) return;
+    
+    disclaimerModal.classList.remove('hidden');
+    setTimeout(() => {
+        disclaimerModal.classList.remove('opacity-0');
+        disclaimerContainer.classList.remove('scale-90');
+        disclaimerContainer.classList.add('scale-100');
+    }, 100);
+}
+
+function hideDisclaimer() {
+    disclaimerModal.classList.add('opacity-0');
+    disclaimerContainer.classList.remove('scale-100');
+    disclaimerContainer.classList.add('scale-90');
+    setTimeout(() => {
+        disclaimerModal.classList.add('hidden');
+    }, 700);
 }
 
 function renderCategories() {
@@ -125,12 +149,12 @@ function renderItems() {
     }
 
     filtered.forEach(item => {
-        const isRetroBowl = item.id === 'retro-bowl';
+        const isSpecialFraming = item.id === 'retro-bowl' || item.id === 'geometry-dash';
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full ${isRetroBowl ? 'object-contain' : 'object-cover'} transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full ${isSpecialFraming ? 'object-contain' : 'object-cover'} transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
@@ -265,6 +289,10 @@ function setupEventListeners() {
             iframeLoader.classList.add('hidden');
             gameIframe.classList.remove('opacity-0');
         };
+    }
+
+    if (acceptDisclaimerBtn) {
+        acceptDisclaimerBtn.onclick = hideDisclaimer;
     }
 
     // Modal Logic
