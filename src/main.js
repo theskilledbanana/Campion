@@ -1,11 +1,11 @@
 // main.js - Vanilla JS Logic for MediaVault
 const allEntries = [
-  {
+    {
     "id": "bitlife",
     "title": "BitLife",
     "iframeUrl": "https://paxvax.github.io/bitlife/",
     "thumbnail": "https://i.ibb.co/WN05w1Mr/bitlife.png",
-    "category": "Simulation",
+    "categories": ["Simulation", "Trending Games"],
     "description": "Live your virtual life and make choices that determine your destiny."
   },
   {
@@ -13,7 +13,7 @@ const allEntries = [
     "title": "Retro Bowl",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-24",
     "thumbnail": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?q=80&w=400&h=300&auto=format&fit=crop",
-    "category": "Sport",
+    "categories": ["Sport", "Trending Games"],
     "description": "The ultimate retro-style American football management sim. Call the plays, manage your roster, and lead your team to victory in this addictive pixel-art classic."
   }
 ];
@@ -41,7 +41,15 @@ function init() {
 }
 
 function renderCategories() {
-    const categories = ['All', ...new Set(allEntries.map(e => e.category))];
+    const rawCategories = [...new Set(allEntries.flatMap(e => e.categories))];
+    // Ensure "Trending Games" is at the start if it exists
+    const sortedCategories = rawCategories.sort((a, b) => {
+        if (a === 'Trending Games') return -1;
+        if (b === 'Trending Games') return 1;
+        return a.localeCompare(b);
+    });
+    
+    const categories = ['All', ...sortedCategories];
     
     // Clear existing buttons (except the label)
     const label = categoriesNav.querySelector('div');
@@ -69,7 +77,7 @@ function renderItems() {
     itemsGrid.innerHTML = '';
     
     const filtered = allEntries.filter(item => {
-        const matchesCategory = currentCategory === 'All' || item.category === currentCategory;
+        const matchesCategory = currentCategory === 'All' || item.categories.includes(currentCategory);
         const matchesSearch = item.title.toLowerCase().includes(currentSearch.toLowerCase()) || 
                              item.description.toLowerCase().includes(currentSearch.toLowerCase());
         return matchesCategory && matchesSearch;
@@ -101,7 +109,7 @@ function renderItems() {
             </div>
             <div class="p-4">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-mono text-cyan-400 px-2 py-1 bg-cyan-400/10 rounded uppercase tracking-wider">${item.category}</span>
+                    <span class="text-xs font-mono text-cyan-400 px-2 py-1 bg-cyan-400/10 rounded uppercase tracking-wider">${item.categories[0]}</span>
                 </div>
                 <h3 class="text-zinc-100 font-bold text-lg group-hover:text-cyan-400 transition-colors">${item.title}</h3>
                 <p class="text-zinc-400 text-sm line-clamp-2 mt-1">${item.description}</p>
@@ -114,7 +122,7 @@ function renderItems() {
 
 function openPlayer(item) {
     playerTitle.textContent = item.title;
-    playerCategory.textContent = item.category;
+    playerCategory.textContent = item.categories.join(' / ');
     
     // Set fallback link href
     const fallbackLink = document.getElementById('external-link');
