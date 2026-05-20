@@ -128,11 +128,31 @@
         </header>
 
         <div class="game-iframe-container flex-1 relative bg-[#050505]" id="game-player">
+            <!-- Loading Indicator -->
+            <div id="iframe-loader" class="absolute inset-0 flex flex-col items-center justify-center z-10">
+                <div class="flex flex-col items-center">
+                    <div class="w-12 h-12 border-4 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin"></div>
+                    <p class="mt-4 text-zinc-500 font-mono text-xs uppercase tracking-widest animate-pulse">Loading Content...</p>
+                </div>
+                
+                <div id="load-error-fallback" class="mt-12 hidden text-center px-6">
+                    <div class="mb-4 text-zinc-600">
+                        <i class="bi bi-exclamation-triangle text-3xl"></i>
+                    </div>
+                    <p class="text-zinc-400 text-sm mb-6 max-w-xs mx-auto">This game might be blocking the embedded view for security reasons.</p>
+                    <a id="iframe-fallback-link" href="#" target="_blank" class="inline-flex items-center gap-2 px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-900/40">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        Open Game Directly
+                    </a>
+                </div>
+            </div>
+
             <div id="mobile-back-button" draggable="true" class="bg-zinc-900/80 backdrop-blur p-2 rounded-full border border-zinc-700 hover:bg-zinc-800 transition-colors">
                 <i class="bi bi-x-circle-fill text-2xl text-cyan-400"></i>
             </div>
-            <iframe id="game-area" class="game-iframe w-full h-full border-none" 
+            <iframe id="game-area" class="game-iframe w-full h-full border-none opacity-0 transition-opacity duration-700" 
                 allow="fullscreen; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; microphone; camera; midi; geolocation" 
+                referrerpolicy="no-referrer"
                 loading="lazy">
             </iframe>
         </div>

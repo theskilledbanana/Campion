@@ -32,6 +32,11 @@ const closePlayerBtn = document.getElementById('close-player');
 const mobileBackButton = document.getElementById('mobile-back-button');
 const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
+const iframeLoader = document.getElementById('iframe-loader');
+const loadErrorFallback = document.getElementById('load-error-fallback');
+const iframeFallbackLink = document.getElementById('iframe-fallback-link');
+
+let loadTimer;
 
 function init() {
     renderCategories();
@@ -120,6 +125,20 @@ function openPlayer(item) {
     if (fallbackLink) {
         fallbackLink.href = item.iframeUrl;
     }
+    if (iframeFallbackLink) {
+        iframeFallbackLink.href = item.iframeUrl;
+    }
+
+    // Reset loader state
+    iframeLoader.classList.remove('hidden');
+    loadErrorFallback.classList.add('hidden');
+    gameIframe.classList.add('opacity-0');
+
+    // Set timer for fallback
+    clearTimeout(loadTimer);
+    loadTimer = setTimeout(() => {
+        loadErrorFallback.classList.remove('hidden');
+    }, 6000); // 6 seconds before showing fallback
 
     gameIframe.src = item.iframeUrl;
     playerOverlay.classList.remove('hidden');
@@ -127,8 +146,10 @@ function openPlayer(item) {
 }
 
 function closePlayer() {
+    clearTimeout(loadTimer);
     playerOverlay.classList.add('hidden');
     gameIframe.src = '';
+    gameIframe.classList.add('opacity-0');
     document.body.style.overflow = '';
 }
 
@@ -214,6 +235,13 @@ function setupEventListeners() {
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closePlayer();
     });
+
+    // Handle iframe load
+    gameIframe.onload = () => {
+        clearTimeout(loadTimer);
+        iframeLoader.classList.add('hidden');
+        gameIframe.classList.remove('opacity-0');
+    };
 }
 
 init();
