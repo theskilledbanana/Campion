@@ -1,5 +1,15 @@
 // main.js - Vanilla JS Logic for MediaVault
-let allEntries = [];
+const allEntries = [
+  {
+    "id": "bitlife",
+    "title": "BitLife",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-4",
+    "thumbnail": "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=400&h=300&auto=format&fit=crop",
+    "category": "Strategy",
+    "description": "Live your virtual life and make choices that determine your destiny."
+  }
+];
+
 let currentCategory = 'All';
 let currentSearch = '';
 
@@ -15,28 +25,10 @@ const mobileBackButton = document.getElementById('mobile-back-button');
 const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 
-async function init() {
-    try {
-        console.log('Fetching entries.json...');
-        // Try fetching from root first
-        let response = await fetch('./entries.json');
-        
-        // If that fails, try public folder (common for raw repository hosting)
-        if (!response.ok) {
-            console.log('Root entries.json not found, trying public/entries.json...');
-            response = await fetch('./public/entries.json');
-        }
-
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        allEntries = await response.json();
-        console.log('Entries loaded:', allEntries);
-        renderCategories();
-        renderItems();
-        setupEventListeners();
-    } catch (error) {
-        console.error('Failed to load entries:', error);
-        itemsGrid.innerHTML = `<div class="col-span-full py-20 text-center text-zinc-500">Error loading content (entries.json). Please verify the file exists in the correct location.</div>`;
-    }
+function init() {
+    renderCategories();
+    renderItems();
+    setupEventListeners();
 }
 
 function renderCategories() {
