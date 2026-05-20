@@ -31,6 +31,14 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUM15tsz1rOyZ_8gi3Vvjxu_6Un3bgbwuteg&s",
     "categories": ["Skill", "Trending Games"],
     "description": "Test your reflexes in this high-speed obstacle course. Navigate through a shifting neon world where one wrong move ends the run."
+  },
+  {
+    "id": "indian-truck-driving-simulator",
+    "title": "Indian Truck Driving Simulator",
+    "iframeUrl": "https://oshkii.github.io/indiantruckdrivingsimulator-webport/",
+    "thumbnail": "https://images.unsplash.com/photo-1591768793355-74d7500d433f?q=80&w=800&auto=format&fit=crop",
+    "categories": ["Simulation", "Driving"],
+    "description": "Experience the thrill of navigating massive rigs through challenging Indian landscapes. Master the art of heavy transport in this high-octane driving simulator."
   }
 ];
 
