@@ -4,7 +4,7 @@ const allEntries = [
     "id": "bitlife",
     "title": "BitLife",
     "iframeUrl": "https://paxvax.github.io/bitlife/",
-    "thumbnail": "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=400&h=300&auto=format&fit=crop",
+    "thumbnail": "https://i.ibb.co/WN05w1Mr/bitlife.png",
     "category": "Strategy",
     "description": "Live your virtual life and make choices that determine your destiny."
   },
