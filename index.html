@@ -168,7 +168,7 @@
                     <div class="absolute -inset-4 bg-cyan-500/20 blur-2xl rounded-full animate-pulse"></div>
                     <div class="relative flex flex-col items-center">
                         <div class="w-16 h-16 border-2 border-cyan-400/10 border-t-cyan-400 rounded-full animate-spin"></div>
-                        <div class="mt-8 text-center">
+                        <div class="mt-8 text-center" id="loader-content">
                             <p class="text-zinc-400 font-black text-[10px] uppercase tracking-[0.3em] animate-subtle">Establishing Connection</p>
                             <div class="mt-12 flex flex-col items-center gap-4">
                                 <p class="text-zinc-600 text-[10px] font-medium max-w-[200px]">Node response may be delayed. Use direct link if extraction fails.</p>
@@ -177,6 +177,15 @@
                                     <i class="bi bi-arrow-right group-hover:translate-x-1 transition-transform"></i>
                                 </a>
                             </div>
+                        </div>
+                        <!-- Failed to load state (hidden by default) -->
+                        <div class="mt-8 text-center hidden" id="failed-to-load-content">
+                            <p class="text-red-400 font-black text-xs uppercase tracking-[0.2em] mb-2">The game has failed to load</p>
+                            <p class="text-zinc-500 text-[10px] font-medium max-w-[240px] mx-auto mb-8">Heavy traffic or institutional blocks may be preventing the secure node from initializing.</p>
+                            <a id="failed-external-link" target="_blank" rel="noopener noreferrer" class="px-8 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-2xl transition-all text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-cyan-500/20 flex items-center gap-2 justify-center">
+                                Open Fallback URL
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
