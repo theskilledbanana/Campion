@@ -12,7 +12,7 @@ const allEntries = [
     "id": "retro-bowl",
     "title": "Retro Bowl",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-24",
-    "thumbnail": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?q=80&w=400&h=300&auto=format&fit=crop",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/b/bf/Retro_Bowl_cover.png",
     "categories": ["Sport", "Trending Games"],
     "description": "The ultimate retro-style American football management sim. Call the plays, manage your roster, and lead your team to victory in this addictive pixel-art classic."
   },
@@ -121,11 +121,12 @@ function renderItems() {
     }
 
     filtered.forEach(item => {
+        const isRetroBowl = item.id === 'retro-bowl';
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
-            <div class="aspect-video relative overflow-hidden">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
+            <div class="aspect-video relative overflow-hidden bg-zinc-950">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full ${isRetroBowl ? 'object-contain' : 'object-cover'} transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
