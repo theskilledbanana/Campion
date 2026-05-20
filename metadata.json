@@ -1,6 +1,6 @@
 {
-  "name": "MediaVault",
-  "description": "A lightweight portal for viewing web content through a clean, responsive interface.",
+  "name": "Vault Portal",
+  "description": "A high-performance portal for accessing curated web content and life simulators.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
