@@ -7,6 +7,14 @@ const allEntries = [
     "thumbnail": "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=400&h=300&auto=format&fit=crop",
     "category": "Strategy",
     "description": "Live your virtual life and make choices that determine your destiny."
+  },
+  {
+    "id": "vault-game",
+    "title": "Vault Discovery",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-74",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&h=300&auto=format&fit=crop",
+    "category": "Games",
+    "description": "Dive into deep exploration with this curated interactive experience."
   }
 ];
 
