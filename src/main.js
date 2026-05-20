@@ -3,7 +3,7 @@ const allEntries = [
     {
     "id": "bitlife",
     "title": "BitLife",
-    "iframeUrl": "https://paxvax.github.io/bitlife/",
+    "iframeUrl": "https://bitlife-life-simulator.github.io/",
     "thumbnail": "https://i.ibb.co/WN05w1Mr/bitlife.png",
     "categories": ["Simulation", "Trending Games"],
     "description": "Live your virtual life and make choices that determine your destiny."
