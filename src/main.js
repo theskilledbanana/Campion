@@ -20,7 +20,7 @@ const allEntries = [
     "id": "geometry-dash",
     "title": "Geometry Dash",
     "iframeUrl": "https://web-dashers.github.io/",
-    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400&h=300&auto=format&fit=crop",
+    "thumbnail": "https://static.wikia.nocookie.net/b213ondiscord/images/a/a6/Geometrydash.png/revision/latest?cb=20200721125515",
     "categories": ["Skill", "Trending Games"],
     "description": "Jump, fly, and flip your way through dangerous passages and spiky obstacles in this high-intensity rhythm-based action platformer."
   },
@@ -28,7 +28,7 @@ const allEntries = [
     "id": "slope",
     "title": "Slope",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-26",
-    "thumbnail": "https://images.unsplash.com/photo-1481831331758-29471d4766eb?q=80&w=400&h=300&auto=format&fit=crop",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUM15tsz1rOyZ_8gi3Vvjxu_6Un3bgbwuteg&s",
     "categories": ["Skill", "Trending Games"],
     "description": "Test your reflexes in this high-speed obstacle course. Navigate through a shifting neon world where one wrong move ends the run."
   }
