@@ -55,6 +55,10 @@ const instructionsModal = document.getElementById('instructions-modal');
 const instructionsContainer = document.getElementById('instructions-container');
 const closeInstructionsBtn = document.getElementById('close-instructions');
 const loaderHowToPlayBtn = document.getElementById('loader-how-to-play');
+const updateSiteBtn = document.getElementById('update-site-btn');
+const updateModal = document.getElementById('update-modal');
+const updateContainer = document.getElementById('update-container');
+const closeUpdateBtn = document.getElementById('close-update');
 
 function init() {
     renderCategories();
@@ -277,6 +281,37 @@ function setupEventListeners() {
     if (howToPlayBtn) howToPlayBtn.onclick = openInstructions;
     if (loaderHowToPlayBtn) loaderHowToPlayBtn.onclick = openInstructions;
 
+    // Update Site Modal Logic
+    const openUpdateModal = () => {
+        updateModal.classList.remove('hidden');
+        setTimeout(() => {
+            updateModal.classList.remove('opacity-0');
+            updateContainer.classList.remove('scale-95');
+            updateContainer.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeUpdateModal = () => {
+        updateModal.classList.add('opacity-0');
+        updateContainer.classList.remove('scale-100');
+        updateContainer.classList.add('scale-95');
+        setTimeout(() => {
+            updateModal.classList.add('hidden');
+            if (playerOverlay.classList.contains('hidden') && instructionsModal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        }, 300);
+    };
+
+    if (updateSiteBtn) updateSiteBtn.onclick = openUpdateModal;
+    if (closeUpdateBtn) closeUpdateBtn.onclick = closeUpdateModal;
+    if (updateModal) {
+        updateModal.onclick = (e) => {
+            if (e.target === updateModal) closeUpdateModal();
+        };
+    }
+
     const closeInstructions = () => {
         instructionsModal.classList.add('opacity-0');
         instructionsContainer.classList.remove('scale-100');
@@ -301,6 +336,7 @@ function setupEventListeners() {
         if (e.key === 'Escape') {
             closePlayer();
             closeInstructions();
+            closeUpdateModal();
         }
     });
 
