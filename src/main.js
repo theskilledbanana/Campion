@@ -33,6 +33,7 @@ const mobileBackButton = document.getElementById('mobile-back-button');
 const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 const iframeLoader = document.getElementById('iframe-loader');
+const dismissLoaderBtn = document.getElementById('dismiss-loader');
 
 function init() {
     renderCategories();
@@ -233,6 +234,13 @@ function setupEventListeners() {
         }
     };
 
+    if (dismissLoaderBtn) {
+        dismissLoaderBtn.onclick = () => {
+            iframeLoader.classList.add('hidden');
+            gameIframe.classList.remove('opacity-0');
+        };
+    }
+
     // Close on Escape
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closePlayer();
@@ -240,7 +248,8 @@ function setupEventListeners() {
 
     // Handle iframe load
     gameIframe.onload = () => {
-        iframeLoader.classList.add('hidden');
+        // We no longer auto-hide the loader to ensure the user has time to choose the fallback link
+        // The loader is now manually dismissed via the proceed button
         gameIframe.classList.remove('opacity-0');
     };
 }
