@@ -47,6 +47,14 @@ const allEntries = [
     "thumbnail": "https://maddrive.io/cache/data/image/game/drive-mad2-f500x500.webp",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Navigate through increasingly difficult obstacle courses in this physics-based driving game. Master the art of balance and speed to reach the finish line."
+  },
+  {
+    "id": "golf-orbit",
+    "title": "Golf Orbit",
+    "iframeUrl": "https://gunspin.bitbucket.io/go/lesson-2123.html#",
+    "thumbnail": "/src/assets/images/golf_orbit_thumbnail_1779334950235.png",
+    "categories": ["Sports", "Skill", "Arcade"],
+    "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
   }
 ];
 
