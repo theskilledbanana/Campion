@@ -78,6 +78,7 @@ const closeUpdateBtn = document.getElementById('close-update');
 const disclaimerModal = document.getElementById('disclaimer-modal');
 const disclaimerContainer = document.getElementById('disclaimer-container');
 const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
+const surpriseBtn = document.getElementById('surprise-btn');
 const terminalModal = document.getElementById('terminal-modal');
 const terminalContainer = document.getElementById('terminal-container');
 const terminalInput = document.getElementById('terminal-input');
@@ -597,6 +598,21 @@ function setupEventListeners() {
     }
 
     // Leaderboard
+    if (surpriseBtn) {
+        surpriseBtn.onclick = () => {
+            const originalContent = surpriseBtn.innerHTML;
+            surpriseBtn.innerHTML = `<i class="bi bi-dice-6 text-lg animate-spin"></i><span>Analyzing...</span>`;
+            surpriseBtn.classList.add('pointer-events-none', 'opacity-70');
+            
+            setTimeout(() => {
+                const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
+                openPlayer(randomItem);
+                surpriseBtn.innerHTML = originalContent;
+                surpriseBtn.classList.remove('pointer-events-none', 'opacity-70');
+            }, 800);
+        };
+    }
+
     if (leaderboardBtn) {
         leaderboardBtn.onclick = openLeaderboard;
     }
