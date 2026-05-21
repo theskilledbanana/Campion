@@ -209,7 +209,6 @@ function openPlayer(item) {
     // Reset loader state
     iframeLoader.classList.remove('hidden');
     gameIframe.classList.add('opacity-0');
-    iframeLoader.classList.remove('opacity-0');
 
     gameIframe.src = item.iframeUrl;
     playerOverlay.classList.remove('hidden');
@@ -387,10 +386,8 @@ function setupEventListeners() {
 
     // Handle iframe load
     gameIframe.onload = () => {
-        iframeLoader.classList.add('opacity-0');
-        setTimeout(() => {
-            iframeLoader.classList.add('hidden');
-        }, 500);
+        // We no longer auto-hide the loader to ensure the user has time to choose the fallback link
+        // The loader is now manually dismissed via the proceed button
         gameIframe.classList.remove('opacity-0');
     };
 }

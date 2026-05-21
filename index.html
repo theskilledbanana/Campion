@@ -194,12 +194,28 @@
                 <div class="relative w-full max-w-lg px-6">
                     <div class="absolute inset-0 bg-cyan-500/10 blur-[100px] rounded-full animate-pulse"></div>
                     <div class="relative flex flex-col items-center">
-                        <!-- Unified Loading state -->
+                        <!-- Unified Loading & Fallback state -->
                         <div id="loader-content" class="flex flex-col items-center text-center">
                             <div class="w-16 h-16 border-2 border-cyan-400/10 border-t-cyan-400 rounded-full animate-spin mb-10"></div>
                             
                             <h3 class="text-3xl font-black text-white tracking-tighter uppercase italic leading-none mb-4 animate-subtle">Establishing Bridge</h3>
-                            <p class="text-zinc-500 text-xs font-medium max-w-[280px] mx-auto leading-relaxed">Attempting secure extraction. Synchronizing assets for your session...</p>
+                            <p class="text-zinc-500 text-xs font-medium max-w-[280px] mx-auto mb-10 leading-relaxed">Attempting secure extraction. If the module is blocked or slow, use the manual override below.</p>
+                            
+                            <div class="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+                                <a id="loader-external-link" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto px-10 py-5 bg-white/5 hover:bg-white/10 text-cyan-400 rounded-3xl border border-white/5 transition-all text-xs font-black uppercase tracking-[0.3em] flex items-center gap-4 justify-center group active:scale-95">
+                                    Launch Secure Mirror
+                                    <i class="bi bi-box-arrow-up-right text-lg group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                                </a>
+                                
+                                <button id="dismiss-loader" class="w-full sm:w-auto px-10 py-5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-3xl transition-all text-xs font-black uppercase tracking-[0.3em] shadow-[0_0_50px_rgba(34,211,238,0.3)] flex items-center gap-4 justify-center group active:scale-95">
+                                    Proceed to Session
+                                    <i class="bi bi-play-fill text-xl"></i>
+                                </button>
+                            </div>
+
+                            <p class="mt-8 text-zinc-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                                dont know how to launch the game? please seek the <button id="loader-how-to-play" class="text-cyan-400 hover:text-cyan-300 transition-colors underline cursor-pointer">how to play tab</button>
+                            </p>
                             
                             <div class="mt-12">
                                 <p class="text-zinc-700 text-[10px] font-mono uppercase tracking-[0.2em] font-bold">Protocol Node: Accessing Secure Assets</p>
@@ -252,15 +268,15 @@
                 <div class="flex gap-4">
                     <span class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 text-xs font-black shrink-0 font-mono">03</span>
                     <div>
-                        <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Mirror Synchronization</h4>
-                        <p class="text-zinc-500 text-[11px] leading-relaxed">The portal syncs with the secure mirror instantly. No manual override required.</p>
+                        <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Extraction Request</h4>
+                        <p class="text-zinc-500 text-[11px] leading-relaxed">The option will appear to <span class="text-cyan-400 font-bold">Launch Secure Mirror</span>. Click it to proceed.</p>
                     </div>
                 </div>
                 <div class="flex gap-4">
                     <span class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-cyan-400 text-xs font-black shrink-0 font-mono">04</span>
                     <div>
                         <h4 class="text-white text-xs font-black uppercase tracking-widest mb-1">Execute Session</h4>
-                        <p class="text-zinc-500 text-[11px] leading-relaxed">The session launches automatically once asset decryption is complete.</p>
+                        <p class="text-zinc-500 text-[11px] leading-relaxed">Once the mirror is open or manually dismissed, the game session will launch automatically.</p>
                     </div>
                 </div>
             </div>
