@@ -78,7 +78,6 @@ const closeUpdateBtn = document.getElementById('close-update');
 const disclaimerModal = document.getElementById('disclaimer-modal');
 const disclaimerContainer = document.getElementById('disclaimer-container');
 const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
-const randomBtn = document.getElementById('random-btn');
 const terminalModal = document.getElementById('terminal-modal');
 const terminalContainer = document.getElementById('terminal-container');
 const terminalInput = document.getElementById('terminal-input');
@@ -269,42 +268,54 @@ function renderLeaderboard() {
         usernameSetup.classList.add('hidden');
     }
 
-    const mockGlobal = [
-        { name: "Neo_Core", time: 45280, isGlobal: true },
-        { name: "Alpha_Node", time: 38200, isGlobal: true },
-        { name: "Terminal_Ghost", time: 29500, isGlobal: true },
-        { name: "Zero_Day", time: 24100, isGlobal: true },
-        { name: "Protocol_X", time: 18900, isGlobal: true }
-    ];
-
+    let globalRanks = JSON.parse(localStorage.getItem('vp_global_ranks')) || [];
+    
+    // Sync current user into the local leaderboard list
     if (userData.username) {
-        mockGlobal.push({ name: userData.username, time: userData.totalSeconds, isUser: true });
+        const existingIdx = globalRanks.findIndex(r => r.name === userData.username);
+        if (existingIdx !== -1) {
+            globalRanks[existingIdx].time = userData.totalSeconds;
+        } else {
+            globalRanks.push({ name: userData.username, time: userData.totalSeconds });
+        }
+        localStorage.setItem('vp_global_ranks', JSON.stringify(globalRanks));
     }
 
-    const sorted = mockGlobal.sort((a, b) => b.time - a.time);
+    const sorted = globalRanks.sort((a, b) => b.time - a.time);
     
+    if (sorted.length === 0) {
+        leaderboardList.innerHTML = `
+            <div class="py-20 text-center">
+                <i class="bi bi-person-badge text-zinc-800 text-4xl mb-4"></i>
+                <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.2em]">No players registered in local matrix</p>
+            </div>
+        `;
+        return;
+    }
+
     leaderboardList.innerHTML = sorted.map((entry, idx) => {
         const hours = Math.floor(entry.time / 3600);
         const mins = Math.floor((entry.time % 3600) / 60);
         const secs = entry.time % 60;
         const timeStr = `${hours}H ${mins}M ${secs}S`;
         const isFirst = idx === 0;
+        const isCurrentUser = entry.name === userData.username;
 
         return `
-            <div class="flex items-center justify-between p-5 ${entry.isUser ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/5 border-white/5'} border rounded-3xl transition-all hover:translate-x-1 group">
+            <div class="flex items-center justify-between p-5 ${isCurrentUser ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/5 border-white/5'} border rounded-3xl transition-all hover:translate-x-1 group">
                 <div class="flex items-center gap-5">
                     <span class="text-xl font-black italic ${isFirst ? 'text-cyan-400' : 'text-zinc-700'} w-6 font-mono">#${(idx + 1).toString().padStart(2, '0')}</span>
                     <div>
-                        <p class="text-sm font-black uppercase italic tracking-wider ${entry.isUser ? 'text-white' : 'text-zinc-400'}">
+                        <p class="text-sm font-black uppercase italic tracking-wider ${isCurrentUser ? 'text-white' : 'text-zinc-400'}">
                             ${entry.name}
-                            ${entry.isUser ? '<span class="ml-2 text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 rounded not-italic tracking-widest">YOU</span>' : ''}
+                            ${isCurrentUser ? '<span class="ml-2 text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 rounded not-italic tracking-widest">YOU</span>' : ''}
                         </p>
-                        <p class="text-[9px] font-mono text-zinc-600 uppercase tracking-widest font-bold mt-0.5">Extraction Progress: ${Math.floor(entry.time/1000)}%</p>
+                        <p class="text-[9px] font-mono text-zinc-600 uppercase tracking-widest font-bold mt-0.5">Extraction Progress: ${Math.min(100, Math.floor(entry.time/360))}%</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-xs font-mono font-black ${entry.isUser ? 'text-cyan-400' : 'text-zinc-500'} group-hover:text-white transition-colors uppercase tracking-widest">${timeStr}</p>
-                    <p class="text-[8px] font-mono text-zinc-700 uppercase tracking-widest mt-0.5 font-bold">Sync: Stable</p>
+                    <p class="text-xs font-mono font-black ${isCurrentUser ? 'text-cyan-400' : 'text-zinc-500'} group-hover:text-white transition-colors uppercase tracking-widest">${timeStr}</p>
+                    <p class="text-[8px] font-mono text-zinc-700 uppercase tracking-widest mt-0.5 font-bold">Latency: Stable</p>
                 </div>
             </div>
         `;
@@ -313,6 +324,18 @@ function renderLeaderboard() {
 
 function saveUserData() {
     localStorage.setItem('vp_user_data', JSON.stringify(userData));
+    
+    // Also sync to global ranks immediately
+    if (userData.username) {
+        let globalRanks = JSON.parse(localStorage.getItem('vp_global_ranks')) || [];
+        const existingIdx = globalRanks.findIndex(r => r.name === userData.username);
+        if (existingIdx !== -1) {
+            globalRanks[existingIdx].time = userData.totalSeconds;
+        } else {
+            globalRanks.push({ name: userData.username, time: userData.totalSeconds });
+        }
+        localStorage.setItem('vp_global_ranks', JSON.stringify(globalRanks));
+    }
 }
 
 function openPlayer(item) {
@@ -360,21 +383,6 @@ function setupEventListeners() {
         currentSearch = e.target.value;
         renderItems();
     });
-
-    if (randomBtn) {
-        randomBtn.onclick = () => {
-            const originalContent = randomBtn.innerHTML;
-            randomBtn.innerHTML = `<i class="bi bi-cpu text-lg animate-spin"></i><span>Decrypting...</span>`;
-            randomBtn.classList.add('pointer-events-none', 'opacity-70');
-            
-            setTimeout(() => {
-                const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
-                openPlayer(randomItem);
-                randomBtn.innerHTML = originalContent;
-                randomBtn.classList.remove('pointer-events-none', 'opacity-70');
-            }, 1000);
-        };
-    }
 
     // Terminal Logic
     const openTerminal = () => {
@@ -609,6 +617,8 @@ function setupEventListeners() {
         resetIdentityBtn.onclick = () => {
             if (confirm('REDACT ALL SESSION DATA? This path is irreversible.')) {
                 localStorage.removeItem('vp_user_data');
+                // Also remove the user from local global ranks if helpful, 
+                // but let's just clear the current user's local profile
                 userData = { username: '', totalSeconds: 0, sessions: 0 };
                 renderLeaderboard();
             }
