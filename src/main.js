@@ -50,6 +50,14 @@ const allEntries = [
     "description": "Navigate through increasingly difficult obstacle courses in this physics-based driving game. Master the art of balance and speed to reach the finish line."
   },
   {
+    "id": "basketball-stars",
+    "title": "Basketball Stars",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-3",
+    "thumbnail": "https://imgs.crazygames.com/basketball-stars_16x9/20231012111520/basketball-stars_16x9-cover?metadata=none&quality=60&height=5527",
+    "categories": ["Sports", "Trending Games", "2 Player"],
+    "description": "Shoot hoops and play as a legend in this competitive basketball game. Master your shots, steals, and blocks to dominate the court in single-player or 2-player modes."
+  },
+  {
     "id": "golf-orbit",
     "title": "Golf Orbit",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2123",
