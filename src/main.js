@@ -1,5 +1,4 @@
 // main.js - Vanilla JS Logic for MediaVault
-import golfThumb from './assets/images/golf-orbit.png';
 
 const allEntries = [
   {
@@ -54,7 +53,7 @@ const allEntries = [
     "id": "golf-orbit",
     "title": "Golf Orbit",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2123",
-    "thumbnail": golfThumb,
+    "thumbnail": "/golf-orbit.png",
     "categories": ["Sports", "Skill", "Arcade"],
     "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
   }
@@ -215,7 +214,7 @@ function renderItems() {
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full ${isSpecialFraming ? 'object-contain' : 'object-cover'} transition-transform duration-700 group-hover:scale-105">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full ${isSpecialFraming ? 'object-contain' : 'object-cover'} transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
