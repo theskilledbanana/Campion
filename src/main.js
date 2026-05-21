@@ -39,6 +39,14 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGJvjj2YumCANX_Xd8bcJmXeJnqigOh5y0gg&s",
     "categories": ["Simulation", "Driving"],
     "description": "Experience the thrill of navigating massive rigs through challenging Indian landscapes. Master the art of heavy transport in this high-octane driving simulator."
+  },
+  {
+    "id": "drive-mad",
+    "title": "Drive Mad",
+    "iframeUrl": "https://gunspin.bitbucket.io/go/lesson-274.html",
+    "thumbnail": "https://maddrive.io/cache/data/image/game/drive-mad2-f500x500.webp",
+    "categories": ["Driving", "Skill", "Trending Games"],
+    "description": "Navigate through increasingly difficult obstacle courses in this physics-based driving game. Master the art of balance and speed to reach the finish line."
   }
 ];
 
@@ -157,7 +165,7 @@ function renderItems() {
     }
 
     filtered.forEach(item => {
-        const isSpecialFraming = item.id === 'retro-bowl' || item.id === 'geometry-dash';
+        const isSpecialFraming = item.id === 'retro-bowl' || item.id === 'geometry-dash' || item.id === 'drive-mad';
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
