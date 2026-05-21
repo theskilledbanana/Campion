@@ -53,7 +53,7 @@ const allEntries = [
     "id": "golf-orbit",
     "title": "Golf Orbit",
     "iframeUrl": "https://gunspin.bitbucket.io/go/lesson-2123.html#",
-    "thumbnail": "/golf-orbit.png",
+    "thumbnail": "https://img.gamedistribution.com/02ff01e6e9f7451ba28d889a2a55eec9-512x512.jpg",
     "categories": ["Sports", "Skill", "Arcade"],
     "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
   }
