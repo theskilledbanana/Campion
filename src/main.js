@@ -1,6 +1,8 @@
 // main.js - Vanilla JS Logic for MediaVault
+import golfThumb from './assets/golf-orbit.png';
+
 const allEntries = [
-    {
+  {
     "id": "bitlife",
     "title": "BitLife",
     "iframeUrl": "https://only-game.github.io/projects/bitlife/index.html",
@@ -52,7 +54,7 @@ const allEntries = [
     "id": "golf-orbit",
     "title": "Golf Orbit",
     "iframeUrl": "https://gunspin.bitbucket.io/go/lesson-2123.html#",
-    "thumbnail": "./golf-orbit.png",
+    "thumbnail": golfThumb,
     "categories": ["Sports", "Skill", "Arcade"],
     "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
   }
