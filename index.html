@@ -13,14 +13,34 @@
             --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
         }
         body {
-            background-color: #0d0d12;
+            background-color: #050508;
             color: #f4f4f5;
             font-family: var(--font-sans);
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%),
-                radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.05) 0px, transparent 50%);
-            background-attachment: fixed;
+                linear-gradient(rgba(20, 184, 166, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(20, 184, 166, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+            mask-image: radial-gradient(circle at 50% 50%, black, transparent 80%);
+        }
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0.3;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -83,9 +103,13 @@
                     <h1 class="text-2xl font-black text-white tracking-tight uppercase">
                         Vault<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Portal</span>
                     </h1>
-                    <div class="flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
-                        <p class="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] font-bold leading-none">Access Node 04</p>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse ring-4 ring-cyan-500/20"></span>
+                            <p class="text-[9px] font-mono text-cyan-400/70 uppercase tracking-[0.2em] font-bold leading-none">Access Node 04</p>
+                        </div>
+                        <div class="h-1 w-1 rounded-full bg-zinc-800"></div>
+                        <p id="system-ticker" class="text-[9px] font-mono text-zinc-600 uppercase tracking-[0.2em] font-bold leading-none">Baud: 9600 // MEM: 84%</p>
                     </div>
                 </div>
             </div>

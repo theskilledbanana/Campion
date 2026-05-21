@@ -84,6 +84,19 @@ function init() {
     renderItems();
     setupEventListeners();
     showDisclaimer();
+    startSystemTicker();
+}
+
+function startSystemTicker() {
+    const ticker = document.getElementById('system-ticker');
+    if (!ticker) return;
+    
+    setInterval(() => {
+        const baud = [4800, 9600, 14400, 19200, 38400, 57600, 115200][Math.floor(Math.random() * 7)];
+        const mem = Math.floor(Math.random() * 15) + 75;
+        const cpu = (Math.random() * 5).toFixed(1);
+        ticker.textContent = `Baud: ${baud} // MEM: ${mem}% // CPU: ${cpu}%`;
+    }, 3000);
 }
 
 function showDisclaimer() {
@@ -164,8 +177,9 @@ function renderItems() {
         return;
     }
 
-    filtered.forEach(item => {
+    filtered.forEach((item, index) => {
         const isSpecialFraming = item.id === 'retro-bowl' || item.id === 'geometry-dash' || item.id === 'drive-mad';
+        const nodeId = `V-P node [${(index + 101).toString(16).toUpperCase()}]`;
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
@@ -173,20 +187,29 @@ function renderItems() {
                 <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full ${isSpecialFraming ? 'object-contain' : 'object-cover'} transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <!-- Data Fragments -->
+                <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                    <span class="text-[8px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20">${nodeId}</span>
+                </div>
+
                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
                     <div class="bg-white text-black px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-tighter shadow-2xl flex items-center gap-2">
-                        <span>Launch Entry</span>
-                        <i class="bi bi-arrow-right-short text-xl"></i>
+                        <span>Initialize Link</span>
+                        <i class="bi bi-arrow-right-short text-xl group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
             </div>
             <div class="p-5">
-                <div class="flex items-center gap-2 mb-3">
-                    ${item.categories.map(cat => `
-                        <span class="text-[10px] font-bold text-cyan-400/80 px-2 py-0.5 bg-cyan-400/5 border border-cyan-400/10 rounded uppercase tracking-[0.1em] font-mono">${cat}</span>
-                    `).join('')}
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        ${item.categories.map(cat => `
+                            <span class="text-[10px] font-bold text-cyan-400/80 px-2 py-0.5 bg-cyan-400/5 border border-cyan-400/10 rounded uppercase tracking-[0.1em] font-mono">${cat}</span>
+                        `).join('')}
+                    </div>
+                    <span class="text-[9px] font-mono text-zinc-700 font-bold group-hover:text-cyan-900 transition-colors">v2.4.0</span>
                 </div>
-                <h3 class="text-zinc-100 font-extrabold text-xl tracking-tight leading-tight group-hover:text-cyan-400 transition-colors">${item.title}</h3>
+                <h3 class="text-zinc-100 font-extrabold text-xl tracking-tight leading-tight group-hover:text-cyan-400 transition-colors uppercase italic">${item.title}</h3>
                 <p class="text-zinc-500 text-sm line-clamp-2 mt-2 font-medium leading-relaxed">${item.description}</p>
             </div>
         `;
