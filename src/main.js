@@ -1,5 +1,4 @@
 // main.js - Vanilla JS Logic for MediaVault
-import golfThumb from './assets/images/golf-orbit.png';
 
 const allEntries = [
   {
@@ -54,7 +53,7 @@ const allEntries = [
     "id": "golf-orbit",
     "title": "Golf Orbit",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2123",
-    "thumbnail": golfThumb,
+    "thumbnail": "./golf-orbit.png",
     "categories": ["Sports", "Skill", "Arcade"],
     "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
   }
