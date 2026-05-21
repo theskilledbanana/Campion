@@ -78,6 +78,11 @@ const closeUpdateBtn = document.getElementById('close-update');
 const disclaimerModal = document.getElementById('disclaimer-modal');
 const disclaimerContainer = document.getElementById('disclaimer-container');
 const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
+const randomBtn = document.getElementById('random-btn');
+const terminalModal = document.getElementById('terminal-modal');
+const terminalContainer = document.getElementById('terminal-container');
+const terminalInput = document.getElementById('terminal-input');
+const terminalResults = document.getElementById('terminal-results');
 
 function init() {
     renderCategories();
@@ -251,6 +256,150 @@ function setupEventListeners() {
         renderItems();
     });
 
+    if (randomBtn) {
+        randomBtn.onclick = () => {
+            const originalContent = randomBtn.innerHTML;
+            randomBtn.innerHTML = `<i class="bi bi-cpu text-lg animate-spin"></i><span>Decrypting...</span>`;
+            randomBtn.classList.add('pointer-events-none', 'opacity-70');
+            
+            setTimeout(() => {
+                const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
+                openPlayer(randomItem);
+                randomBtn.innerHTML = originalContent;
+                randomBtn.classList.remove('pointer-events-none', 'opacity-70');
+            }, 1000);
+        };
+    }
+
+    // Terminal Logic
+    const openTerminal = () => {
+        terminalModal.classList.remove('hidden');
+        setTimeout(() => {
+            terminalModal.classList.remove('opacity-0');
+            terminalContainer.classList.remove('scale-95');
+            terminalContainer.classList.add('scale-100');
+            terminalInput.focus();
+            renderTerminalResults();
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeTerminal = () => {
+        terminalModal.classList.add('opacity-0');
+        terminalContainer.classList.remove('scale-100');
+        terminalContainer.classList.add('scale-95');
+        setTimeout(() => {
+            terminalModal.classList.add('hidden');
+            if (playerOverlay.classList.contains('hidden') && instructionsModal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        }, 300);
+    };
+
+    const renderTerminalResults = (query = '') => {
+        terminalResults.innerHTML = '';
+        
+        const commands = [
+            { cmd: '/random', desc: 'Initialize random session link' },
+            { cmd: '/clear', desc: 'Reset all active filters/queries' },
+            { cmd: '/about', desc: 'Display system architecture specs' },
+            { cmd: '/theme', desc: 'Cycle interface accent protocols' }
+        ];
+
+        const games = allEntries.filter(g => g.title.toLowerCase().includes(query.toLowerCase()));
+        
+        if (query.startsWith('/')) {
+            const filteredCmds = commands.filter(c => c.cmd.startsWith(query.toLowerCase()));
+            filteredCmds.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "px-6 py-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex items-center justify-between group";
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <i class="bi bi-terminal text-cyan-400"></i>
+                        <div>
+                            <p class="text-cyan-400 font-mono text-sm">${c.cmd}</p>
+                            <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-widest">${c.desc}</p>
+                        </div>
+                    </div>
+                    <i class="bi bi-arrow-right-short text-zinc-800 group-hover:text-cyan-400 transition-colors text-xl"></i>
+                `;
+                div.onclick = () => executeCommand(c.cmd);
+                terminalResults.appendChild(div);
+            });
+        }
+
+        games.forEach(g => {
+            const div = document.createElement('div');
+            div.className = "px-6 py-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex items-center justify-between group";
+            div.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5">
+                        <img src="${g.thumbnail}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <div>
+                        <p class="text-zinc-300 font-bold text-sm uppercase italic tracking-tighter">${g.title}</p>
+                        <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.1em] font-mono">${g.categories.join(' // ')}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-[8px] font-mono text-zinc-800 uppercase tracking-widest bg-zinc-950 px-2 py-0.5 rounded border border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">Node: En-0${Math.floor(Math.random()*9)}</span>
+                    <i class="bi bi-arrow-right-short text-zinc-800 group-hover:text-cyan-400 transition-colors text-xl"></i>
+                </div>
+            `;
+            div.onclick = () => {
+                openPlayer(g);
+                closeTerminal();
+            };
+            terminalResults.appendChild(div);
+        });
+
+        if (games.length === 0 && !query.startsWith('/')) {
+            terminalResults.innerHTML = `
+                <div class="px-6 py-12 text-center">
+                    <i class="bi bi-slash-circle text-zinc-800 text-3xl mb-4"></i>
+                    <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-widest">No matching nodes found in directory</p>
+                </div>
+            `;
+        }
+    };
+
+    const executeCommand = (cmd) => {
+        if (cmd === '/random') {
+            const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
+            openPlayer(randomItem);
+            closeTerminal();
+        } else if (cmd === '/clear') {
+            currentSearch = '';
+            searchInput.value = '';
+            renderItems();
+            closeTerminal();
+        } else if (cmd === '/about') {
+            alert('Vault Portal v2.4.0\nKernel: 0.11.4-LTS\nMaintainer: V-P Control Node\nStatus: Secure');
+        } else if (cmd === '/theme') {
+            const colors = ['#22d3ee', '#4ade80', '#f87171', '#c084fc'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            document.documentElement.style.setProperty('--cyan-500', randomColor);
+            // This is a bit hacky as tailwind uses its own vars, but for custom styles it works
+            closeTerminal();
+        }
+    };
+
+    terminalInput.addEventListener('input', (e) => renderTerminalResults(e.target.value));
+    terminalInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const query = terminalInput.value;
+            if (query.startsWith('/')) {
+                executeCommand(query.trim());
+            } else {
+                const firstGame = allEntries.find(g => g.title.toLowerCase().includes(query.toLowerCase()));
+                if (firstGame) {
+                    openPlayer(firstGame);
+                    closeTerminal();
+                }
+            }
+        }
+    });
+
     closePlayerBtn.onclick = closePlayer;
     if (mobileBackButton) {
         mobileBackButton.onclick = closePlayer;
@@ -379,6 +528,12 @@ function setupEventListeners() {
         };
     }
 
+    if (terminalModal) {
+        terminalModal.onclick = (e) => {
+            if (e.target === terminalModal) closeTerminal();
+        };
+    }
+
     const closeInstructions = () => {
         instructionsModal.classList.add('opacity-0');
         instructionsContainer.classList.remove('scale-100');
@@ -400,10 +555,21 @@ function setupEventListeners() {
 
     // Close on Escape
     window.addEventListener('keydown', (e) => {
+        if (e.key === '/') {
+            if (document.activeElement.tagName !== 'INPUT') {
+                e.preventDefault();
+                openTerminal();
+            }
+        }
+        if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            openTerminal();
+        }
         if (e.key === 'Escape') {
             closePlayer();
             closeInstructions();
             closeUpdateModal();
+            closeTerminal();
         }
     });
 
