@@ -43,7 +43,7 @@ const allEntries = [
   {
     "id": "drive-mad",
     "title": "Drive Mad",
-    "iframeUrl": "https://gunspin.bitbucket.io/go/lesson-274.html",
+    "iframeUrl": "https://xg4321.github.io/drivemad-gnmathport/",
     "thumbnail": "https://maddrive.io/cache/data/image/game/drive-mad2-f500x500.webp",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Navigate through increasingly difficult obstacle courses in this physics-based driving game. Master the art of balance and speed to reach the finish line."
