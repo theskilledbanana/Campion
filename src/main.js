@@ -83,6 +83,22 @@ const terminalModal = document.getElementById('terminal-modal');
 const terminalContainer = document.getElementById('terminal-container');
 const terminalInput = document.getElementById('terminal-input');
 const terminalResults = document.getElementById('terminal-results');
+const leaderboardBtn = document.getElementById('leaderboard-btn');
+const leaderboardModal = document.getElementById('leaderboard-modal');
+const leaderboardContainer = document.getElementById('leaderboard-container');
+const closeLeaderboardBtn = document.getElementById('close-leaderboard');
+const leaderboardList = document.getElementById('leaderboard-list');
+const usernameSetup = document.getElementById('username-setup');
+const usernameInput = document.getElementById('username-input');
+const saveUsernameBtn = document.getElementById('save-username');
+const resetIdentityBtn = document.getElementById('reset-identity');
+
+let playSessionStart = null;
+let userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
+    username: '',
+    totalSeconds: 0,
+    sessions: 0
+};
 
 function init() {
     renderCategories();
@@ -223,7 +239,89 @@ function renderItems() {
     });
 }
 
+function openLeaderboard() {
+    leaderboardModal.classList.remove('hidden');
+    setTimeout(() => {
+        leaderboardModal.classList.remove('opacity-0');
+        leaderboardContainer.classList.remove('scale-90');
+        leaderboardContainer.classList.add('scale-100');
+        renderLeaderboard();
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLeaderboard() {
+    leaderboardModal.classList.add('opacity-0');
+    leaderboardContainer.classList.remove('scale-100');
+    leaderboardContainer.classList.add('scale-90');
+    setTimeout(() => {
+        leaderboardModal.classList.add('hidden');
+        if (playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }, 500);
+}
+
+function renderLeaderboard() {
+    if (!userData.username) {
+        usernameSetup.classList.remove('hidden');
+    } else {
+        usernameSetup.classList.add('hidden');
+    }
+
+    const mockGlobal = [
+        { name: "Neo_Core", time: 45280, isGlobal: true },
+        { name: "Alpha_Node", time: 38200, isGlobal: true },
+        { name: "Terminal_Ghost", time: 29500, isGlobal: true },
+        { name: "Zero_Day", time: 24100, isGlobal: true },
+        { name: "Protocol_X", time: 18900, isGlobal: true }
+    ];
+
+    if (userData.username) {
+        mockGlobal.push({ name: userData.username, time: userData.totalSeconds, isUser: true });
+    }
+
+    const sorted = mockGlobal.sort((a, b) => b.time - a.time);
+    
+    leaderboardList.innerHTML = sorted.map((entry, idx) => {
+        const hours = Math.floor(entry.time / 3600);
+        const mins = Math.floor((entry.time % 3600) / 60);
+        const secs = entry.time % 60;
+        const timeStr = `${hours}H ${mins}M ${secs}S`;
+        const isFirst = idx === 0;
+
+        return `
+            <div class="flex items-center justify-between p-5 ${entry.isUser ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/5 border-white/5'} border rounded-3xl transition-all hover:translate-x-1 group">
+                <div class="flex items-center gap-5">
+                    <span class="text-xl font-black italic ${isFirst ? 'text-cyan-400' : 'text-zinc-700'} w-6 font-mono">#${(idx + 1).toString().padStart(2, '0')}</span>
+                    <div>
+                        <p class="text-sm font-black uppercase italic tracking-wider ${entry.isUser ? 'text-white' : 'text-zinc-400'}">
+                            ${entry.name}
+                            ${entry.isUser ? '<span class="ml-2 text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 rounded not-italic tracking-widest">YOU</span>' : ''}
+                        </p>
+                        <p class="text-[9px] font-mono text-zinc-600 uppercase tracking-widest font-bold mt-0.5">Extraction Progress: ${Math.floor(entry.time/1000)}%</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs font-mono font-black ${entry.isUser ? 'text-cyan-400' : 'text-zinc-500'} group-hover:text-white transition-colors uppercase tracking-widest">${timeStr}</p>
+                    <p class="text-[8px] font-mono text-zinc-700 uppercase tracking-widest mt-0.5 font-bold">Sync: Stable</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function saveUserData() {
+    localStorage.setItem('vp_user_data', JSON.stringify(userData));
+}
+
 function openPlayer(item) {
+    if (!item) return;
+    
+    playSessionStart = Date.now();
+    userData.sessions++;
+    saveUserData();
+
     playerTitle.textContent = item.title;
     playerCategory.textContent = item.categories.join(' / ');
     
@@ -244,6 +342,13 @@ function openPlayer(item) {
 }
 
 function closePlayer() {
+    if (playSessionStart) {
+        const elapsed = Math.floor((Date.now() - playSessionStart) / 1000);
+        userData.totalSeconds += elapsed;
+        saveUserData();
+        playSessionStart = null;
+    }
+
     playerOverlay.classList.add('hidden');
     gameIframe.src = '';
     gameIframe.classList.add('opacity-0');
@@ -483,6 +588,33 @@ function setupEventListeners() {
         acceptDisclaimerBtn.onclick = hideDisclaimer;
     }
 
+    // Leaderboard
+    if (leaderboardBtn) {
+        leaderboardBtn.onclick = openLeaderboard;
+    }
+    if (closeLeaderboardBtn) {
+        closeLeaderboardBtn.onclick = closeLeaderboard;
+    }
+    if (saveUsernameBtn) {
+        saveUsernameBtn.onclick = () => {
+            const val = usernameInput.value.trim();
+            if (val) {
+                userData.username = val;
+                saveUserData();
+                renderLeaderboard();
+            }
+        };
+    }
+    if (resetIdentityBtn) {
+        resetIdentityBtn.onclick = () => {
+            if (confirm('REDACT ALL SESSION DATA? This path is irreversible.')) {
+                localStorage.removeItem('vp_user_data');
+                userData = { username: '', totalSeconds: 0, sessions: 0 };
+                renderLeaderboard();
+            }
+        }
+    }
+
     // Modal Logic
     const openInstructions = () => {
         instructionsModal.classList.remove('hidden');
@@ -570,6 +702,7 @@ function setupEventListeners() {
             closeInstructions();
             closeUpdateModal();
             closeTerminal();
+            closeLeaderboard();
         }
     });
 

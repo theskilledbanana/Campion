@@ -125,6 +125,10 @@
             </div>
 
             <div class="flex items-center gap-3">
+                <button id="leaderboard-btn" class="flex items-center gap-2.5 px-5 py-3 bg-zinc-900/50 border border-white/10 hover:border-cyan-500/40 hover:bg-zinc-800/80 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-cyan-400 group active:scale-95 shadow-[0_0_20px_-10px_rgba(34,211,238,0.2)]">
+                    <i class="bi bi-trophy text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span class="hidden md:inline">Rankings</span>
+                </button>
                 <button id="random-btn" class="flex items-center gap-2.5 px-5 py-3 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-500/50 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-cyan-400 group active:scale-95 shadow-[0_0_30px_-10px_rgba(34,211,238,0.3)]">
                     <i class="bi bi-shuffle text-lg group-hover:rotate-180 transition-transform duration-500"></i>
                     <span class="hidden xl:inline">Lucky Link</span>
@@ -385,6 +389,48 @@
                     Initialize Access
                     <i class="bi bi-chevron-right text-lg group-hover:translate-x-1 transition-transform"></i>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-500">
+        <div class="bg-zinc-950 border border-white/10 rounded-[2.5rem] p-8 md:p-12 max-w-2xl w-full shadow-2xl relative scale-90 transition-all duration-500" id="leaderboard-container">
+            <button id="close-leaderboard" class="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+            <div class="mb-10">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-cyan-400">
+                        <i class="bi bi-trophy text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter">Global <span class="text-cyan-400">Rankings</span></h2>
+                        <p class="text-zinc-500 text-[10px] font-mono uppercase tracking-[0.2em] font-bold">Time Extraction Leaderboard</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Username Input (Hidden if set) -->
+            <div id="username-setup" class="mb-8 p-6 bg-cyan-500/5 border border-cyan-500/10 rounded-3xl hidden">
+                <p class="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-4 italic">Register Identity</p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="username-input" placeholder="ENTER CODENAME..." class="flex-1 bg-zinc-900 border border-white/10 rounded-2xl px-5 py-3 text-white font-mono text-sm focus:outline-none focus:border-cyan-500/50">
+                    <button id="save-username" class="px-8 py-3 bg-cyan-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-cyan-400 transition-all active:scale-95">Set Identity</button>
+                </div>
+            </div>
+
+            <div class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2" id="leaderboard-list">
+                <!-- Rankings injected here -->
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+                    <span class="text-[9px] font-mono text-zinc-600 uppercase tracking-widest font-bold italic">Real-time sync active</span>
+                </div>
+                <button id="reset-identity" class="text-[9px] font-mono text-zinc-700 hover:text-red-400 uppercase tracking-widest font-bold transition-colors">Wipe Identity Data</button>
             </div>
         </div>
     </div>
