@@ -63,7 +63,8 @@ const allEntries = [
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-3",
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0hMBsvy_AxpR3o3RcMOXsZwDWWtfWrX1CIQ&s",
     "categories": ["Sports", "Trending Games", "2 Player"],
-    "description": "Shoot hoops and play as a legend in this competitive basketball game. Master your shots, steals, and blocks to dominate the court in single-player or 2-player modes."
+    "description": "Shoot hoops and play as a legend in this competitive basketball game. Master your shots, steals, and blocks to dominate the court in single-player or 2-player modes.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   },
   {
     "id": "golf-orbit",
@@ -384,6 +385,28 @@ function openPlayer(item) {
     // Reset loader state
     iframeLoader.classList.remove('hidden');
     gameIframe.classList.add('opacity-0');
+
+    // Apply custom styles if any
+    if (item.customStyles) {
+        gameIframe.style.cssText = item.customStyles;
+        gameIframe.classList.remove('w-full', 'h-full');
+    } else {
+        gameIframe.style.cssText = '';
+        gameIframe.classList.add('w-full', 'h-full');
+    }
+
+    // Apply custom attributes
+    if (item.allow) {
+        gameIframe.setAttribute('allow', item.allow);
+    } else {
+        gameIframe.removeAttribute('allow');
+    }
+
+    if (item.tabindex !== undefined) {
+        gameIframe.setAttribute('tabindex', item.tabindex);
+    } else {
+        gameIframe.removeAttribute('tabindex');
+    }
 
     gameIframe.src = item.iframeUrl;
     playerOverlay.classList.remove('hidden');
