@@ -115,7 +115,7 @@ const allEntries = [
     "id": "among-us",
     "title": "Among Us",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-1",
-    "thumbnail": "https://static.wikia.nocookie.net/among-us-wiki/images/a/a2/Among_Us_Icon.png/revision/latest?cb=20210214193617",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/9/9a/Among_Us_cover_art.jpg",
     "categories": ["Skill", "Trending Games", "Multiplayer"],
     "description": "Find the imposter or sabotage the crew! Master the art of deception and deduction in this social deduction sensation.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
