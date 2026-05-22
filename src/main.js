@@ -128,7 +128,15 @@ const usernameSetup = document.getElementById('username-setup');
 const usernameInput = document.getElementById('username-input');
 const saveUsernameBtn = document.getElementById('save-username');
 const resetIdentityBtn = document.getElementById('reset-identity');
+const cloakTabBtn = document.getElementById('cloak-tab-btn');
+const cloakModal = document.getElementById('cloak-modal');
+const cloakContainer = document.getElementById('cloak-container');
+const closeCloakBtn = document.getElementById('close-cloak');
+const cloakInput = document.getElementById('cloak-input');
+const applyCloakBtn = document.getElementById('apply-cloak');
+const resetCloakBtn = document.getElementById('reset-cloak');
 
+const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
 let userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
     username: '',
@@ -142,6 +150,13 @@ function init() {
     setupEventListeners();
     showDisclaimer();
     startSystemTicker();
+    
+    // Auto-load cloaked title
+    const savedTitle = localStorage.getItem('vp_cloaked_title');
+    if (savedTitle) {
+        document.title = savedTitle;
+        if (cloakInput) cloakInput.value = savedTitle;
+    }
 }
 
 function startSystemTicker() {
@@ -706,6 +721,58 @@ function setupEventListeners() {
         }
     }
 
+    // Tab Cloak Modal Functions
+    const openCloakModal = () => {
+        cloakModal.classList.remove('hidden');
+        setTimeout(() => {
+            cloakModal.classList.remove('opacity-0');
+            cloakContainer.classList.remove('scale-90');
+            cloakContainer.classList.add('scale-100');
+            cloakInput.focus();
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeCloakModal = () => {
+        cloakModal.classList.add('opacity-0');
+        cloakContainer.classList.remove('scale-100');
+        cloakContainer.classList.add('scale-90');
+        setTimeout(() => {
+            cloakModal.classList.add('hidden');
+            if (playerOverlay.classList.contains('hidden') && instructionsModal.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        }, 500);
+    };
+
+    if (cloakTabBtn) cloakTabBtn.onclick = openCloakModal;
+    if (closeCloakBtn) closeCloakBtn.onclick = closeCloakModal;
+    if (cloakModal) {
+        cloakModal.onclick = (e) => {
+            if (e.target === cloakModal) closeCloakModal();
+        };
+    }
+
+    if (applyCloakBtn) {
+        applyCloakBtn.onclick = () => {
+            const val = cloakInput.value.trim();
+            if (val) {
+                document.title = val;
+                localStorage.setItem('vp_cloaked_title', val);
+                closeCloakModal();
+            }
+        };
+    }
+
+    if (resetCloakBtn) {
+        resetCloakBtn.onclick = () => {
+            document.title = ORIGINAL_TITLE;
+            localStorage.removeItem('vp_cloaked_title');
+            cloakInput.value = '';
+            closeCloakModal();
+        };
+    }
+
     // Modal Logic
     const openInstructions = () => {
         instructionsModal.classList.remove('hidden');
@@ -794,6 +861,7 @@ function setupEventListeners() {
             closeUpdateModal();
             closeTerminal();
             closeLeaderboard();
+            closeCloakModal();
         }
     });
 
