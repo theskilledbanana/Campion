@@ -137,6 +137,15 @@ const allEntries = [
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The classic infinite runner. Leap over cacti and dodge pterodactyls as you sprint through a prehistoric desert in this pixel-perfect challenge.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "flappy-bird",
+    "title": "Flappy Bird",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-130",
+    "thumbnail": "https://cdn1.epicgames.com/spt-assets/36082ce08c3f402f8155bb3a2fd8afeb/flappy-bird-wnu7w.png",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "The viral flight sensation. Tap to flap your way through a treacherous landscape of pipes in this deceptively simple but incredibly challenging arcade classic.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
