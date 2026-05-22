@@ -413,7 +413,7 @@ function openPlayer(item) {
 
     // Set custom loader message if any
     if (item.loadingMessage) {
-        loaderMessage.innerHTML = `<span class="text-cyan-400 font-bold underline decoration-cyan-400/30 underline-offset-4 tracking-[0.1em]">${item.loadingMessage}</span><br><br>Attempting secure extraction. If the module is blocked or slow, use the manual override below.`;
+        loaderMessage.innerHTML = `<span class="text-cyan-400 font-black text-2xl uppercase italic tracking-tighter underline decoration-cyan-400/30 underline-offset-8 mb-4 block animate-pulse">${item.loadingMessage}</span><p class="mt-4">Attempting secure extraction. If the module is blocked or slow, use the manual override below.</p>`;
     } else {
         loaderMessage.textContent = 'Attempting secure extraction. If the module is blocked or slow, use the manual override below.';
     }
