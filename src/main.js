@@ -137,6 +137,24 @@ const allEntries = [
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The viral flight sensation. Tap to flap your way through a treacherous landscape of pipes in this deceptively simple but incredibly challenging arcade classic.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "level-devil",
+    "title": "Level Devil",
+    "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2107",
+    "thumbnail": "https://i.ytimg.com/vi/KRv-x5eCFoU/hq720.jpg?sqp=-oaymwEXCK4FEIIDSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLDitvnLMDHAnWeJx4QIz99ByUSB2g",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "A brutally difficult platformer where the levels are designed to trick you. Master the art of anticipation and reflexes to navigate through treacherous traps.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "real-cars-epic-stunts",
+    "title": "Real Cars Epic Stunts",
+    "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2161",
+    "thumbnail": "https://imgs.crazygames.com/real-cars-epic-stunts_16x9/20240913073039/real-cars-epic-stunts_16x9-cover?metadata=none&quality=60&height=3091",
+    "categories": ["Driving", "Arcade", "Trending Games"],
+    "description": "Perform impossible maneuvers in high-performance vehicles. Master the physics of speed and rotation to execute the ultimate stunt sequence.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
