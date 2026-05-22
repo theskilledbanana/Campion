@@ -50,6 +50,14 @@ const allEntries = [
     "description": "Navigate through increasingly difficult obstacle courses in this physics-based driving game. Master the art of balance and speed to reach the finish line."
   },
   {
+    "id": "escape-road-2",
+    "title": "Escape Road 2",
+    "iframeUrl": "https://staticquasar931.github.io/Escape-Road-2/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoJmBnLLcGoLogI3-_x2Tl6kXvMyIFZRc0_A&s",
+    "categories": ["Driving", "Skill", "Trending Games"],
+    "description": "Escape the law in this high-octane driving game. Navigate through dense traffic, avoid police roadblocks, and prove your skills behind the wheel in a race for freedom."
+  },
+  {
     "id": "basketball-stars",
     "title": "Basketball Stars",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-3",
