@@ -87,9 +87,18 @@ const allEntries = [
     "id": "moto-x3m",
     "title": "Moto X3M",
     "iframeUrl": "https://lesson126.github.io/lesson305/lesson-332",
-    "thumbnail": "https://play-lh.googleusercontent.com/CH-6f-2T2l8MeeY69zI8pUfQ09O6A8XJmly9z-7-jZ5V5p-M-Qz1W-u2-2-u2-2-u",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6dkOS1Oz4sPuSpxKPm_TwAnsjUUaageye0A&s",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Master the art of motorcycle stunts in this high-speed physics-based racer. Navigate through challenging obstacle courses and beat the clock.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "geometry-dash-wave",
+    "title": "Geometry Dash Wave",
+    "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2119",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_7SeScDs80JQ9Aqk7Z2qd4FPVd_BS0Rw3aA&s",
+    "categories": ["Skill", "Trending Games"],
+    "description": "Master the wave form in this intense high-speed precision challenge. Navigate the zig-zag corridors with absolute timing.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
