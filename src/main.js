@@ -55,7 +55,8 @@ const allEntries = [
     "iframeUrl": "https://y.demo.lhyang.org/https://baseballbros.io/",
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
     "categories": ["Sports", "Skill", "Trending Games"],
-    "description": "Step up to the plate and become a baseball legend. Master your timing, swing for the fences, and dominate the diamond in this fast-paced, competitive baseball game."
+    "description": "Step up to the plate and become a baseball legend. Master your timing, swing for the fences, and dominate the diamond in this fast-paced, competitive baseball game.",
+    "loadingMessage": "THE PASSWORD IS 123"
   },
   {
     "id": "escape-road-2",
@@ -99,6 +100,7 @@ const mobileBackButton = document.getElementById('mobile-back-button');
 const refreshPlayerBtn = document.getElementById('refresh-player');
 const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 const iframeLoader = document.getElementById('iframe-loader');
+const loaderMessage = document.getElementById('loader-message');
 const dismissLoaderBtn = document.getElementById('dismiss-loader');
 const howToPlayBtn = document.getElementById('how-to-play-btn');
 const instructionsModal = document.getElementById('instructions-modal');
@@ -393,6 +395,13 @@ function openPlayer(item) {
     // Reset loader state
     iframeLoader.classList.remove('hidden');
     gameIframe.classList.add('opacity-0');
+
+    // Set custom loader message if any
+    if (item.loadingMessage) {
+        loaderMessage.innerHTML = `<span class="text-cyan-400 font-bold underline decoration-cyan-400/30 underline-offset-4 tracking-[0.1em]">${item.loadingMessage}</span><br><br>Attempting secure extraction. If the module is blocked or slow, use the manual override below.`;
+    } else {
+        loaderMessage.textContent = 'Attempting secure extraction. If the module is blocked or slow, use the manual override below.';
+    }
 
     // Apply custom styles if any
     if (item.customStyles) {
