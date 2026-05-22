@@ -124,7 +124,7 @@ const allEntries = [
     "id": "we-become-what-we-behold",
     "title": "We Become What We Behold",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-59",
-    "thumbnail": "https://imgs.crazygames.com/we-become-what-we-behold/20201217112015/we-become-what-we-behold-cover?metadata=none&quality=60&width=390&height=260",
+    "thumbnail": "https://img.itch.zone/aW1hZ2UvOTIxMTUvNDM0OTExLnBuZw==/original/GkCZT7.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "A game about news cycles, vicious cycles, and how we become what we behold. Take photos of people to see how they react and observe the societal impact in this thought-provoking simulation.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -133,7 +133,7 @@ const allEntries = [
     "id": "flappy-bird",
     "title": "Flappy Bird",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-130",
-    "thumbnail": "https://imgs.crazygames.com/flappy-bird/20210211130349/flappy-bird-cover?metadata=none&quality=60&width=390&height=260",
+    "thumbnail": "https://static.wikia.nocookie.net/gamia_gamepedia_en/images/b/b5/Title.jpg/revision/latest?cb=20180806163955",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The viral flight sensation. Tap to flap your way through a treacherous landscape of pipes in this deceptively simple but incredibly challenging arcade classic.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -426,7 +426,7 @@ function setupEventListeners() {
             div.innerHTML = `
                 <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5 p-2">
-                        <img src="${g.thumbnail}" class="w-full h-full object-contain opacity-60 group-hover:opacity-100 transition-opacity">
+                        <img src="${g.thumbnail}" class="w-full h-full object-contain opacity-60 group-hover:opacity-100 transition-opacity" referrerpolicy="no-referrer">
                     </div>
                     <div>
                         <p class="text-zinc-300 font-bold text-sm uppercase italic tracking-tighter">${g.title}</p>
