@@ -124,7 +124,7 @@ const allEntries = [
     "id": "we-become-what-we-behold",
     "title": "We Become What We Behold",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-59",
-    "thumbnail": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1103210/header.jpg?t=1563495717",
+    "thumbnail": "https://imgs.crazygames.com/we-become-what-we-behold/20201217112015/we-become-what-we-behold-cover?metadata=none&quality=60&width=390&height=260",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "A game about news cycles, vicious cycles, and how we become what we behold. Take photos of people to see how they react and observe the societal impact in this thought-provoking simulation.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -133,7 +133,7 @@ const allEntries = [
     "id": "flappy-bird",
     "title": "Flappy Bird",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-130",
-    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png",
+    "thumbnail": "https://imgs.crazygames.com/flappy-bird/20210211130349/flappy-bird-cover?metadata=none&quality=60&width=390&height=260",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The viral flight sensation. Tap to flap your way through a treacherous landscape of pipes in this deceptively simple but incredibly challenging arcade classic.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
