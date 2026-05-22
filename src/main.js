@@ -100,6 +100,15 @@ const allEntries = [
     "categories": ["Skill", "Trending Games"],
     "description": "Master the wave form in this intense high-speed precision challenge. Navigate the zig-zag corridors with absolute timing.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "stickman-hook",
+    "title": "Stickman Hook",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-28",
+    "thumbnail": "https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=204,height=204,fit=cover,f=auto/99e090d154caf30f3625df7e456d5984/stickman-hook-logo.png",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "Swing like a spider! Master the physics of the hook and rope to navigate through challenging levels in this addictive skill-based platformer.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
