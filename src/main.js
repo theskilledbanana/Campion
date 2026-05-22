@@ -1,5 +1,41 @@
 // main.js - Vanilla JS Logic for MediaVault
 
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, query, orderBy, limit, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import firebaseConfig from '../firebase-applet-config.json';
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+
+// Error Handling
+const OperationType = {
+  CREATE: 'create',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  LIST: 'list',
+  GET: 'get',
+  WRITE: 'write',
+};
+
+function handleFirestoreError(error, operationType, path) {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
 const allEntries = [
   {
     "id": "bitlife",
@@ -128,6 +164,7 @@ const usernameSetup = document.getElementById('username-setup');
 const usernameInput = document.getElementById('username-input');
 const saveUsernameBtn = document.getElementById('save-username');
 const resetIdentityBtn = document.getElementById('reset-identity');
+const logoutBtn = document.getElementById('logout-btn');
 const cloakTabBtn = document.getElementById('cloak-tab-btn');
 const cloakModal = document.getElementById('cloak-modal');
 const cloakContainer = document.getElementById('cloak-container');
@@ -138,6 +175,8 @@ const resetCloakBtn = document.getElementById('reset-cloak');
 
 const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
+let googleUser = null;
+
 let userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
     username: '',
     totalSeconds: 0,
@@ -157,6 +196,23 @@ function init() {
         document.title = savedTitle;
         if (cloakInput) cloakInput.value = savedTitle;
     }
+
+    // Firebase Auth State Listener
+    onAuthStateChanged(auth, (user) => {
+        googleUser = user;
+        if (logoutBtn) {
+            if (user) logoutBtn.classList.remove('hidden');
+            else logoutBtn.classList.add('hidden');
+        }
+        if (user) {
+            // If logged in, prioritize firebase data or at least mark identity
+            if (!userData.username) {
+                userData.username = user.displayName || 'ANON_PLAYER';
+                saveUserData();
+            }
+        }
+        renderLeaderboard();
+    });
 }
 
 function startSystemTicker() {
@@ -313,80 +369,105 @@ function closeLeaderboard() {
     }, 500);
 }
 
-function renderLeaderboard() {
+async function renderLeaderboard() {
+    if (!googleUser) {
+        leaderboardList.innerHTML = `
+            <div class="py-20 text-center px-10">
+                <div class="w-20 h-20 bg-cyan-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-cyan-500/20">
+                    <i class="bi bi-shield-lock text-cyan-400 text-3xl"></i>
+                </div>
+                <h3 class="text-white font-black uppercase text-xl italic mb-3">Authentication Required</h3>
+                <p class="text-zinc-500 text-xs font-medium mb-8 leading-relaxed italic">Sign in with your secure node identity to synchronize your local records with the global matrix and view elite rankings.</p>
+                <button id="google-login-btn" class="px-10 py-4 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-cyan-400 transition-all active:scale-95 flex items-center gap-3 mx-auto">
+                    <i class="bi bi-google"></i>
+                    Initialize Auth Sequence
+                </button>
+            </div>
+        `;
+        const loginBtn = document.getElementById('google-login-btn');
+        if (loginBtn) {
+            loginBtn.onclick = async () => {
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                } catch (error) {
+                    console.error("Auth Fail:", error);
+                }
+            };
+        }
+        usernameSetup.classList.add('hidden');
+        return;
+    }
+
     if (!userData.username) {
         usernameSetup.classList.remove('hidden');
     } else {
         usernameSetup.classList.add('hidden');
     }
 
-    let globalRanks = JSON.parse(localStorage.getItem('vp_global_ranks')) || [];
+    // Real-time Firestore Listener
+    const q = query(collection(db, 'leaderboard'), orderBy('playTime', 'desc'), limit(10));
     
-    // Sync current user into the local leaderboard list
-    if (userData.username) {
-        const existingIdx = globalRanks.findIndex(r => r.name === userData.username);
-        if (existingIdx !== -1) {
-            globalRanks[existingIdx].time = userData.totalSeconds;
-        } else {
-            globalRanks.push({ name: userData.username, time: userData.totalSeconds });
+    onSnapshot(q, (snapshot) => {
+        const sorted = snapshot.docs.map(doc => doc.data());
+        
+        if (sorted.length === 0) {
+            leaderboardList.innerHTML = `
+                <div class="py-20 text-center">
+                    <i class="bi bi-person-badge text-zinc-800 text-4xl mb-4"></i>
+                    <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.2em]">No players registered in global matrix</p>
+                </div>
+            `;
+            return;
         }
-        localStorage.setItem('vp_global_ranks', JSON.stringify(globalRanks));
-    }
 
-    const sorted = globalRanks.sort((a, b) => b.time - a.time);
-    
-    if (sorted.length === 0) {
-        leaderboardList.innerHTML = `
-            <div class="py-20 text-center">
-                <i class="bi bi-person-badge text-zinc-800 text-4xl mb-4"></i>
-                <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.2em]">No players registered in local matrix</p>
-            </div>
-        `;
-        return;
-    }
+        leaderboardList.innerHTML = sorted.map((entry, idx) => {
+            const hours = Math.floor(entry.playTime / 3600);
+            const mins = Math.floor((entry.playTime % 3600) / 60);
+            const secs = entry.playTime % 60;
+            const timeStr = `${hours}H ${mins}M ${secs}S`;
+            const isFirst = idx === 0;
+            const isCurrentUser = entry.userId === googleUser?.uid;
 
-    leaderboardList.innerHTML = sorted.map((entry, idx) => {
-        const hours = Math.floor(entry.time / 3600);
-        const mins = Math.floor((entry.time % 3600) / 60);
-        const secs = entry.time % 60;
-        const timeStr = `${hours}H ${mins}M ${secs}S`;
-        const isFirst = idx === 0;
-        const isCurrentUser = entry.name === userData.username;
-
-        return `
-            <div class="flex items-center justify-between p-5 ${isCurrentUser ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/5 border-white/5'} border rounded-3xl transition-all hover:translate-x-1 group">
-                <div class="flex items-center gap-5">
-                    <span class="text-xl font-black italic ${isFirst ? 'text-cyan-400' : 'text-zinc-700'} w-6 font-mono">#${(idx + 1).toString().padStart(2, '0')}</span>
-                    <div>
-                        <p class="text-sm font-black uppercase italic tracking-wider ${isCurrentUser ? 'text-white' : 'text-zinc-400'}">
-                            ${entry.name}
-                            ${isCurrentUser ? '<span class="ml-2 text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 rounded not-italic tracking-widest">YOU</span>' : ''}
-                        </p>
-                        <p class="text-[9px] font-mono text-zinc-600 uppercase tracking-widest font-bold mt-0.5">Extraction Progress: ${Math.min(100, Math.floor(entry.time/360))}%</p>
+            return `
+                <div class="flex items-center justify-between p-5 ${isCurrentUser ? 'bg-cyan-500/10 border-cyan-500/30' : 'bg-white/5 border-white/5'} border rounded-3xl transition-all hover:translate-x-1 group">
+                    <div class="flex items-center gap-5">
+                        <span class="text-xl font-black italic ${isFirst ? 'text-cyan-400' : 'text-zinc-700'} w-6 font-mono">#${(idx + 1).toString().padStart(2, '0')}</span>
+                        <div>
+                            <p class="text-sm font-black uppercase italic tracking-wider ${isCurrentUser ? 'text-white' : 'text-zinc-400'}">
+                                ${entry.username}
+                                ${isCurrentUser ? '<span class="ml-2 text-[8px] bg-cyan-500 text-black px-1.5 py-0.5 rounded not-italic tracking-widest">YOU</span>' : ''}
+                            </p>
+                            <p class="text-[9px] font-mono text-zinc-600 uppercase tracking-widest font-bold mt-0.5">Extraction Progress: ${Math.min(100, Math.floor(entry.playTime/360))}%</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-mono font-black ${isCurrentUser ? 'text-cyan-400' : 'text-zinc-500'} group-hover:text-white transition-colors uppercase tracking-widest">${timeStr}</p>
+                        <p class="text-[8px] font-mono text-zinc-700 uppercase tracking-widest mt-0.5 font-bold">Latency: Stable</p>
                     </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-xs font-mono font-black ${isCurrentUser ? 'text-cyan-400' : 'text-zinc-500'} group-hover:text-white transition-colors uppercase tracking-widest">${timeStr}</p>
-                    <p class="text-[8px] font-mono text-zinc-700 uppercase tracking-widest mt-0.5 font-bold">Latency: Stable</p>
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'leaderboard');
+    });
 }
 
-function saveUserData() {
+async function saveUserData() {
     localStorage.setItem('vp_user_data', JSON.stringify(userData));
     
-    // Also sync to global ranks immediately
-    if (userData.username) {
-        let globalRanks = JSON.parse(localStorage.getItem('vp_global_ranks')) || [];
-        const existingIdx = globalRanks.findIndex(r => r.name === userData.username);
-        if (existingIdx !== -1) {
-            globalRanks[existingIdx].time = userData.totalSeconds;
-        } else {
-            globalRanks.push({ name: userData.username, time: userData.totalSeconds });
+    // Sync to Firestore
+    if (googleUser && userData.username) {
+        const path = `leaderboard/${googleUser.uid}`;
+        try {
+            await setDoc(doc(db, path), {
+                userId: googleUser.uid,
+                username: userData.username,
+                playTime: userData.totalSeconds,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        } catch (error) {
+            handleFirestoreError(error, OperationType.WRITE, path);
         }
-        localStorage.setItem('vp_global_ranks', JSON.stringify(globalRanks));
     }
 }
 
@@ -706,6 +787,15 @@ function setupEventListeners() {
                 userData.username = val;
                 saveUserData();
                 renderLeaderboard();
+            }
+        };
+    }
+    if (logoutBtn) {
+        logoutBtn.onclick = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Signout Error:", error);
             }
         };
     }
