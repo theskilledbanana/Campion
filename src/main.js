@@ -139,11 +139,6 @@ const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
 const iframeLoader = document.getElementById('iframe-loader');
 const loaderMessage = document.getElementById('loader-message');
 const dismissLoaderBtn = document.getElementById('dismiss-loader');
-const howToPlayBtn = document.getElementById('how-to-play-btn');
-const instructionsModal = document.getElementById('instructions-modal');
-const instructionsContainer = document.getElementById('instructions-container');
-const closeInstructionsBtn = document.getElementById('close-instructions');
-const loaderHowToPlayBtn = document.getElementById('loader-how-to-play');
 const updateSiteBtn = document.getElementById('update-site-btn');
 const updateModal = document.getElementById('update-modal');
 const updateContainer = document.getElementById('update-container');
@@ -326,6 +321,11 @@ function saveUserData() {
 function openPlayer(item) {
     if (!item) return;
     
+    // Baseball Bros Disclaimer
+    if (item.id === 'baseball-bros') {
+        alert("SECURITY ALERT: When you enter the game, you will be asked for a password. The access code is 123.");
+    }
+    
     // Track session and time
     playSessionStart = Date.now();
     userData.sessions++;
@@ -374,7 +374,7 @@ function setupEventListeners() {
         terminalContainer.classList.add('scale-95');
         setTimeout(() => {
             terminalModal.classList.add('hidden');
-            if (playerOverlay.classList.contains('hidden') && instructionsModal.classList.contains('hidden')) {
+            if (playerOverlay.classList.contains('hidden')) {
                 document.body.style.overflow = '';
             }
         }, 300);
@@ -491,23 +491,6 @@ function setupEventListeners() {
         closeCloakModal();
     };
 
-    const openInstructions = () => {
-        instructionsModal.classList.remove('hidden');
-        setTimeout(() => {
-            instructionsModal.classList.remove('opacity-0');
-            instructionsContainer.classList.add('scale-100');
-        }, 10);
-    };
-
-    const closeInstructions = () => {
-        instructionsModal.classList.add('opacity-0');
-        instructionsContainer.classList.remove('scale-100');
-        setTimeout(() => instructionsModal.classList.add('hidden'), 300);
-    };
-
-    if (howToPlayBtn) howToPlayBtn.onclick = openInstructions;
-    if (closeInstructionsBtn) closeInstructionsBtn.onclick = closeInstructions;
-
     updateSiteBtn.onclick = () => {
         updateModal.classList.remove('hidden');
         setTimeout(() => {
@@ -553,7 +536,6 @@ function setupEventListeners() {
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closePlayer();
-            closeInstructions();
             closeCloakModal();
             closeDevModal();
         }
