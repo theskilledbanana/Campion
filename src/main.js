@@ -82,6 +82,15 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYbiEb5tS7wNx-siDywgLLc0M26k5aYkWaHw&s",
     "categories": ["Sports", "Skill", "Arcade"],
     "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
+  },
+  {
+    "id": "moto-x3m",
+    "title": "Moto X3M",
+    "iframeUrl": "https://lesson126.github.io/lesson305/lesson-332",
+    "thumbnail": "https://play-lh.googleusercontent.com/CH-6f-2T2l8MeeY69zI8pUfQ09O6A8XJmly9z-7-jZ5V5p-M-Qz1W-u2-2-u2-2-u",
+    "categories": ["Driving", "Skill", "Trending Games"],
+    "description": "Master the art of motorcycle stunts in this high-speed physics-based racer. Navigate through challenging obstacle courses and beat the clock.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
