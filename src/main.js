@@ -277,7 +277,7 @@ function renderItems() {
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
@@ -404,7 +404,7 @@ function setupEventListeners() {
             div.className = "px-6 py-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex items-center justify-between group";
             div.innerHTML = `
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5 p-1">
+                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5 p-2">
                         <img src="${g.thumbnail}" class="w-full h-full object-contain opacity-60 group-hover:opacity-100 transition-opacity">
                     </div>
                     <div>
