@@ -128,6 +128,15 @@ const allEntries = [
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "A game about news cycles, vicious cycles, and how we become what we behold. Take photos of people to see how they react and observe the societal impact in this thought-provoking simulation.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "dino-game",
+    "title": "Dino Game",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-112",
+    "thumbnail": "https://www.coolmathgames.com/sites/default/files/styles/mobile_game_image/public/DinoGame_OG-logo.jpg.webp?itok=fCn4IdZB",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "The classic infinite runner. Leap over cacti and dodge pterodactyls as you sprint through a prehistoric desert in this pixel-perfect challenge.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
