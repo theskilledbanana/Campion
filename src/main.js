@@ -50,6 +50,14 @@ const allEntries = [
     "description": "Navigate through increasingly difficult obstacle courses in this physics-based driving game. Master the art of balance and speed to reach the finish line."
   },
   {
+    "id": "baseball-bros",
+    "title": "Baseball Bros",
+    "iframeUrl": "https://y.demo.lhyang.org/https://baseballbros.io/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
+    "categories": ["Sports", "Skill", "Trending Games"],
+    "description": "Step up to the plate and become a baseball legend. Master your timing, swing for the fences, and dominate the diamond in this fast-paced, competitive baseball game."
+  },
+  {
     "id": "escape-road-2",
     "title": "Escape Road 2",
     "iframeUrl": "https://staticquasar931.github.io/Escape-Road-2/",
