@@ -326,39 +326,14 @@ function saveUserData() {
 function openPlayer(item) {
     if (!item) return;
     
+    // Track session and time
     playSessionStart = Date.now();
     userData.sessions++;
     saveUserData();
 
-    playerTitle.textContent = item.title;
-    playerCategory.textContent = item.categories.join(' / ');
-    
-    const fallbackLink = document.getElementById('external-link');
-    const loaderLink = document.getElementById('loader-external-link');
-    
-    if (fallbackLink) fallbackLink.href = item.iframeUrl;
-    if (loaderLink) loaderLink.href = item.iframeUrl;
-
-    iframeLoader.classList.remove('hidden');
-    gameIframe.classList.add('opacity-0');
-
-    if (item.loadingMessage) {
-        loaderMessage.innerHTML = `<span class="text-cyan-400 font-black text-2xl uppercase italic tracking-tighter underline decoration-cyan-400/30 underline-offset-8 mb-4 block animate-pulse">${item.loadingMessage}</span><p class="mt-4">Attempting secure extraction. If the module is blocked or slow, use the manual override below.</p>`;
-    } else {
-        loaderMessage.textContent = 'Attempting secure extraction. If the module is blocked or slow, use the manual override below.';
-    }
-
-    if (item.customStyles) {
-        gameIframe.style.cssText = item.customStyles;
-        gameIframe.classList.remove('w-full', 'h-full');
-    } else {
-        gameIframe.style.cssText = '';
-        gameIframe.classList.add('w-full', 'h-full');
-    }
-
-    gameIframe.src = item.iframeUrl;
-    playerOverlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    // Directly take the user to the "Secure Mirror" (External Link)
+    // and skip the intermediate "option" screen.
+    window.open(item.iframeUrl, '_blank');
 }
 
 function closePlayer() {
