@@ -119,6 +119,15 @@ const allEntries = [
     "categories": ["Skill", "Trending Games", "Multiplayer"],
     "description": "Find the imposter or sabotage the crew! Master the art of deception and deduction in this social deduction sensation.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "we-become-what-we-behold",
+    "title": "We Become What We Behold",
+    "iframeUrl": "https://lesson126.github.io/lesson302/lesson-59",
+    "thumbnail": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1103210/header.jpg?t=1563495717",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "A game about news cycles, vicious cycles, and how we become what we behold. Take photos of people to see how they react and observe the societal impact in this thought-provoking simulation.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
