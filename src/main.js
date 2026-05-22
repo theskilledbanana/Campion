@@ -109,6 +109,15 @@ const allEntries = [
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "Swing like a spider! Master the physics of the hook and rope to navigate through challenging levels in this addictive skill-based platformer.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "murder",
+    "title": "To Kill or Not to Kill",
+    "iframeUrl": "https://lesson126.github.io/lesson85/lesson-2225",
+    "thumbnail": "https://play-lh.googleusercontent.com/p_HEsJKSmIJVkrjh_cK-e7ZIUTRYt3wN4zdPE64M-c5NwKsrhwJGBvoqet8Jrrq14g=w240-h480-rw",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "Seize the throne! Master the art of stealth and timing to become the king, then stay alert to keep your crown from ambitious rivals.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
