@@ -111,6 +111,10 @@ const updateSiteBtn = document.getElementById('update-site-btn');
 const updateModal = document.getElementById('update-modal');
 const updateContainer = document.getElementById('update-container');
 const closeUpdateBtn = document.getElementById('close-update');
+const devApplyBtn = document.getElementById('dev-apply-btn');
+const devModal = document.getElementById('dev-modal');
+const devContainer = document.getElementById('dev-container');
+const closeDevBtn = document.getElementById('close-dev');
 const disclaimerModal = document.getElementById('disclaimer-modal');
 const disclaimerContainer = document.getElementById('disclaimer-container');
 const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
@@ -246,7 +250,7 @@ function renderItems() {
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
@@ -373,8 +377,8 @@ function setupEventListeners() {
             div.className = "px-6 py-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex items-center justify-between group";
             div.innerHTML = `
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5">
-                        <img src="${g.thumbnail}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity">
+                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5 p-1">
+                        <img src="${g.thumbnail}" class="w-full h-full object-contain opacity-60 group-hover:opacity-100 transition-opacity">
                     </div>
                     <div>
                         <p class="text-zinc-300 font-bold text-sm uppercase italic tracking-tighter">${g.title}</p>
@@ -506,11 +510,40 @@ function setupEventListeners() {
         setTimeout(() => updateModal.classList.add('hidden'), 300);
     };
 
+    const openDevModal = () => {
+        devModal.classList.remove('hidden');
+        setTimeout(() => {
+            devModal.classList.remove('opacity-0');
+            devContainer.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeDevModal = () => {
+        devModal.classList.add('opacity-0');
+        devContainer.classList.remove('scale-100');
+        setTimeout(() => {
+            devModal.classList.add('hidden');
+            if (playerOverlay.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        }, 300);
+    };
+
+    if (devApplyBtn) devApplyBtn.onclick = openDevModal;
+    if (closeDevBtn) closeDevBtn.onclick = closeDevModal;
+    if (devModal) {
+        devModal.onclick = (e) => {
+            if (e.target === devModal) closeDevModal();
+        };
+    }
+
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closePlayer();
             closeInstructions();
             closeCloakModal();
+            closeDevModal();
         }
     });
 }
