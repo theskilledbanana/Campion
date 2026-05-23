@@ -1,0 +1,291 @@
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-L7856P3VNT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-L7856P3VNT');
+</script>
+<style>
+#sidebarad1,
+#sidebarad2 {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  height: 600px;
+  padding: 0;
+  margin: 0;
+  z-index: 999999;
+}
+#sidebarad1 {
+  left: 0;
+}
+#sidebarad2 {
+  right: 0;
+}
+.sidebar-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  text-align: center;
+  background: rgba(0,0,0,0.7);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  z-index: 10;
+}
+.sidebar-frame {
+  width: 160px;
+  height: 600px;
+  border: none;
+  display: block;
+}
+</style>
+<html lang="en">
+<head>
+<script>
+        (function() {
+          if (window.__noahFreezeHarnessInstalled) return;
+          window.__noahFreezeHarnessInstalled = true;
+
+          var frozen = false;
+          var rafCallbacks = new Map();
+          var rafPending = new Set();
+          var intervals = new Map();
+          var timeouts = new Map();
+          var audioContexts = [];
+          var nextRafId = 1;
+          var nextIntervalId = 1;
+          var nextTimeoutId = 1;
+          var nativeRaf = window.requestAnimationFrame ? window.requestAnimationFrame.bind(window) : null;
+          var nativeCancelRaf = window.cancelAnimationFrame ? window.cancelAnimationFrame.bind(window) : null;
+          var nativeSetInterval = window.setInterval.bind(window);
+          var nativeClearInterval = window.clearInterval.bind(window);
+          var nativeSetTimeout = window.setTimeout.bind(window);
+          var nativeClearTimeout = window.clearTimeout.bind(window);
+
+          function invokeSafely(cb, args, ts) {
+            try {
+              if (typeof ts === 'number') cb(ts);
+              else cb.apply(window, args || []);
+            } catch (error) {
+              nativeSetTimeout(function() { throw error; }, 0);
+            }
+          }
+
+          function scheduleInterval(entry) {
+            entry.nativeId = nativeSetInterval(function() {
+              if (frozen || !entry.active) return;
+              invokeSafely(entry.cb, entry.args);
+            }, entry.delay);
+          }
+
+          function scheduleTimeout(entry, delayMs) {
+            var wait = Math.max(0, delayMs);
+            entry.startedAt = Date.now();
+            entry.nativeId = nativeSetTimeout(function() {
+              if (!entry.active) return;
+              entry.nativeId = null;
+              if (frozen) {
+                entry.remaining = Math.max(0, entry.delay - (Date.now() - entry.startedAt));
+                return;
+              }
+              invokeSafely(entry.cb, entry.args);
+              timeouts.delete(entry.id);
+            }, wait);
+          }
+
+          function scheduleRaf(rafId) {
+            if (!nativeRaf) return;
+            nativeRaf(function(ts) {
+              if (!rafCallbacks.has(rafId)) return;
+              if (frozen) {
+                rafPending.add(rafId);
+                return;
+              }
+              var cb = rafCallbacks.get(rafId);
+              rafCallbacks.delete(rafId);
+              invokeSafely(cb, null, ts);
+            });
+          }
+
+          if (nativeRaf) {
+            window.requestAnimationFrame = function(cb) {
+              if (typeof cb !== 'function') return nativeRaf(cb);
+              var rafId = nextRafId++;
+              rafCallbacks.set(rafId, cb);
+              if (frozen) {
+                rafPending.add(rafId);
+                return rafId;
+              }
+              scheduleRaf(rafId);
+              return rafId;
+            };
+
+            window.cancelAnimationFrame = function(rafId) {
+              rafCallbacks.delete(rafId);
+              rafPending.delete(rafId);
+              if (nativeCancelRaf) nativeCancelRaf(rafId);
+            };
+          }
+
+          window.setInterval = function(cb, delay) {
+            if (typeof cb !== 'function') return nativeSetInterval(cb, delay);
+            var intervalId = nextIntervalId++;
+            var entry = {
+              id: intervalId,
+              cb: cb,
+              args: Array.prototype.slice.call(arguments, 2),
+              delay: Math.max(0, Number(delay) || 0),
+              nativeId: null,
+              active: true
+            };
+            intervals.set(intervalId, entry);
+            if (!frozen) scheduleInterval(entry);
+            return intervalId;
+          };
+
+          window.clearInterval = function(intervalId) {
+            var entry = intervals.get(intervalId);
+            if (!entry) {
+              nativeClearInterval(intervalId);
+              return;
+            }
+            entry.active = false;
+            if (entry.nativeId !== null) nativeClearInterval(entry.nativeId);
+            intervals.delete(intervalId);
+          };
+
+          window.setTimeout = function(cb, delay) {
+            if (typeof cb !== 'function') return nativeSetTimeout(cb, delay);
+            var timeoutId = nextTimeoutId++;
+            var entry = {
+              id: timeoutId,
+              cb: cb,
+              args: Array.prototype.slice.call(arguments, 2),
+              delay: Math.max(0, Number(delay) || 0),
+              remaining: Math.max(0, Number(delay) || 0),
+              startedAt: 0,
+              nativeId: null,
+              active: true
+            };
+            timeouts.set(timeoutId, entry);
+            if (!frozen) scheduleTimeout(entry, entry.remaining);
+            return timeoutId;
+          };
+
+          window.clearTimeout = function(timeoutId) {
+            var entry = timeouts.get(timeoutId);
+            if (!entry) {
+              nativeClearTimeout(timeoutId);
+              return;
+            }
+            entry.active = false;
+            if (entry.nativeId !== null) nativeClearTimeout(entry.nativeId);
+            timeouts.delete(timeoutId);
+          };
+
+          function trackAudioContext(ctorName) {
+            var NativeCtor = window[ctorName];
+            if (!NativeCtor) return;
+            function WrappedAudioContext() {
+              var ctx = new NativeCtor(...arguments);
+              audioContexts.push(ctx);
+              if (frozen && typeof ctx.suspend === 'function') {
+                Promise.resolve().then(function() { return ctx.suspend(); }).catch(function() {});
+              }
+              return ctx;
+            }
+            WrappedAudioContext.prototype = NativeCtor.prototype;
+            Object.setPrototypeOf(WrappedAudioContext, NativeCtor);
+            window[ctorName] = WrappedAudioContext;
+          };
+          trackAudioContext('AudioContext');
+          trackAudioContext('webkitAudioContext');
+
+          function setFrozen(nextFrozen) {
+            frozen = !!nextFrozen;
+            window.__NOAH_FROZEN__ = frozen;
+
+            if (frozen) {
+              document.documentElement.style.animationPlayState = 'paused';
+              document.documentElement.style.transitionProperty = 'none';
+
+              intervals.forEach(function(entry) {
+                if (entry.nativeId !== null) {
+                  nativeClearInterval(entry.nativeId);
+                  entry.nativeId = null;
+                }
+              });
+
+              timeouts.forEach(function(entry) {
+                if (entry.nativeId !== null) {
+                  entry.remaining = Math.max(0, entry.delay - (Date.now() - entry.startedAt));
+                  nativeClearTimeout(entry.nativeId);
+                  entry.nativeId = null;
+                }
+              });
+
+              audioContexts.forEach(function(ctx) {
+                if (ctx && ctx.state === 'running' && typeof ctx.suspend === 'function') {
+                  Promise.resolve().then(function() { return ctx.suspend(); }).catch(function() {});
+                }
+              });
+
+              try {
+                var mediaEls = document.querySelectorAll('video, audio');
+                mediaEls.forEach(function(media) { media.pause(); });
+              } catch (error) {}
+              return;
+            }
+
+            document.documentElement.style.animationPlayState = '';
+            document.documentElement.style.transitionProperty = '';
+
+            intervals.forEach(function(entry) {
+              if (entry.active && entry.nativeId === null) scheduleInterval(entry);
+            });
+
+            timeouts.forEach(function(entry) {
+              if (entry.active && entry.nativeId === null) scheduleTimeout(entry, entry.remaining);
+            });
+
+            audioContexts.forEach(function(ctx) {
+              if (ctx && ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+                Promise.resolve().then(function() { return ctx.resume(); }).catch(function() {});
+              }
+            });
+
+            if (nativeRaf && rafPending.size) {
+              var pendingIds = Array.from(rafPending);
+              rafPending.clear();
+              pendingIds.forEach(scheduleRaf);
+            }
+          }
+
+          window.addEventListener('message', function(event) {
+            if (!event || !event.data || event.data.type !== 'NOAH_TAB_STATE') return;
+            setFrozen(!!event.data.frozen);
+          });
+
+          window.__NOAH_SET_FROZEN__ = setFrozen;
+        })();
+      </script>
+    <base href="https://cdn.jsdelivr.net/gh/web-ports/dumb-ways-to-die@main/">
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/gh/u-cvlassrom-y/google@main/ruffle.js"></script>
+
+<object width="100%" height="100%">
+    <param name="movie" value="https://cdn.jsdelivr.net/gh/web-ports/dumb-ways-to-die@main/data/main.swf">
+    <embed src="https://cdn.jsdelivr.net/gh/web-ports/dumb-ways-to-die@main/data/main.swf" width="100%" height="100%">
+</body>
+</html>

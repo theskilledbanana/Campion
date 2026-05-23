@@ -164,6 +164,24 @@ const allEntries = [
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The latest installment in the legendary platformer series. Master new mechanics, tackle treacherous levels, and prove your parkour prowess in this high-octane skill challenge.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "doodle-jump",
+    "title": "Doodle Jump",
+    "iframeUrl": "/doodle-jump.html",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQf5FjoQT0fkP1kSer0C3Nd-oP4aHvXPHuEJQ&s",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "The addictive jumping sensation. Bounce higher and higher, avoiding monsters and using power-ups to reach the vertex of a never-ending climb.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "dumb-ways-to-die",
+    "title": "Dumb Ways to Die",
+    "iframeUrl": "/dumb-ways-to-die.html",
+    "thumbnail": "https://m.media-amazon.com/images/M/MV5BOTk1MmJkNWEtMjBiNy00Y2MzLWJkYzItOTJlYzdjOTk5MDU4XkEyXkFqcGc@._V1_.jpg",
+    "categories": ["Arcade", "Skill", "Trending Games"],
+    "description": "A collection of hilarious and increasingly difficult mini-games. Avoid the most ridiculous ways to die in this quirky and charming challenge.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
