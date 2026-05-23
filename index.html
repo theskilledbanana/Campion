@@ -198,20 +198,30 @@
 
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 pb-32">
         <!-- Recently Played -->
-        <section id="recent-section" class="mb-16 hidden">
+        <section id="recent-section" class="mb-20">
             <div class="flex items-center justify-between mb-8 px-2">
-                <div class="flex items-center gap-3">
-                    <div class="p-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400">
-                        <i class="bi bi-clock-history text-xl"></i>
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl text-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.1)]">
+                        <i class="bi bi-clock-history text-2xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-xl font-black text-white uppercase italic tracking-tighter">Recently <span class="text-cyan-400">Played</span></h2>
-                        <p class="text-zinc-600 text-[9px] font-mono uppercase tracking-[0.2em] font-bold">Resuming active sessions</p>
+                        <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">Recently <span class="text-cyan-400">Played</span></h2>
+                        <div class="flex items-center gap-2">
+                            <span class="w-1 h-1 rounded-full bg-cyan-500/40"></span>
+                            <p class="text-zinc-600 text-[10px] font-mono uppercase tracking-[0.2em] font-bold">Resuming previous data cycles</p>
+                        </div>
                     </div>
                 </div>
+                <button id="clear-recent" class="px-4 py-2 bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/30 rounded-xl transition-all text-zinc-500 hover:text-red-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <i class="bi bi-trash3"></i>
+                    <span>Purge History</span>
+                </button>
             </div>
-            <div id="recent-grid" class="flex gap-6 overflow-x-auto pb-6 px-2 custom-scrollbar scroll-smooth">
-                <!-- Recently played items will be injected here -->
+            <div class="relative">
+                <div id="recent-grid" class="flex gap-6 overflow-x-auto pb-8 pt-2 px-2 custom-scrollbar scroll-smooth snap-x">
+                    <!-- Recently played items will be injected here -->
+                </div>
+                <div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#050508] to-transparent pointer-events-none"></div>
             </div>
         </section>
 

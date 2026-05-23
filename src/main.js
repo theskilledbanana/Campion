@@ -173,6 +173,7 @@ let currentSearch = '';
 const itemsGrid = document.getElementById('items-grid');
 const recentSection = document.getElementById('recent-section');
 const recentGrid = document.getElementById('recent-grid');
+const clearRecentBtn = document.getElementById('clear-recent');
 const categoriesNav = document.getElementById('categories-nav');
 const searchInput = document.getElementById('search-input');
 const playerOverlay = document.getElementById('player-overlay');
@@ -374,27 +375,40 @@ function renderRecentlyPlayed() {
     const recentIds = userData.recentlyPlayed || [];
     
     if (recentIds.length === 0) {
-        recentSection.classList.add('hidden');
+        recentGrid.innerHTML = `
+            <div class="col-span-full py-12 px-8 bg-zinc-900/20 rounded-3xl border border-dashed border-white/5 backdrop-blur-sm w-full">
+                <p class="text-zinc-600 text-[10px] font-black uppercase tracking-[0.2em] text-center">No session history detected in current cycle</p>
+            </div>
+        `;
         return;
     }
-    
-    recentSection.classList.remove('hidden');
     
     recentIds.forEach(id => {
         const item = allEntries.find(g => g.id === id);
         if (!item) return;
         
         const card = document.createElement('div');
-        card.className = "flex-shrink-0 w-48 group cursor-pointer";
+        card.className = "flex-shrink-0 w-64 group cursor-pointer snap-start";
         card.innerHTML = `
-            <div class="relative aspect-video rounded-xl overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-all duration-300 shadow-lg">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-3 transition-transform group-hover:scale-110" referrerpolicy="no-referrer">
-                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent opacity-60"></div>
-                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-cyan-500/20">
-                     <i class="bi bi-play-circle-fill text-3xl text-white"></i>
+            <div class="relative aspect-video rounded-2xl overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-1" referrerpolicy="no-referrer">
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80"></div>
+                <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-cyan-950/40 backdrop-blur-[2px]">
+                     <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <i class="bi bi-play-fill text-2xl ml-1"></i>
+                     </div>
+                     <span class="mt-4 text-[9px] font-black text-white uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">Resume Link</span>
+                </div>
+                <div class="absolute top-3 left-3">
+                    <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,1)]"></div>
                 </div>
             </div>
-            <p class="mt-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center group-hover:text-cyan-400 transition-colors truncate">${item.title}</p>
+            <div class="mt-4 px-1">
+                <h4 class="text-zinc-200 font-bold text-sm uppercase italic tracking-tighter group-hover:text-cyan-400 transition-colors">${item.title}</h4>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-bold">${item.categories[0]}</span>
+                </div>
+            </div>
         `;
         card.onclick = () => openPlayer(item);
         recentGrid.appendChild(card);
@@ -538,11 +552,23 @@ function setupEventListeners() {
         openPlayer(randomItem);
     };
 
+    if (clearRecentBtn) {
+        clearRecentBtn.onclick = () => {
+            if (confirm("PURGE SESSION RESUME DATA?")) {
+                userData.recentlyPlayed = [];
+                saveUserData();
+                renderRecentlyPlayed();
+            }
+        };
+    }
+
     if (resetIdentityBtn) {
         resetIdentityBtn.onclick = () => {
             if (confirm('REDACT ALL SESSION DATA?')) {
                 localStorage.removeItem('vp_user_data');
-                userData = { username: '', totalSeconds: 0, sessions: 0 };
+                userData = { username: '', totalSeconds: 0, sessions: 0, recentlyPlayed: [] };
+                saveUserData();
+                renderRecentlyPlayed();
             }
         }
     }
