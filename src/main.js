@@ -371,6 +371,12 @@ function renderItems() {
 function renderRecentlyPlayed() {
     if (!recentGrid || !recentSection) return;
     
+    if (currentSearch.trim() !== '') {
+        recentSection.classList.add('hidden');
+        return;
+    }
+    
+    recentSection.classList.remove('hidden');
     recentGrid.innerHTML = '';
     const recentIds = userData.recentlyPlayed || [];
     
@@ -459,6 +465,7 @@ function closePlayer() {
 function setupEventListeners() {
     searchInput.addEventListener('input', (e) => {
         currentSearch = e.target.value;
+        renderRecentlyPlayed();
         renderItems();
     });
 
