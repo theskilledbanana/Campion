@@ -14,7 +14,7 @@ const allEntries = [
     "title": "Retro Bowl",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-24",
     "thumbnail": "https://upload.wikimedia.org/wikipedia/en/b/bf/Retro_Bowl_cover.png",
-    "categories": ["Sport", "Trending Games"],
+    "categories": ["Sports", "Trending Games"],
     "description": "The ultimate retro-style American football management sim. Call the plays, manage your roster, and lead your team to victory in this addictive pixel-art classic."
   },
   {
@@ -155,6 +155,15 @@ const allEntries = [
     "categories": ["Driving", "Arcade", "Trending Games"],
     "description": "Perform impossible maneuvers in high-performance vehicles. Master the physics of speed and rotation to execute the ultimate stunt sequence.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "vex-8",
+    "title": "Vex 8",
+    "iframeUrl": "https://lesson126.github.io/lesson306/lesson-216",
+    "thumbnail": "https://play-lh.googleusercontent.com/4tQSYur7SAvXeEvT5GBugYeqbh8KEQSLd1S16t8CJYyDN3g2p27wiPlXnqqAxeCqvg",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "The latest installment in the legendary platformer series. Master new mechanics, tackle treacherous levels, and prove your parkour prowess in this high-octane skill challenge.",
+    "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
   }
 ];
 
@@ -162,6 +171,8 @@ let currentCategory = 'All';
 let currentSearch = '';
 
 const itemsGrid = document.getElementById('items-grid');
+const recentSection = document.getElementById('recent-section');
+const recentGrid = document.getElementById('recent-grid');
 const categoriesNav = document.getElementById('categories-nav');
 const searchInput = document.getElementById('search-input');
 const playerOverlay = document.getElementById('player-overlay');
@@ -206,11 +217,16 @@ let playSessionStart = null;
 let userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
     username: '',
     totalSeconds: 0,
-    sessions: 0
+    sessions: 0,
+    recentlyPlayed: []
 };
+
+// Migration for existing users
+if (!userData.recentlyPlayed) userData.recentlyPlayed = [];
 
 function init() {
     renderCategories();
+    renderRecentlyPlayed();
     renderItems();
     setupEventListeners();
     showDisclaimer();
@@ -288,6 +304,7 @@ function renderCategories() {
 }
 
 function renderItems() {
+    if (!itemsGrid) return;
     itemsGrid.innerHTML = '';
     
     const filtered = allEntries.filter(item => {
@@ -350,6 +367,40 @@ function renderItems() {
     });
 }
 
+function renderRecentlyPlayed() {
+    if (!recentGrid || !recentSection) return;
+    
+    recentGrid.innerHTML = '';
+    const recentIds = userData.recentlyPlayed || [];
+    
+    if (recentIds.length === 0) {
+        recentSection.classList.add('hidden');
+        return;
+    }
+    
+    recentSection.classList.remove('hidden');
+    
+    recentIds.forEach(id => {
+        const item = allEntries.find(g => g.id === id);
+        if (!item) return;
+        
+        const card = document.createElement('div');
+        card.className = "flex-shrink-0 w-48 group cursor-pointer";
+        card.innerHTML = `
+            <div class="relative aspect-video rounded-xl overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-all duration-300 shadow-lg">
+                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-3 transition-transform group-hover:scale-110" referrerpolicy="no-referrer">
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent opacity-60"></div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-cyan-500/20">
+                     <i class="bi bi-play-circle-fill text-3xl text-white"></i>
+                </div>
+            </div>
+            <p class="mt-3 text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center group-hover:text-cyan-400 transition-colors truncate">${item.title}</p>
+        `;
+        card.onclick = () => openPlayer(item);
+        recentGrid.appendChild(card);
+    });
+}
+
 function saveUserData() {
     localStorage.setItem('vp_user_data', JSON.stringify(userData));
 }
@@ -362,10 +413,15 @@ function openPlayer(item) {
         alert("SECURITY ALERT: When you enter the game, you will be asked for a password. The access code is 123.");
     }
     
+    // Update Recently Played
+    if (!userData.recentlyPlayed) userData.recentlyPlayed = [];
+    userData.recentlyPlayed = [item.id, ...userData.recentlyPlayed.filter(id => id !== item.id)].slice(0, 8);
+    
     // Track session and time
     playSessionStart = Date.now();
     userData.sessions++;
     saveUserData();
+    renderRecentlyPlayed();
 
     // Directly take the user to the "Secure Mirror" (External Link)
     // and skip the intermediate "option" screen.

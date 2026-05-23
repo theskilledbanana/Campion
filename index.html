@@ -197,6 +197,24 @@
     </div>
 
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 pb-32">
+        <!-- Recently Played -->
+        <section id="recent-section" class="mb-16 hidden">
+            <div class="flex items-center justify-between mb-8 px-2">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400">
+                        <i class="bi bi-clock-history text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black text-white uppercase italic tracking-tighter">Recently <span class="text-cyan-400">Played</span></h2>
+                        <p class="text-zinc-600 text-[9px] font-mono uppercase tracking-[0.2em] font-bold">Resuming active sessions</p>
+                    </div>
+                </div>
+            </div>
+            <div id="recent-grid" class="flex gap-6 overflow-x-auto pb-6 px-2 custom-scrollbar scroll-smooth">
+                <!-- Recently played items will be injected here -->
+            </div>
+        </section>
+
         <!-- Category Navigation -->
         <section id="categories-nav" class="mb-12 flex items-center gap-3 overflow-x-auto pb-4 custom-scrollbar">
             <div class="flex items-center gap-3 pr-6 border-r border-white/5 mr-3">
