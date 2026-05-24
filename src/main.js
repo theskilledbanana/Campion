@@ -746,8 +746,9 @@ function setupEventListeners() {
     const updateForumAuthUI = (user) => {
         const forumInputArea = document.getElementById('forum-input-area');
         const forumAuthPrompt = document.getElementById('forum-auth-prompt');
+        const promptText = forumAuthPrompt?.querySelector('p');
         
-        const isAuthorized = isChatAuthorized() || (user && ALLOWED_DEVS.includes(user.email));
+        const isAuthorized = isChatAuthorized();
 
         if (isAuthorized) {
             forumInputArea?.classList.remove('hidden');
@@ -755,9 +756,8 @@ function setupEventListeners() {
         } else {
             forumInputArea?.classList.add('hidden');
             forumAuthPrompt?.classList.remove('hidden');
-            if (user && !isAuthorized) {
-                const promptText = forumAuthPrompt?.querySelector('p');
-                if (promptText) promptText.textContent = `V-P ACCESS DENIED: ${user.email} IS NOT AUTHORIZED`;
+            if (promptText) {
+                promptText.textContent = "READ-ONLY TERMINAL // AUTHORIZATION REQUIRED TO BROADCAST";
             }
         }
     };
@@ -862,9 +862,9 @@ function setupEventListeners() {
 
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
-                    authorId: user ? user.uid : (isManualDev ? 'passcode-admin-001' : 'guest'),
-                    authorName: isManualDev ? 'CEO' : (user ? (user.displayName || user.email.split('@')[0]) : 'Guest'),
-                    authorPhoto: user ? user.photoURL : (isManualDev ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=guest`),
+                    authorId: 'passcode-admin-001',
+                    authorName: 'CEO',
+                    authorPhoto: `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal`,
                     createdAt: serverTimestamp()
                 });
 
