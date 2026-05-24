@@ -737,53 +737,62 @@ function setupEventListeners() {
         }
     }
 
+    // Developer Authorization Logic
+    const isChatAuthorized = () => {
+        return localStorage.getItem('vp_chat_authorized') === 'true' || localStorage.getItem('vp_dev_override') === 'true';
+    };
+
+    const updateForumAuthUI = (user) => {
+        const forumInputArea = document.getElementById('forum-input-area');
+        const forumAuthPrompt = document.getElementById('forum-auth-prompt');
+        
+        const isAuthorized = isChatAuthorized() || (user && ALLOWED_DEVS.includes(user.email));
+
+        if (isAuthorized) {
+            forumInputArea?.classList.remove('hidden');
+            forumAuthPrompt?.classList.add('hidden');
+        } else {
+            forumInputArea?.classList.add('hidden');
+            forumAuthPrompt?.classList.remove('hidden');
+            if (user && !isAuthorized) {
+                const promptText = forumAuthPrompt?.querySelector('p');
+                if (promptText) promptText.textContent = `V-P ACCESS DENIED: ${user.email} IS NOT AUTHORIZED`;
+            }
+        }
+    };
+
     if (auth) {
         onAuthStateChanged(auth, (user) => {
-            const forumInputArea = document.getElementById('forum-input-area');
-            const forumAuthPrompt = document.getElementById('forum-auth-prompt');
-            
-            const isAuthorized = (user && ALLOWED_DEVS.includes(user.email)) || isDevOverridden;
-
-            if (isAuthorized) {
-                forumInputArea?.classList.remove('hidden');
-                forumAuthPrompt?.classList.add('hidden');
-            } else {
-                forumInputArea?.classList.add('hidden');
-                forumAuthPrompt?.classList.remove('hidden');
-                if (user) {
-                    const promptText = forumAuthPrompt?.querySelector('p');
-                    if (promptText) promptText.textContent = `V-P ACCESS DENIED: ${user.email} IS NOT AUTHORIZED`;
-                }
-            }
+            updateForumAuthUI(user);
         });
     }
 
-    // Developer Login Button
+    // Developer Login Button (Passcode implementation)
     const devLoginBtn = document.getElementById('dev-login-btn');
-    if (devLoginBtn && auth) {
+    if (devLoginBtn) {
         devLoginBtn.onclick = () => {
-            const originalText = devLoginBtn.textContent;
-            devLoginBtn.disabled = true;
-            devLoginBtn.textContent = 'AUTHORIZING...';
-            
-            const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider).then(() => {
+            const code = prompt("ENTER AUTHORIZATION PASSCODE:");
+            if (code === '3012') {
+                alert("PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
+                localStorage.setItem('vp_chat_authorized', 'true');
                 devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-            }).catch(err => {
-                console.error("Login failed:", err);
-                devLoginBtn.textContent = 'LINK FAILED';
+                devLoginBtn.disabled = true;
+                updateForumAuthUI(auth?.currentUser);
+            } else if (code !== null) {
+                alert("PROTOCOL ERROR: INVALID PASSCODE.");
                 setTimeout(() => {
-                    devLoginBtn.disabled = false;
-                    devLoginBtn.textContent = originalText;
-                }, 3000);
-
-                if (err.code === 'auth/unauthorized-domain') {
-                    alert("UPLINK ERROR: UNAUTHORIZED DOMAIN\n\nThis domain is not whitelisted in Firebase.\n\nFIX: Click 'SYSTEM: [ONLINE]' at the top 5 times to use a MANUAL UPLINK KEY.");
-                } else {
-                    alert("Login Error: " + err.message);
-                }
-            });
+                    devLoginBtn.textContent = 'LINK FAILED';
+                    setTimeout(() => {
+                        devLoginBtn.textContent = 'AUTHORIZE LINK';
+                    }, 2000);
+                }, 100);
+            }
         };
+        
+        if (isChatAuthorized()) {
+            devLoginBtn.textContent = 'PROTOCOL SUCCESS';
+            devLoginBtn.disabled = true;
+        }
     }
 
     // Forum Management
@@ -836,7 +845,7 @@ function setupEventListeners() {
             if (!content) return;
 
             const user = auth ? auth.currentUser : null;
-            const isManualDev = localStorage.getItem('vp_dev_override') === 'true';
+            const isManualDev = localStorage.getItem('vp_dev_override') === 'true' || localStorage.getItem('vp_chat_authorized') === 'true';
 
             if (!user && !isManualDev) {
                 alert("PROTOCOL ERROR: YOU MUST BE AUTHORIZED TO BROADCAST");
@@ -849,9 +858,9 @@ function setupEventListeners() {
 
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
-                    authorId: user ? user.uid : (isManualDev ? 'manual-dev-001' : 'guest'),
+                    authorId: user ? user.uid : (isManualDev ? 'passcode-admin-001' : 'guest'),
                     authorName: user ? (user.displayName || user.email.split('@')[0]) : (isManualDev ? 'Administrator' : 'Guest'),
-                    authorPhoto: user ? user.photoURL : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${isManualDev ? 'admin' : 'guest'}`,
+                    authorPhoto: user ? user.photoURL : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${isManualDev ? 'vault-admin' : 'guest'}`,
                     createdAt: serverTimestamp()
                 });
 
