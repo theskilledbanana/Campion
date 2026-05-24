@@ -229,7 +229,6 @@ const terminalModal = document.getElementById('terminal-modal');
 const terminalContainer = document.getElementById('terminal-container');
 const terminalInput = document.getElementById('terminal-input');
 const terminalResults = document.getElementById('terminal-results');
-const resetIdentityBtn = document.getElementById('reset-identity');
 const cloakTabBtn = document.getElementById('cloak-tab-btn');
 const cloakModal = document.getElementById('cloak-modal');
 const cloakContainer = document.getElementById('cloak-container');
@@ -248,17 +247,23 @@ let userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
     recentlyPlayed: []
 };
 
-// Migration for existing users
-if (!userData.recentlyPlayed) userData.recentlyPlayed = [];
+    // Migration for existing users
+    if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
+        userData.recentlyPlayed = [];
+    }
 
 function init() {
-    renderCategories();
-    renderRecentlyPlayed();
-    renderItems();
-    setupEventListeners();
-    showDisclaimer();
-    startSystemTicker();
-    initBadgeSubscription();
+    try {
+        renderCategories();
+        renderRecentlyPlayed();
+        renderItems();
+        setupEventListeners();
+        showDisclaimer();
+        startSystemTicker();
+        initBadgeSubscription();
+    } catch (err) {
+        console.error("Initialization failed:", err);
+    }
     
     // Auto-load cloaked title
     const savedTitle = localStorage.getItem('vp_cloaked_title');
@@ -300,6 +305,7 @@ function hideDisclaimer() {
 }
 
 function renderCategories() {
+    if (!categoriesNav) return;
     const rawCategories = [...new Set(allEntries.flatMap(e => e.categories))];
     const sortedCategories = rawCategories.sort((a, b) => {
         if (a === 'Trending Games') return -1;
@@ -311,8 +317,10 @@ function renderCategories() {
     
     // Clear existing buttons (except the label)
     const label = categoriesNav.querySelector('div');
-    categoriesNav.innerHTML = '';
-    categoriesNav.appendChild(label);
+    if (label) {
+        categoriesNav.innerHTML = '';
+        categoriesNav.appendChild(label);
+    }
 
     categories.forEach(category => {
         const btn = document.createElement('button');
@@ -405,7 +413,7 @@ function renderRecentlyPlayed() {
     
     recentSection.classList.remove('hidden');
     recentGrid.innerHTML = '';
-    const recentIds = userData.recentlyPlayed || [];
+    const recentIds = Array.isArray(userData.recentlyPlayed) ? userData.recentlyPlayed : [];
     
     if (recentIds.length === 0) {
         recentGrid.innerHTML = `
@@ -455,13 +463,13 @@ function saveUserData() {
 function openPlayer(item) {
     if (!item) return;
     
-    // Baseball Bros Disclaimer
+    // Baseball Bros Disclaimer - Using non-blocking feedback
     if (item.id === 'baseball-bros') {
-        alert("SECURITY ALERT: When you enter the game, you will be asked for a password. The access code is 123.");
+        console.log("Baseball Bros Access Code: 123");
     }
     
     // Update Recently Played
-    if (!userData.recentlyPlayed) userData.recentlyPlayed = [];
+    if (!Array.isArray(userData.recentlyPlayed)) userData.recentlyPlayed = [];
     userData.recentlyPlayed = [item.id, ...userData.recentlyPlayed.filter(id => id !== item.id)].slice(0, 8);
     
     // Track session and time
@@ -630,8 +638,8 @@ function setupEventListeners() {
         }
     });
 
-    // Hidden Operator Login Trigger
-    const systemIndicator = document.querySelector('p.text-cyan-400\\/70'); // "Access Node 04"
+    // Use a safer selector for the system indicator
+    const systemIndicator = document.getElementById('system-indicator') || document.querySelector('p.text-cyan-400\\/70');
     if (systemIndicator) {
         let clickCount = 0;
         systemIndicator.style.cursor = 'pointer';
