@@ -189,6 +189,14 @@ const allEntries = [
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The latest installment in the legendary platformer series. Master new mechanics, tackle treacherous levels, and prove your parkour prowess in this high-octane skill challenge.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
+  },
+  {
+    "id": "infinite-craft",
+    "title": "Infinite Craft Game",
+    "iframeUrl": "https://y.demo.lhyang.org/https://infinitecraft-game.io/infinite-craft-game.embed",
+    "thumbnail": "https://neal.fun/share-cards/infinite-craft.png",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "Combine basic elements—Fire, Water, Earth, and Air—to discover anything from dinosaurs to entire universes in this limitless crafting sandbox."
   }
 ];
 
