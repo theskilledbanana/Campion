@@ -684,7 +684,7 @@ function setupEventListeners() {
 
     // Use a safer selector for the system indicator
     const systemIndicator = document.getElementById('system-indicator') || document.querySelector('p.text-cyan-400\\/70');
-    if (systemIndicator) {
+    if (systemIndicator && auth) {
         let clickCount = 0;
         systemIndicator.style.cursor = 'pointer';
         systemIndicator.onclick = () => {
@@ -697,22 +697,24 @@ function setupEventListeners() {
         };
     }
 
-    onAuthStateChanged(auth, (user) => {
-        const forumInputArea = document.getElementById('forum-input-area');
-        const forumAuthPrompt = document.getElementById('forum-auth-prompt');
-        
-        if (user && user.email === OWNER_EMAIL) {
-            forumInputArea?.classList.remove('hidden');
-            forumAuthPrompt?.classList.add('hidden');
-        } else {
-            forumInputArea?.classList.add('hidden');
-            forumAuthPrompt?.classList.remove('hidden');
-        }
-    });
+    if (auth) {
+        onAuthStateChanged(auth, (user) => {
+            const forumInputArea = document.getElementById('forum-input-area');
+            const forumAuthPrompt = document.getElementById('forum-auth-prompt');
+            
+            if (user && user.email === OWNER_EMAIL) {
+                forumInputArea?.classList.remove('hidden');
+                forumAuthPrompt?.classList.add('hidden');
+            } else {
+                forumInputArea?.classList.add('hidden');
+                forumAuthPrompt?.classList.remove('hidden');
+            }
+        });
+    }
 
     // Developer Login Button
     const devLoginBtn = document.getElementById('dev-login-btn');
-    if (devLoginBtn) {
+    if (devLoginBtn && auth) {
         devLoginBtn.onclick = () => {
             const provider = new GoogleAuthProvider();
             signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err));
@@ -763,7 +765,7 @@ function setupEventListeners() {
     if (forumBtn) forumBtn.onclick = openForumModal;
     if (closeForumBtn) closeForumBtn.onclick = closeForumModal;
 
-    if (sendForumMsgBtn) {
+    if (sendForumMsgBtn && db && auth) {
         sendForumMsgBtn.onclick = async () => {
             const content = forumMsgInput.value.trim();
             if (!content) return;
@@ -772,7 +774,6 @@ function setupEventListeners() {
                 sendForumMsgBtn.disabled = true;
                 sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
-                const operatorUser = auth.currentUser;
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
                     authorId: 'developer-nexus',
@@ -811,31 +812,38 @@ function setupEventListeners() {
 function initBadgeSubscription() {
     if (unsubscribeBadge) unsubscribeBadge();
     const broadcastBadge = document.getElementById('broadcast-badge');
-    if (!broadcastBadge) return;
+    if (!broadcastBadge || !db) return;
 
-    const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'desc'), limit(1));
-    
-    unsubscribeBadge = onSnapshot(messagesQuery, (snapshot) => {
-        if (snapshot.empty) return;
+    try {
+        const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'desc'), limit(1));
         
-        const newestMsg = snapshot.docs[0].data();
-        const newestTime = newestMsg.createdAt?.toMillis() || 0;
-        const lastReadTime = parseInt(localStorage.getItem('vp_last_read_broadcast') || '0');
+        unsubscribeBadge = onSnapshot(messagesQuery, (snapshot) => {
+            if (snapshot.empty) return;
+            
+            const newestMsg = snapshot.docs[0].data();
+            const newestTime = newestMsg.createdAt?.toMillis() || 0;
+            const lastReadTime = parseInt(localStorage.getItem('vp_last_read_broadcast') || '0');
 
-        // If we are currently viewing the forum, mark as read
-        const forumModal = document.getElementById('forum-modal');
-        if (forumModal && !forumModal.classList.contains('hidden')) {
-            localStorage.setItem('vp_last_read_broadcast', newestTime.toString());
-            broadcastBadge.classList.add('hidden');
-            return;
-        }
+            // If we are currently viewing the forum, mark as read
+            const forumModal = document.getElementById('forum-modal');
+            if (forumModal && !forumModal.classList.contains('hidden')) {
+                localStorage.setItem('vp_last_read_broadcast', newestTime.toString());
+                broadcastBadge.classList.add('hidden');
+                return;
+            }
 
-        if (newestTime > lastReadTime) {
-            broadcastBadge.classList.remove('hidden');
-        } else {
+            if (newestTime > lastReadTime) {
+                broadcastBadge.classList.remove('hidden');
+            } else {
+                broadcastBadge.classList.add('hidden');
+            }
+        }, (err) => {
+            console.warn("Badge sync unavailable:", err);
             broadcastBadge.classList.add('hidden');
-        }
-    });
+        });
+    } catch (e) {
+        console.warn("Badge sub failed:", e);
+    }
 }
 
 // Forum Message Rendering Logic
@@ -845,12 +853,16 @@ function syncForumMessages() {
     
     if (!forumMessagesView) return;
 
-    forumMessagesView.innerHTML = `
-        <div class="flex flex-col items-center justify-center py-20 text-center">
-            <div class="w-16 h-16 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
-            <p class="text-zinc-500 font-mono text-[10px] uppercase tracking-widest">Synchronizing Relay Network...</p>
-        </div>
-    `;
+    if (!db) {
+        forumMessagesView.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20 text-center">
+                <i class="bi bi-wifi-off text-zinc-700 text-4xl mb-4"></i>
+                <h3 class="text-white font-bold uppercase italic tracking-tighter">Connection Unavailable</h3>
+                <p class="text-zinc-500 text-xs mt-2 px-10">The secure relay network is currently offline. Please check your local uplink.</p>
+            </div>
+        `;
+        return;
+    }
 
     const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'asc'));
     
