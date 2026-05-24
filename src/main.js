@@ -196,46 +196,15 @@ let currentSearch = '';
 let unsubscribeForum = null;
 let unsubscribeBadge = null;
 
-const itemsGrid = document.getElementById('items-grid');
-const recentSection = document.getElementById('recent-section');
-const recentGrid = document.getElementById('recent-grid');
-const clearRecentBtn = document.getElementById('clear-recent');
-const categoriesNav = document.getElementById('categories-nav');
-const searchInput = document.getElementById('search-input');
-const playerOverlay = document.getElementById('player-overlay');
-const gameIframe = document.getElementById('game-area');
-const playerTitle = document.getElementById('player-title');
-const playerCategory = document.getElementById('player-category');
-const closePlayerBtn = document.getElementById('close-player');
-const mobileBackButton = document.getElementById('mobile-back-button');
-const refreshPlayerBtn = document.getElementById('refresh-player');
-const fullscreenPlayerBtn = document.getElementById('fullscreen-player');
-const iframeLoader = document.getElementById('iframe-loader');
-const loaderMessage = document.getElementById('loader-message');
-const dismissLoaderBtn = document.getElementById('dismiss-loader');
-const updateSiteBtn = document.getElementById('update-site-btn');
-const updateModal = document.getElementById('update-modal');
-const updateContainer = document.getElementById('update-container');
-const closeUpdateBtn = document.getElementById('close-update');
-const devApplyBtn = document.getElementById('dev-apply-btn');
-const devModal = document.getElementById('dev-modal');
-const devContainer = document.getElementById('dev-container');
-const closeDevBtn = document.getElementById('close-dev');
-const disclaimerModal = document.getElementById('disclaimer-modal');
-const disclaimerContainer = document.getElementById('disclaimer-container');
-const acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
-const surpriseBtn = document.getElementById('surprise-btn');
-const terminalModal = document.getElementById('terminal-modal');
-const terminalContainer = document.getElementById('terminal-container');
-const terminalInput = document.getElementById('terminal-input');
-const terminalResults = document.getElementById('terminal-results');
-const cloakTabBtn = document.getElementById('cloak-tab-btn');
-const cloakModal = document.getElementById('cloak-modal');
-const cloakContainer = document.getElementById('cloak-container');
-const closeCloakBtn = document.getElementById('close-cloak');
-const cloakInput = document.getElementById('cloak-input');
-const applyCloakBtn = document.getElementById('apply-cloak');
-const resetCloakBtn = document.getElementById('reset-cloak');
+// Global UI Elements (Initialized in init)
+const getEl = (id) => document.getElementById(id);
+let itemsGrid, recentSection, recentGrid, clearRecentBtn, categoriesNav, searchInput;
+let playerOverlay, gameIframe, playerTitle, playerCategory, closePlayerBtn, mobileBackButton;
+let refreshPlayerBtn, fullscreenPlayerBtn, iframeLoader, loaderMessage, dismissLoaderBtn;
+let updateSiteBtn, updateModal, updateContainer, closeUpdateBtn, devApplyBtn, devModal;
+let devContainer, closeDevBtn, disclaimerModal, disclaimerContainer, acceptDisclaimerBtn;
+let surpriseBtn, terminalModal, terminalContainer, terminalInput, terminalResults;
+let cloakTabBtn, cloakModal, cloakContainer, closeCloakBtn, cloakInput, applyCloakBtn, resetCloakBtn;
 
 const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
@@ -266,15 +235,58 @@ if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
 function init() {
     console.log("VaultPortal [UPLINK ACTIVE] Initializing System Core...");
     
-    // Diagnostic Visual feedback
-    const indicator = document.getElementById('system-indicator');
-    if (indicator) indicator.textContent = 'SYSTEM: [SYNCING]';
+    // Initialize UI Selectors
+    itemsGrid = document.getElementById('items-grid');
+    recentSection = document.getElementById('recent-section');
+    recentGrid = document.getElementById('recent-grid');
+    clearRecentBtn = document.getElementById('clear-recent');
+    categoriesNav = document.getElementById('categories-nav');
+    searchInput = document.getElementById('search-input');
+    playerOverlay = document.getElementById('player-overlay');
+    gameIframe = document.getElementById('game-area');
+    playerTitle = document.getElementById('player-title');
+    playerCategory = document.getElementById('player-category');
+    closePlayerBtn = document.getElementById('close-player');
+    mobileBackButton = document.getElementById('mobile-back-button');
+    refreshPlayerBtn = document.getElementById('refresh-player');
+    fullscreenPlayerBtn = document.getElementById('fullscreen-player');
+    iframeLoader = document.getElementById('iframe-loader');
+    loaderMessage = document.getElementById('loader-message');
+    dismissLoaderBtn = document.getElementById('dismiss-loader');
+    updateSiteBtn = document.getElementById('update-site-btn');
+    updateModal = document.getElementById('update-modal');
+    updateContainer = document.getElementById('update-container');
+    closeUpdateBtn = document.getElementById('close-update');
+    devApplyBtn = document.getElementById('dev-apply-btn');
+    devModal = document.getElementById('dev-modal');
+    devContainer = document.getElementById('dev-container');
+    closeDevBtn = document.getElementById('close-dev');
+    disclaimerModal = document.getElementById('disclaimer-modal');
+    disclaimerContainer = document.getElementById('disclaimer-container');
+    acceptDisclaimerBtn = document.getElementById('accept-disclaimer');
+    surpriseBtn = document.getElementById('surprise-btn');
+    terminalModal = document.getElementById('terminal-modal');
+    terminalContainer = document.getElementById('terminal-container');
+    terminalInput = document.getElementById('terminal-input');
+    terminalResults = document.getElementById('terminal-results');
+    cloakTabBtn = document.getElementById('cloak-tab-btn');
+    cloakModal = document.getElementById('cloak-modal');
+    cloakContainer = document.getElementById('cloak-container');
+    closeCloakBtn = document.getElementById('close-cloak');
+    cloakInput = document.getElementById('cloak-input');
+    applyCloakBtn = document.getElementById('apply-cloak');
+    resetCloakBtn = document.getElementById('reset-cloak');
 
     // Explicitly reset initial state
     currentCategory = 'All';
     currentSearch = '';
-    const sInput = document.getElementById('search-input');
-    if (sInput) sInput.value = '';
+    
+    if (searchInput) searchInput.value = '';
+
+    const indicator = document.getElementById('system-indicator');
+    if (indicator) indicator.textContent = 'SYSTEM: [SYNCING]';
+
+    const isDevOverridden = localStorage.getItem('vp_dev_override') === 'true';
 
     try {
         console.log(`Diagnostic: Found ${allEntries.length} modules in payload.`);
@@ -290,7 +302,9 @@ function init() {
         safeCall(startSystemTicker, "Ticker");
         safeCall(initBadgeSubscription, "BadgeSub");
         
-        if (indicator) indicator.textContent = 'SYSTEM: [ONLINE]';
+        if (indicator) {
+            indicator.textContent = isDevOverridden ? 'SYSTEM: [OVERRIDE_ACTIVE]' : 'SYSTEM: [ONLINE]';
+        }
         console.log("VaultPortal [INITIALIZATION COMPLETE]");
     } catch (err) {
         console.error("Initialization sequence fatal error:", err);
@@ -301,8 +315,7 @@ function init() {
     const savedTitle = localStorage.getItem('vp_cloaked_title');
     if (savedTitle) {
         document.title = savedTitle;
-        const cInput = document.getElementById('cloak-input');
-        if (cInput) cInput.value = savedTitle;
+        if (cloakInput) cloakInput.value = savedTitle;
     }
 }
 
@@ -346,7 +359,8 @@ function hideDisclaimer() {
 }
 
 function renderCategories() {
-    if (!categoriesNav) return;
+    const nav = getEl('categories-nav');
+    if (!nav) return;
     
     const entries = Array.isArray(allEntries) ? allEntries : [];
     const rawCategories = [...new Set(entries.flatMap(e => e.categories || []))];
@@ -366,7 +380,7 @@ function renderCategories() {
         </div>
     `;
     
-    categoriesNav.innerHTML = labelHTML;
+    nav.innerHTML = labelHTML;
 
     categoriesList.forEach(category => {
         const btn = document.createElement('button');
@@ -382,13 +396,14 @@ function renderCategories() {
             renderCategories();
             renderItems();
         };
-        categoriesNav.appendChild(btn);
+        nav.appendChild(btn);
     });
 }
 
 function renderItems() {
-    if (!itemsGrid) return;
-    itemsGrid.innerHTML = '';
+    const grid = getEl('items-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
     
     const term = (currentSearch || '').toLowerCase();
     const cat = currentCategory || 'All';
@@ -403,7 +418,7 @@ function renderItems() {
     });
 
     if (filtered.length === 0) {
-        itemsGrid.innerHTML = `
+        grid.innerHTML = `
             <div class="col-span-full py-32 text-center">
                 <div class="inline-block p-10 bg-zinc-900/20 rounded-[3rem] border border-dashed border-white/5 backdrop-blur-sm">
                     <div class="w-16 h-16 bg-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-white/5">
@@ -455,24 +470,26 @@ function renderItems() {
             </div>
         `;
         card.onclick = () => openPlayer(item);
-        itemsGrid.appendChild(card);
+        grid.appendChild(card);
     });
 }
 
 function renderRecentlyPlayed() {
-    if (!recentGrid || !recentSection) return;
+    const grid = getEl('recent-grid');
+    const section = getEl('recent-section');
+    if (!grid || !section) return;
     
     if (currentSearch.trim() !== '') {
-        recentSection.classList.add('hidden');
+        section.classList.add('hidden');
         return;
     }
     
-    recentSection.classList.remove('hidden');
-    recentGrid.innerHTML = '';
+    section.classList.remove('hidden');
+    grid.innerHTML = '';
     const recentIds = Array.isArray(userData.recentlyPlayed) ? userData.recentlyPlayed : [];
     
     if (recentIds.length === 0) {
-        recentGrid.innerHTML = `
+        grid.innerHTML = `
             <div class="col-span-full py-12 px-8 bg-zinc-900/20 rounded-3xl border border-dashed border-white/5 backdrop-blur-sm w-full">
                 <p class="text-zinc-600 text-[10px] font-black uppercase tracking-[0.2em] text-center">No session history detected in current cycle</p>
             </div>
@@ -508,7 +525,7 @@ function renderRecentlyPlayed() {
             </div>
         `;
         card.onclick = () => openPlayer(item);
-        recentGrid.appendChild(card);
+        grid.appendChild(card);
     });
 }
 
