@@ -264,14 +264,21 @@ if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
 }
 
 function init() {
-    console.log("VaultPortal Initializing...");
+    console.log("VaultPortal [UPLINK ACTIVE] Initializing System Core...");
     
+    // Diagnostic Visual feedback
+    const indicator = document.getElementById('system-indicator');
+    if (indicator) indicator.textContent = 'SYSTEM: [SYNCING]';
+
     // Explicitly reset initial state
     currentCategory = 'All';
     currentSearch = '';
-    if (searchInput) searchInput.value = '';
+    const sInput = document.getElementById('search-input');
+    if (sInput) sInput.value = '';
 
     try {
+        console.log(`Diagnostic: Found ${allEntries.length} modules in payload.`);
+        
         // Individual safety wrappers for core rendering
         safeCall(renderCategories, "Categories");
         safeCall(renderRecentlyPlayed, "Recent");
@@ -282,15 +289,20 @@ function init() {
         safeCall(showDisclaimer, "Disclaimer");
         safeCall(startSystemTicker, "Ticker");
         safeCall(initBadgeSubscription, "BadgeSub");
+        
+        if (indicator) indicator.textContent = 'SYSTEM: [ONLINE]';
+        console.log("VaultPortal [INITIALIZATION COMPLETE]");
     } catch (err) {
         console.error("Initialization sequence fatal error:", err);
+        if (indicator) indicator.textContent = 'SYSTEM: [CRITICAL_FAIL]';
     }
     
     // Auto-load cloaked title
     const savedTitle = localStorage.getItem('vp_cloaked_title');
     if (savedTitle) {
         document.title = savedTitle;
-        if (cloakInput) cloakInput.value = savedTitle;
+        const cInput = document.getElementById('cloak-input');
+        if (cInput) cInput.value = savedTitle;
     }
 }
 
@@ -915,4 +927,8 @@ function syncForumMessages() {
 }
 
 
-init();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
