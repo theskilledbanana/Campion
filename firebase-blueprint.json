@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "ForumPost": {
+      "title": "Forum Post",
+      "description": "A post in the community forum.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the post." },
+        "content": { "type": "string", "description": "The main content of the post." },
+        "authorId": { "type": "string", "description": "The UID of the user who created the post." },
+        "authorName": { "type": "string", "description": "The display name of the author." },
+        "authorPhoto": { "type": "string", "description": "The photo URL of the author." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the post was created." },
+        "likes": { "type": "number", "description": "Number of likes." }
+      },
+      "required": ["title", "content", "authorId", "authorName", "createdAt"]
+    },
+    "ForumComment": {
+      "title": "Forum Comment",
+      "description": "A comment on a forum post.",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string", "description": "The ID of the parent post." },
+        "content": { "type": "string", "description": "The content of the comment." },
+        "authorId": { "type": "string", "description": "The UID of the user who created the comment." },
+        "authorName": { "type": "string", "description": "The display name of the author." },
+        "authorPhoto": { "type": "string", "description": "The photo URL of the author." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the comment was created." }
+      },
+      "required": ["postId", "content", "authorId", "authorName", "createdAt"]
+    },
+    "ForumMessage": {
+      "title": "Forum Message",
+      "description": "A message in the real-time community chat.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string", "description": "The content of the message." },
+        "authorId": { "type": "string", "description": "The UID of the user who sent the message." },
+        "authorName": { "type": "string", "description": "The display name of the author." },
+        "authorPhoto": { "type": "string", "description": "The photo URL of the author." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["content", "authorId", "authorName", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User profile with stats and settings.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "description": "Public name of the user." },
+        "avatarUrl": { "type": "string", "description": "URL to the selected avatar." },
+        "stats": { "type": "object", "description": "Game statistics." },
+        "settings": { "type": "object", "description": "User preferences." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update time." }
+      },
+      "required": ["displayName", "avatarUrl", "stats", "settings", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Public and private profile data for each user."
+    },
+    "/forum_messages/{msgId}": {
+      "schema": "ForumMessage",
+      "description": "Collection of all real-time forum messages."
+    },
+    "/forum_posts/{postId}": {
+      "schema": "ForumPost",
+      "description": "Collection of all forum posts."
+    },
+    "/forum_posts/{postId}/comments/{commentId}": {
+      "schema": "ForumComment",
+      "description": "Comments belonging to a specific post."
+    }
+  }
+}

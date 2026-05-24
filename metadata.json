@@ -1,6 +1,6 @@
 {
   "name": "Vault Portal",
-  "description": "A high-performance portal for accessing curated web content and life simulators.",
+  "description": "A high-performance portal for accessing curated games with integrated user profiles, persistent stats, and a global community forum.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

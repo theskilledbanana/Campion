@@ -1,5 +1,29 @@
 // main.js - Vanilla JS Logic for MediaVault
 
+import { db, auth } from './firebase-config.js';
+import { 
+    collection, 
+    addDoc, 
+    getDocs, 
+    query, 
+    orderBy, 
+    onSnapshot, 
+    serverTimestamp,
+    doc,
+    getDoc,
+    setDoc,
+    increment,
+    updateDoc,
+    limit
+} from 'firebase/firestore';
+import { 
+    onAuthStateChanged,
+    GoogleAuthProvider,
+    signInWithPopup
+} from 'firebase/auth';
+
+const OWNER_EMAIL = 'jackcampell608@gmail.com';
+
 const allEntries = [
   {
     "id": "bitlife",
@@ -169,6 +193,8 @@ const allEntries = [
 
 let currentCategory = 'All';
 let currentSearch = '';
+let unsubscribeForum = null;
+let unsubscribeBadge = null;
 
 const itemsGrid = document.getElementById('items-grid');
 const recentSection = document.getElementById('recent-section');
@@ -232,6 +258,7 @@ function init() {
     setupEventListeners();
     showDisclaimer();
     startSystemTicker();
+    initBadgeSubscription();
     
     // Auto-load cloaked title
     const savedTitle = localStorage.getItem('vp_cloaked_title');
@@ -440,6 +467,7 @@ function openPlayer(item) {
     // Track session and time
     playSessionStart = Date.now();
     userData.sessions++;
+    
     saveUserData();
     renderRecentlyPlayed();
 
@@ -463,75 +491,14 @@ function closePlayer() {
 }
 
 function setupEventListeners() {
+    // Search Functionality
     searchInput.addEventListener('input', (e) => {
         currentSearch = e.target.value;
         renderRecentlyPlayed();
         renderItems();
     });
 
-    const openTerminal = () => {
-        terminalModal.classList.remove('hidden');
-        setTimeout(() => {
-            terminalModal.classList.remove('opacity-0');
-            terminalContainer.classList.remove('scale-95');
-            terminalContainer.classList.add('scale-100');
-            terminalInput.focus();
-            renderTerminalResults();
-        }, 10);
-        document.body.style.overflow = 'hidden';
-    };
-
-    const closeTerminal = () => {
-        terminalModal.classList.add('opacity-0');
-        terminalContainer.classList.remove('scale-100');
-        terminalContainer.classList.add('scale-95');
-        setTimeout(() => {
-            terminalModal.classList.add('hidden');
-            if (playerOverlay.classList.contains('hidden')) {
-                document.body.style.overflow = '';
-            }
-        }, 300);
-    };
-
-    const renderTerminalResults = (query = '') => {
-        terminalResults.innerHTML = '';
-        const games = allEntries.filter(g => g.title.toLowerCase().includes(query.toLowerCase()));
-        
-        games.forEach(g => {
-            const div = document.createElement('div');
-            div.className = "px-6 py-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex items-center justify-between group";
-            div.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-lg overflow-hidden bg-zinc-900 border border-white/5 p-2">
-                        <img src="${g.thumbnail}" class="w-full h-full object-contain opacity-60 group-hover:opacity-100 transition-opacity" referrerpolicy="no-referrer">
-                    </div>
-                    <div>
-                        <p class="text-zinc-300 font-bold text-sm uppercase italic tracking-tighter">${g.title}</p>
-                        <p class="text-zinc-600 text-[10px] uppercase font-bold tracking-[0.1em] font-mono">${g.categories.join(' // ')}</p>
-                    </div>
-                </div>
-                <i class="bi bi-arrow-right-short text-zinc-800 group-hover:text-cyan-400 transition-colors text-xl"></i>
-            `;
-            div.onclick = () => {
-                openPlayer(g);
-                closeTerminal();
-            };
-            terminalResults.appendChild(div);
-        });
-    };
-
-    terminalInput.addEventListener('input', (e) => renderTerminalResults(e.target.value));
-    terminalInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const query = terminalInput.value;
-            const firstGame = allEntries.find(g => g.title.toLowerCase().includes(query.toLowerCase()));
-            if (firstGame) {
-                openPlayer(firstGame);
-                closeTerminal();
-            }
-        }
-    });
-
+    // Player Controls
     closePlayerBtn.onclick = closePlayer;
     if (mobileBackButton) mobileBackButton.onclick = closePlayer;
     
@@ -552,13 +519,16 @@ function setupEventListeners() {
         };
     }
 
+    // Disclaimer
     acceptDisclaimerBtn.onclick = hideDisclaimer;
 
+    // Surprise Me
     surpriseBtn.onclick = () => {
         const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
         openPlayer(randomItem);
     };
 
+    // Purge History
     if (clearRecentBtn) {
         clearRecentBtn.onclick = () => {
             if (confirm("PURGE SESSION RESUME DATA?")) {
@@ -569,17 +539,7 @@ function setupEventListeners() {
         };
     }
 
-    if (resetIdentityBtn) {
-        resetIdentityBtn.onclick = () => {
-            if (confirm('REDACT ALL SESSION DATA?')) {
-                localStorage.removeItem('vp_user_data');
-                userData = { username: '', totalSeconds: 0, sessions: 0, recentlyPlayed: [] };
-                saveUserData();
-                renderRecentlyPlayed();
-            }
-        }
-    }
-
+    // Tab Cloak
     const openCloakModal = () => {
         cloakModal.classList.remove('hidden');
         setTimeout(() => {
@@ -616,6 +576,7 @@ function setupEventListeners() {
         closeCloakModal();
     };
 
+    // Update Modal
     updateSiteBtn.onclick = () => {
         updateModal.classList.remove('hidden');
         setTimeout(() => {
@@ -630,6 +591,7 @@ function setupEventListeners() {
         setTimeout(() => updateModal.classList.add('hidden'), 300);
     };
 
+    // Dev Application
     const openDevModal = () => {
         devModal.classList.remove('hidden');
         setTimeout(() => {
@@ -658,13 +620,235 @@ function setupEventListeners() {
         };
     }
 
+    // Global Keybinds
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closePlayer();
             closeCloakModal();
             closeDevModal();
+            closeForumModal();
+        }
+    });
+
+    // Hidden Operator Login Trigger
+    const systemIndicator = document.querySelector('p.text-cyan-400\\/70'); // "Access Node 04"
+    if (systemIndicator) {
+        let clickCount = 0;
+        systemIndicator.style.cursor = 'pointer';
+        systemIndicator.onclick = () => {
+            clickCount++;
+            if (clickCount >= 5) {
+                clickCount = 0;
+                const provider = new GoogleAuthProvider();
+                signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err));
+            }
+        };
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        const forumInputArea = document.getElementById('forum-input-area');
+        const forumAuthPrompt = document.getElementById('forum-auth-prompt');
+        
+        if (user && user.email === OWNER_EMAIL) {
+            forumInputArea?.classList.remove('hidden');
+            forumAuthPrompt?.classList.add('hidden');
+        } else {
+            forumInputArea?.classList.add('hidden');
+            forumAuthPrompt?.classList.remove('hidden');
+        }
+    });
+
+    // Developer Login Button
+    const devLoginBtn = document.getElementById('dev-login-btn');
+    if (devLoginBtn) {
+        devLoginBtn.onclick = () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err));
+        };
+    }
+
+    // Forum Management
+    const forumBtn = document.getElementById('forum-btn');
+    const closeForumBtn = document.getElementById('close-forum');
+    const forumModal = document.getElementById('forum-modal');
+    const forumContainer = document.getElementById('forum-container');
+    const forumMessagesView = document.getElementById('forum-messages-view');
+    const forumMsgInput = document.getElementById('forum-msg-input');
+    const sendForumMsgBtn = document.getElementById('send-forum-msg');
+
+    const openForumModal = () => {
+        forumModal.classList.remove('hidden');
+        setTimeout(() => {
+            forumModal.classList.remove('opacity-0');
+            forumContainer.classList.remove('scale-90');
+            forumContainer.classList.add('scale-100');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+        
+        // Mark as read when opening
+        const broadcastBadge = document.getElementById('broadcast-badge');
+        if (broadcastBadge) broadcastBadge.classList.add('hidden');
+        
+        syncForumMessages();
+    };
+
+    const closeForumModal = () => {
+        forumModal.classList.add('opacity-0');
+        forumContainer.classList.remove('scale-100');
+        forumContainer.classList.add('scale-90');
+        
+        if (unsubscribeForum) {
+            unsubscribeForum();
+            unsubscribeForum = null;
+        }
+
+        setTimeout(() => {
+            forumModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    };
+
+    if (forumBtn) forumBtn.onclick = openForumModal;
+    if (closeForumBtn) closeForumBtn.onclick = closeForumModal;
+
+    if (sendForumMsgBtn) {
+        sendForumMsgBtn.onclick = async () => {
+            const content = forumMsgInput.value.trim();
+            if (!content) return;
+
+            try {
+                sendForumMsgBtn.disabled = true;
+                sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
+
+                const operatorUser = auth.currentUser;
+                await addDoc(collection(db, 'forum_messages'), {
+                    content,
+                    authorId: 'developer-nexus',
+                    authorName: 'Developer',
+                    authorPhoto: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=dev-nexus',
+                    createdAt: serverTimestamp()
+                });
+
+                forumMsgInput.value = '';
+                forumMsgInput.style.height = 'auto';
+                forumMessagesView.scrollTo({ top: forumMessagesView.scrollHeight, behavior: 'smooth' });
+            } catch (error) {
+                console.error("Transmission failed:", error);
+            } finally {
+                sendForumMsgBtn.disabled = false;
+                sendForumMsgBtn.innerHTML = '<i class="bi bi-send-fill text-xl group-hover:rotate-12 transition-transform"></i>';
+            }
+        };
+
+        forumMsgInput.oninput = () => {
+            forumMsgInput.style.height = 'auto';
+            forumMsgInput.style.height = (forumMsgInput.scrollHeight) + 'px';
+        };
+
+        forumMsgInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendForumMsgBtn.click();
+            }
+        };
+    }
+}
+
+
+// Integrated Broadcast Badge Syncing
+function initBadgeSubscription() {
+    if (unsubscribeBadge) unsubscribeBadge();
+    const broadcastBadge = document.getElementById('broadcast-badge');
+    if (!broadcastBadge) return;
+
+    const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'desc'), limit(1));
+    
+    unsubscribeBadge = onSnapshot(messagesQuery, (snapshot) => {
+        if (snapshot.empty) return;
+        
+        const newestMsg = snapshot.docs[0].data();
+        const newestTime = newestMsg.createdAt?.toMillis() || 0;
+        const lastReadTime = parseInt(localStorage.getItem('vp_last_read_broadcast') || '0');
+
+        // If we are currently viewing the forum, mark as read
+        const forumModal = document.getElementById('forum-modal');
+        if (forumModal && !forumModal.classList.contains('hidden')) {
+            localStorage.setItem('vp_last_read_broadcast', newestTime.toString());
+            broadcastBadge.classList.add('hidden');
+            return;
+        }
+
+        if (newestTime > lastReadTime) {
+            broadcastBadge.classList.remove('hidden');
+        } else {
+            broadcastBadge.classList.add('hidden');
         }
     });
 }
+
+// Forum Message Rendering Logic
+function syncForumMessages() {
+    const forumMessagesView = document.getElementById('forum-messages-view');
+    if (unsubscribeForum) unsubscribeForum();
+    
+    if (!forumMessagesView) return;
+
+    forumMessagesView.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <div class="w-16 h-16 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+            <p class="text-zinc-500 font-mono text-[10px] uppercase tracking-widest">Synchronizing Relay Network...</p>
+        </div>
+    `;
+
+    const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'asc'));
+    
+    unsubscribeForum = onSnapshot(messagesQuery, (snapshot) => {
+        if (snapshot.empty) {
+            forumMessagesView.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-24 text-center">
+                    <div class="p-6 bg-white/5 rounded-3xl mb-6">
+                        <i class="bi bi-terminal text-zinc-700 text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white uppercase italic tracking-tighter">No Logs Yet</h3>
+                    <p class="text-zinc-500 text-xs mt-2 max-w-xs">Development is in progress. Stay tuned for official system updates.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let latestTime = 0;
+        forumMessagesView.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const msg = docSnap.data();
+            if (msg.createdAt?.toMillis() > latestTime) latestTime = msg.createdAt.toMillis();
+            
+            const date = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
+            
+            const msgEl = document.createElement('div');
+            msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`;
+            msgEl.innerHTML = `
+                <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + msg.authorId}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
+                <div class="flex flex-col items-start max-w-[80%]">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-[10px] font-black text-white uppercase italic leading-none">${msg.authorName}</span>
+                        <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
+                    </div>
+                    <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20">
+                        ${msg.content}
+                    </div>
+                </div>
+            `;
+            forumMessagesView.appendChild(msgEl);
+        });
+
+        // Update last read since we are viewing
+        localStorage.setItem('vp_last_read_broadcast', latestTime.toString());
+        
+        setTimeout(() => {
+            forumMessagesView.scrollTo({ top: forumMessagesView.scrollHeight, behavior: 'smooth' });
+        }, 100);
+    });
+}
+
 
 init();
