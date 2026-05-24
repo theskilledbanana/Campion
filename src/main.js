@@ -440,22 +440,22 @@ function renderItems() {
         const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
         
         const card = document.createElement('div');
-        card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
+        card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
-                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
-                <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
+                
+                <!-- Hover Overlay -->
+                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center p-4">
+                    <div class="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-full mb-3 scale-75 group-hover:scale-100 transition-transform duration-500">
+                        <i class="bi bi-play-fill text-3xl text-cyan-400"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] translate-y-2 group-hover:translate-y-0 transition-all duration-500">Initialize Link</span>
+                    <h4 class="text-white font-black text-xs mt-2 uppercase tracking-tight opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">Ready for Uplink</h4>
+                </div>
                 
                 <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
                     <span class="text-[8px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20">${nodeId}</span>
-                </div>
-
-                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
-                    <div class="bg-white text-black px-6 py-2.5 rounded-full font-black text-xs uppercase tracking-tighter shadow-2xl flex items-center gap-2">
-                        <span>Initialize Link</span>
-                        <i class="bi bi-arrow-right-short text-xl group-hover:translate-x-1 transition-transform"></i>
-                    </div>
                 </div>
             </div>
             <div class="p-5">
@@ -506,14 +506,17 @@ function renderRecentlyPlayed() {
         card.className = "flex-shrink-0 w-64 group cursor-pointer snap-start";
         card.innerHTML = `
             <div class="relative aspect-video rounded-2xl overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-1" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-1 group-hover:blur-[2px]" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80"></div>
-                <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-cyan-950/40 backdrop-blur-[2px]">
-                     <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                
+                <!-- Hover Overlay -->
+                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center p-4">
+                    <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                         <i class="bi bi-play-fill text-2xl ml-1"></i>
-                     </div>
-                     <span class="mt-4 text-[9px] font-black text-white uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">Resume Link</span>
+                    </div>
+                    <span class="mt-4 text-[9px] font-black text-white uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">Resume Link</span>
                 </div>
+                
                 <div class="absolute top-3 left-3">
                     <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,1)]"></div>
                 </div>
@@ -537,9 +540,9 @@ function saveUserData() {
 function openPlayer(item) {
     if (!item) return;
     
-    // Baseball Bros Disclaimer - Using non-blocking feedback
+    // Baseball Bros Disclaimer - Big protocol alert
     if (item.id === 'baseball-bros') {
-        console.log("Baseball Bros Access Code: 123");
+        alert("PROTOCOL ALERT [BASEBALL BROS]:\n\nTHE ACCESS CODE IS: 123\n\nENTER THIS IN THE GAME TERMINAL TO UNLOCK CORE ASSETS.");
     }
     
     // Update Recently Played
