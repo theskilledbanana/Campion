@@ -814,6 +814,7 @@ function setupEventListeners() {
         document.body.style.overflow = 'hidden';
         
         // Mark as read when opening
+        localStorage.setItem('vp_last_read_broadcast', Date.now().toString());
         const broadcastBadge = document.getElementById('broadcast-badge');
         if (broadcastBadge) broadcastBadge.classList.add('hidden');
         const forumBtn = document.getElementById('forum-btn');
