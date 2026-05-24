@@ -440,19 +440,22 @@ function renderItems() {
         const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
         
         const card = document.createElement('div');
-        card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2";
+        card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-700 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/40";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" referrerpolicy="no-referrer">
                 
-                <!-- Hover Overlay -->
-                <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950/90 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none p-6 text-center">
-                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                        <div class="w-16 h-16 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)] mb-4 mx-auto">
+                <!-- Ultimate Hover Overlay -->
+                <div class="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-zinc-950/90 opacity-0 group-hover:opacity-100 transition-all duration-500 p-6 text-center shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
+                    <div class="transform translate-y-12 group-hover:translate-y-0 transition-all duration-500 ease-out">
+                        <div class="w-16 h-16 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-[0_0_50px_rgba(34,211,238,0.6)] mb-6 mx-auto group-hover:scale-110 transition-transform duration-500">
                             <i class="bi bi-play-fill text-4xl ml-1"></i>
                         </div>
                         <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Initialize Link</h2>
-                        <p class="text-cyan-400 font-mono text-[10px] uppercase tracking-[0.4em] font-bold">Uplink Confirmed</p>
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-1 h-1 rounded-full bg-cyan-400 animate-ping"></div>
+                            <p class="text-cyan-400 font-mono text-[10px] uppercase tracking-[0.5em] font-bold">Uplink Ready</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -509,18 +512,18 @@ function renderRecentlyPlayed() {
         const card = document.createElement('div');
         card.className = "flex-shrink-0 w-72 group cursor-pointer snap-start";
         card.innerHTML = `
-            <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
+            <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-80"></div>
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 z-50 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-zinc-950/90 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none p-6 text-center">
-                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                        <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center text-black shadow-[0_0_40px_rgba(255,255,255,0.4)] mb-4 mx-auto">
-                            <i class="bi bi-play-fill text-4xl ml-1"></i>
+                <div class="absolute inset-0 z-[100] opacity-0 group-hover:opacity-100 transition-all duration-500 bg-zinc-950/90 flex flex-col items-center justify-center p-6 text-center">
+                    <div class="transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
+                        <div class="w-14 h-14 rounded-full bg-white flex items-center justify-center text-black shadow-[0_0_30px_rgba(255,255,255,0.4)] mb-4 mx-auto group-hover:scale-110 transition-transform">
+                            <i class="bi bi-play-fill text-3xl ml-1"></i>
                         </div>
-                        <h5 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Resume Link</h5>
-                        <p class="text-cyan-400 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Protocol Active</p>
+                        <h5 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-none mb-1">Resume Link</h5>
+                        <p class="text-cyan-400 font-mono text-[8px] uppercase tracking-[0.4em] font-bold">Protocol Active</p>
                     </div>
                 </div>
                 
@@ -550,33 +553,39 @@ function saveUserData() {
 function openPlayer(item) {
     if (!item) return;
     
-    // Baseball Bros Disclaimer - Big protocol alert
+    // Baseball Bros Disclaimer - Horizontal protocol alert
     if (item.id === 'baseball-bros') {
-        const modal = document.getElementById('system-alert-modal');
-        const closeBtn = document.getElementById('close-system-alert');
-        if (modal) {
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modal.querySelector('div').classList.remove('scale-90');
-                modal.querySelector('div').classList.add('scale-100');
-            }, 10);
+        const notify = document.getElementById('top-notification');
+        const msg = document.getElementById('notification-msg');
+        const close = document.getElementById('close-notification');
+        
+        if (notify && msg) {
+            msg.innerHTML = `SYSTEM NOTICE: UPON ENTERING THE GAME, YOU WILL BE ASKED FOR A PASSWORD. IT IS <span class="bg-white text-black px-3 py-0.5 rounded ml-2 font-black">123</span>`;
+            close.textContent = "LAUNCH SYSTEM";
+            notify.classList.remove('-translate-y-full');
+            notify.classList.add('translate-y-0');
             
-            closeBtn.onclick = () => {
-                modal.classList.add('opacity-0');
-                modal.querySelector('div').classList.add('scale-90');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                    window.open(item.iframeUrl, '_blank');
-                }, 500);
+            // Pulse the notification for visibility
+            notify.classList.add('animate-pulse');
+            setTimeout(() => notify.classList.remove('animate-pulse'), 2000);
+
+            close.onclick = () => {
+                notify.classList.remove('translate-y-0');
+                notify.classList.add('-translate-y-full');
+                
+                // Track and Open
+                trackAndRedirect(item);
             };
-        } else {
-            alert("PROTOCOL ALERT [BASEBALL BROS]:\n\nTHE ACCESS CODE IS: 123");
-            window.open(item.iframeUrl, '_blank');
+            
+            // Do NOT redirect immediately for Baseball Bros
+            return;
         }
-        return; // Don't proceed to window.open here, wait for click
     }
     
+    trackAndRedirect(item);
+}
+
+function trackAndRedirect(item) {
     // Update Recently Played
     if (!Array.isArray(userData.recentlyPlayed)) userData.recentlyPlayed = [];
     userData.recentlyPlayed = [item.id, ...userData.recentlyPlayed.filter(id => id !== item.id)].slice(0, 8);
@@ -588,8 +597,6 @@ function openPlayer(item) {
     saveUserData();
     renderRecentlyPlayed();
 
-    // Directly take the user to the "Secure Mirror" (External Link)
-    // and skip the intermediate "option" screen.
     window.open(item.iframeUrl, '_blank');
 }
 
