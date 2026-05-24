@@ -22,7 +22,7 @@ import {
     signInWithPopup
 } from 'firebase/auth';
 
-const ALLOWED_DEVS = ['jackcampell608@gmail.com', 'mandyfmcgregor@gmail.com', 'fmcgregm@gmail.com'];
+const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 
 const allEntries = [
   {
@@ -859,8 +859,8 @@ function setupEventListeners() {
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
                     authorId: user ? user.uid : (isManualDev ? 'passcode-admin-001' : 'guest'),
-                    authorName: user ? (user.displayName || user.email.split('@')[0]) : (isManualDev ? 'Administrator' : 'Guest'),
-                    authorPhoto: user ? user.photoURL : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${isManualDev ? 'vault-admin' : 'guest'}`,
+                    authorName: isManualDev ? 'CEO' : (user ? (user.displayName || user.email.split('@')[0]) : 'Guest'),
+                    authorPhoto: user ? user.photoURL : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${isManualDev ? 'ceo-vault' : 'guest'}`,
                     createdAt: serverTimestamp()
                 });
 
