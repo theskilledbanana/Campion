@@ -426,6 +426,22 @@
         </div>
     </div>
 
+    <!-- System Alert Modal -->
+    <div id="system-alert-modal" class="fixed inset-0 z-[250] flex items-center justify-center p-6 bg-black/95 backdrop-blur-3xl hidden opacity-0 transition-opacity duration-500">
+        <div class="bg-zinc-950 border border-red-500/30 rounded-[3rem] p-12 max-w-xl w-full shadow-[0_0_100px_rgba(239,68,68,0.2)] relative scale-90 transition-all duration-500 text-center">
+            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-red-500/10 border border-red-500/20 mb-8 animate-pulse">
+                <i class="bi bi-exclamation-triangle-fill text-red-500 text-4xl"></i>
+            </div>
+            <h2 class="text-4xl font-black text-white tracking-tighter uppercase italic leading-none mb-6">Security Alert</h2>
+            <div class="p-8 bg-red-500/5 border border-red-500/20 rounded-3xl mb-8">
+                <p class="text-zinc-400 text-[10px] font-mono uppercase tracking-[0.2em] mb-4">Baseball Bros Access Protocol</p>
+                <h3 id="system-alert-msg" class="text-5xl font-black text-red-500 tracking-widest my-4">123</h3>
+                <p class="text-zinc-500 text-[9px] font-black uppercase tracking-[0.2em]">Enter this code in the terminal to unlock assets</p>
+            </div>
+            <button id="close-system-alert" class="w-full py-5 bg-white text-black rounded-3xl font-black uppercase tracking-[0.4em] hover:bg-zinc-200 transition-all active:scale-95">Acknowledge</button>
+        </div>
+    </div>
+
     <!-- Developer Application Modal -->
     <div id="dev-modal" class="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-300">
         <div class="bg-zinc-950 border border-white/10 rounded-[2.5rem] p-8 md:p-12 max-w-lg w-full shadow-2xl relative scale-95 transition-all duration-300" id="dev-container">

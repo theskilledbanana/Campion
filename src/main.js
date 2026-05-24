@@ -440,34 +440,38 @@ function renderItems() {
         const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
         
         const card = document.createElement('div');
-        card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
+        card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-4 backdrop-blur-[2px]">
-                    <div class="bg-white text-black px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-[0_0_30px_rgba(255,255,255,0.3)] transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 flex items-center gap-2">
-                        <span>Initialize Link</span>
-                        <i class="bi bi-cpu-fill text-lg"></i>
+                <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950/90 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none p-6 text-center">
+                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <div class="w-16 h-16 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)] mb-4 mx-auto">
+                            <i class="bi bi-play-fill text-4xl ml-1"></i>
+                        </div>
+                        <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Initialize Link</h2>
+                        <p class="text-cyan-400 font-mono text-[10px] uppercase tracking-[0.4em] font-bold">Uplink Confirmed</p>
                     </div>
-                    <span class="mt-4 text-[8px] font-black text-cyan-400 uppercase tracking-[0.4em] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">Secure Uplink Ready</span>
                 </div>
                 
-                <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                    <span class="text-[8px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20">${nodeId}</span>
+                <div class="absolute top-4 left-4 z-10">
+                    <span class="text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20">${nodeId}</span>
                 </div>
             </div>
-            <div class="p-5">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
+            <div class="p-6 relative">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex flex-wrap gap-2">
                         ${categories.map(cat => `
-                            <span class="text-[10px] font-bold text-cyan-400/80 px-2 py-0.5 bg-cyan-400/5 border border-cyan-400/10 rounded uppercase tracking-[0.1em] font-mono">${cat}</span>
+                            <span class="text-[10px] font-black text-cyan-400/90 px-3 py-1 bg-cyan-400/5 border border-cyan-400/10 rounded-full uppercase tracking-widest font-mono shadow-[inset_0_0_10px_rgba(34,211,238,0.1)]">${cat}</span>
                         `).join('')}
                     </div>
                 </div>
-                <h3 class="text-zinc-100 font-extrabold text-xl tracking-tight leading-tight group-hover:text-cyan-400 transition-colors uppercase italic">${item.title || 'Untitled Game'}</h3>
-                <p class="text-zinc-500 text-sm line-clamp-2 mt-2 font-medium leading-relaxed">${item.description || 'No description available for this link.'}</p>
+                <h3 class="text-zinc-100 font-black text-2xl tracking-tighter group-hover:text-cyan-400 transition-all duration-300 uppercase italic leading-none">${item.title || 'Untitled Game'}</h3>
+                <p class="text-zinc-500 text-sm line-clamp-2 mt-3 font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">${item.description || 'No description available for this link.'}</p>
+                
+                <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/10 transition-colors pointer-events-none"></div>
             </div>
         `;
         card.onclick = () => openPlayer(item);
@@ -503,28 +507,34 @@ function renderRecentlyPlayed() {
         if (!item || !item.id) return;
         
         const card = document.createElement('div');
-        card.className = "flex-shrink-0 w-64 group cursor-pointer snap-start";
+        card.className = "flex-shrink-0 w-72 group cursor-pointer snap-start";
         card.innerHTML = `
-            <div class="relative aspect-video rounded-2xl overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-1 group-hover:blur-[2px]" referrerpolicy="no-referrer">
-                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80"></div>
+            <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-80"></div>
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-4 backdrop-blur-[2px]">
-                    <div class="bg-white text-black px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 flex items-center gap-2">
-                        <span>Resume Link</span>
-                        <i class="bi bi-arrow-right-short text-xl"></i>
+                <div class="absolute inset-0 z-50 opacity-0 group-hover:opacity-100 transition-all duration-500 bg-zinc-950/90 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none p-6 text-center">
+                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <div class="w-16 h-16 rounded-full bg-white flex items-center justify-center text-black shadow-[0_0_40px_rgba(255,255,255,0.4)] mb-4 mx-auto">
+                            <i class="bi bi-play-fill text-4xl ml-1"></i>
+                        </div>
+                        <h5 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Resume Link</h5>
+                        <p class="text-cyan-400 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Protocol Active</p>
                     </div>
                 </div>
                 
-                <div class="absolute top-3 left-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(34,211,238,1)]"></div>
+                <div class="absolute top-4 left-4 z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,1)] animate-pulse"></div>
+                        <span class="text-[8px] font-black text-cyan-400 uppercase tracking-widest font-mono">Archive Active</span>
+                    </div>
                 </div>
             </div>
-            <div class="mt-4 px-1">
-                <h4 class="text-zinc-200 font-bold text-sm uppercase italic tracking-tighter group-hover:text-cyan-400 transition-colors">${item.title || 'Untitled'}</h4>
-                <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-bold">${(item.categories && item.categories[0]) || 'Game'}</span>
+            <div class="mt-5 px-2">
+                <h4 class="text-zinc-100 font-black text-lg uppercase italic tracking-tighter group-hover:text-cyan-400 transition-colors leading-none">${item.title || 'Untitled'}</h4>
+                <div class="flex items-center gap-2 mt-2">
+                    <span class="text-[9px] font-mono text-zinc-600 uppercase tracking-[0.2em] font-black">${(item.categories && item.categories[0]) || 'Game'}</span>
                 </div>
             </div>
         `;
@@ -542,7 +552,29 @@ function openPlayer(item) {
     
     // Baseball Bros Disclaimer - Big protocol alert
     if (item.id === 'baseball-bros') {
-        alert("PROTOCOL ALERT [BASEBALL BROS]:\n\nTHE ACCESS CODE IS: 123\n\nENTER THIS IN THE GAME TERMINAL TO UNLOCK CORE ASSETS.");
+        const modal = document.getElementById('system-alert-modal');
+        const closeBtn = document.getElementById('close-system-alert');
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('div').classList.remove('scale-90');
+                modal.querySelector('div').classList.add('scale-100');
+            }, 10);
+            
+            closeBtn.onclick = () => {
+                modal.classList.add('opacity-0');
+                modal.querySelector('div').classList.add('scale-90');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    window.open(item.iframeUrl, '_blank');
+                }, 500);
+            };
+        } else {
+            alert("PROTOCOL ALERT [BASEBALL BROS]:\n\nTHE ACCESS CODE IS: 123");
+            window.open(item.iframeUrl, '_blank');
+        }
+        return; // Don't proceed to window.open here, wait for click
     }
     
     // Update Recently Played
