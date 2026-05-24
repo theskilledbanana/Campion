@@ -14,7 +14,8 @@ import {
     setDoc,
     increment,
     updateDoc,
-    limit
+    limit,
+    deleteDoc
 } from 'firebase/firestore';
 import { 
     onAuthStateChanged,
@@ -979,20 +980,43 @@ function syncForumMessages() {
             const date = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
             
             const msgEl = document.createElement('div');
-            msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500`;
+            const isAuthor = (msg.authorId === auth.currentUser?.uid) || (msg.authorId === 'passcode-admin-001' && localStorage.getItem('vp_chat_authorized') === 'true');
+            
+            msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
                 <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + msg.authorId}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
-                <div class="flex flex-col items-start max-w-[80%]">
+                <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black text-white uppercase italic leading-none">${msg.authorName}</span>
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
-                    <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20">
+                    <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative">
                         ${msg.content}
+                        ${isAuthor ? `
+                            <button class="delete-msg-btn absolute -right-8 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-red-500 opacity-0 group-hover/msg:opacity-100 transition-all p-2" data-id="${docSnap.id}">
+                                <i class="bi bi-trash-fill text-xs"></i>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             `;
             forumMessagesView.appendChild(msgEl);
+        });
+
+        // Attach listeners
+        document.querySelectorAll('.delete-msg-btn').forEach(btn => {
+            btn.onclick = async (e) => {
+                const msgId = btn.getAttribute('data-id');
+                if (confirm("PROTOCOL: PERMANENTLY DELETE THIS LOG FROM THE GRID?")) {
+                    try {
+                        await deleteDoc(doc(db, 'forum_messages', msgId));
+                        console.log("Log purged.");
+                    } catch (err) {
+                        console.error("Purge failed:", err);
+                        alert("PURGE ERROR: " + err.message);
+                    }
+                }
+            };
         });
 
         // Update last read since we are viewing

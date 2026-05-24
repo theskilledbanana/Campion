@@ -79,7 +79,8 @@ service cloud.firestore {
       allow create: if (isSignedIn() || incoming().authorId == 'passcode-admin-001') && isValidMessage(incoming())
           && incoming().keys().hasAll(['content', 'authorId', 'authorName', 'createdAt'])
           && incoming().keys().size() <= 6;
-      allow update, delete: if isOwner(existing().authorId);
+      allow update: if isOwner(existing().authorId);
+      allow delete: if isOwner(existing().authorId) || (existing().authorId == 'passcode-admin-001');
     }
     
     // Forum Posts (Legacy)
