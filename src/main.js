@@ -240,17 +240,28 @@ const resetCloakBtn = document.getElementById('reset-cloak');
 const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
 
-let userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
-    username: '',
-    totalSeconds: 0,
-    sessions: 0,
-    recentlyPlayed: []
-};
+let userData;
+try {
+    userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
+        username: '',
+        totalSeconds: 0,
+        sessions: 0,
+        recentlyPlayed: []
+    };
+} catch (e) {
+    console.error("Failed to load user data:", e);
+    userData = {
+        username: '',
+        totalSeconds: 0,
+        sessions: 0,
+        recentlyPlayed: []
+    };
+}
 
-    // Migration for existing users
-    if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
-        userData.recentlyPlayed = [];
-    }
+// Migration for existing users
+if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
+    userData.recentlyPlayed = [];
+}
 
 function init() {
     try {
@@ -366,12 +377,16 @@ function renderItems() {
     }
 
     filtered.forEach((item, index) => {
+        if (!item || !item.id) return;
+        
         const nodeId = `V-P node [${(index + 101).toString(16).toUpperCase()}]`;
+        const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
+        
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/30 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/10";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-105" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-60"></div>
                 <div class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
@@ -389,13 +404,13 @@ function renderItems() {
             <div class="p-5">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-2">
-                        ${item.categories.map(cat => `
+                        ${categories.map(cat => `
                             <span class="text-[10px] font-bold text-cyan-400/80 px-2 py-0.5 bg-cyan-400/5 border border-cyan-400/10 rounded uppercase tracking-[0.1em] font-mono">${cat}</span>
                         `).join('')}
                     </div>
                 </div>
-                <h3 class="text-zinc-100 font-extrabold text-xl tracking-tight leading-tight group-hover:text-cyan-400 transition-colors uppercase italic">${item.title}</h3>
-                <p class="text-zinc-500 text-sm line-clamp-2 mt-2 font-medium leading-relaxed">${item.description}</p>
+                <h3 class="text-zinc-100 font-extrabold text-xl tracking-tight leading-tight group-hover:text-cyan-400 transition-colors uppercase italic">${item.title || 'Untitled Game'}</h3>
+                <p class="text-zinc-500 text-sm line-clamp-2 mt-2 font-medium leading-relaxed">${item.description || 'No description available for this link.'}</p>
             </div>
         `;
         card.onclick = () => openPlayer(item);
@@ -426,13 +441,13 @@ function renderRecentlyPlayed() {
     
     recentIds.forEach(id => {
         const item = allEntries.find(g => g.id === id);
-        if (!item) return;
+        if (!item || !item.id) return;
         
         const card = document.createElement('div');
         card.className = "flex-shrink-0 w-64 group cursor-pointer snap-start";
         card.innerHTML = `
             <div class="relative aspect-video rounded-2xl overflow-hidden border border-white/5 group-hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
-                <img src="${item.thumbnail}" alt="${item.title}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-1" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-6 transition-all duration-700 group-hover:scale-110 group-hover:rotate-1" referrerpolicy="no-referrer">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80"></div>
                 <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-cyan-950/40 backdrop-blur-[2px]">
                      <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
@@ -445,9 +460,9 @@ function renderRecentlyPlayed() {
                 </div>
             </div>
             <div class="mt-4 px-1">
-                <h4 class="text-zinc-200 font-bold text-sm uppercase italic tracking-tighter group-hover:text-cyan-400 transition-colors">${item.title}</h4>
+                <h4 class="text-zinc-200 font-bold text-sm uppercase italic tracking-tighter group-hover:text-cyan-400 transition-colors">${item.title || 'Untitled'}</h4>
                 <div class="flex items-center gap-2 mt-1">
-                    <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-bold">${item.categories[0]}</span>
+                    <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-bold">${(item.categories && item.categories[0]) || 'Game'}</span>
                 </div>
             </div>
         `;
