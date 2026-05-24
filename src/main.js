@@ -522,8 +522,7 @@ function renderRecentlyPlayed() {
                         <div class="w-14 h-14 rounded-full bg-white flex items-center justify-center text-black shadow-[0_0_30px_rgba(255,255,255,0.4)] mb-4 mx-auto group-hover:scale-110 transition-transform">
                             <i class="bi bi-play-fill text-3xl ml-1"></i>
                         </div>
-                        <h5 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-none mb-1">Resume Game</h5>
-                        <p class="text-cyan-400 font-mono text-[8px] uppercase tracking-[0.4em] font-bold">Protocol Active</p>
+                        <h5 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-none">Resume Game</h5>
                     </div>
                 </div>
                 
