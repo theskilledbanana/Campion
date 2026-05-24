@@ -22,7 +22,7 @@ import {
     signInWithPopup
 } from 'firebase/auth';
 
-const OWNER_EMAIL = 'jackcampell608@gmail.com';
+const ALLOWED_DEVS = ['jackcampell608@gmail.com', 'mandyfmcgregor@gmail.com', 'fmcgregm@gmail.com'];
 
 const allEntries = [
   {
@@ -714,12 +714,16 @@ function setupEventListeners() {
             const forumInputArea = document.getElementById('forum-input-area');
             const forumAuthPrompt = document.getElementById('forum-auth-prompt');
             
-            if (user && user.email === OWNER_EMAIL) {
+            if (user && ALLOWED_DEVS.includes(user.email)) {
                 forumInputArea?.classList.remove('hidden');
                 forumAuthPrompt?.classList.add('hidden');
             } else {
                 forumInputArea?.classList.add('hidden');
                 forumAuthPrompt?.classList.remove('hidden');
+                if (user) {
+                    const promptText = forumAuthPrompt?.querySelector('p');
+                    if (promptText) promptText.textContent = `V-P ACCESS DENIED: ${user.email} IS NOT AUTHORIZED`;
+                }
             }
         });
     }
@@ -728,8 +732,22 @@ function setupEventListeners() {
     const devLoginBtn = document.getElementById('dev-login-btn');
     if (devLoginBtn && auth) {
         devLoginBtn.onclick = () => {
+            const originalText = devLoginBtn.textContent;
+            devLoginBtn.disabled = true;
+            devLoginBtn.textContent = 'AUTHORIZING...';
+            
             const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider).catch(err => console.error("Login failed:", err));
+            signInWithPopup(auth, provider).then(() => {
+                devLoginBtn.textContent = 'PROTOCOL SUCCESS';
+            }).catch(err => {
+                console.error("Login failed:", err);
+                devLoginBtn.textContent = 'LINK FAILED';
+                setTimeout(() => {
+                    devLoginBtn.disabled = false;
+                    devLoginBtn.textContent = originalText;
+                }, 3000);
+                alert("Login Error: If you are on a restricted network, the authentication window might be blocked. Error: " + err.message);
+            });
         };
     }
 
@@ -786,11 +804,12 @@ function setupEventListeners() {
                 sendForumMsgBtn.disabled = true;
                 sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
+                const user = auth.currentUser;
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
-                    authorId: 'developer-nexus',
-                    authorName: 'Developer',
-                    authorPhoto: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=dev-nexus',
+                    authorId: user ? user.uid : 'developer-nexus',
+                    authorName: user ? (user.displayName || user.email.split('@')[0]) : 'Developer',
+                    authorPhoto: user ? user.photoURL : `https://api.dicebear.com/7.x/pixel-art/svg?seed=dev-nexus`,
                     createdAt: serverTimestamp()
                 });
 
@@ -799,6 +818,7 @@ function setupEventListeners() {
                 forumMessagesView.scrollTo({ top: forumMessagesView.scrollHeight, behavior: 'smooth' });
             } catch (error) {
                 console.error("Transmission failed:", error);
+                alert("Cloud Sync Failure: " + error.message);
             } finally {
                 sendForumMsgBtn.disabled = false;
                 sendForumMsgBtn.innerHTML = '<i class="bi bi-send-fill text-xl group-hover:rotate-12 transition-transform"></i>';
