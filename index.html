@@ -95,6 +95,23 @@
         .animate-scale-up {
             animation: scale-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
+        /* Hover Protocol Fallbacks */
+        .group:hover .group-hover\:opacity-100 {
+            opacity: 1 !important;
+        }
+        .group:hover .group-hover\:translate-y-0 {
+            transform: translateY(0) !important;
+        }
+        .group:hover .group-hover\:scale-110 {
+            transform: scale(1.1) !important;
+        }
+        .group:hover .group-hover\:blur-sm {
+            filter: blur(4px) !important;
+        }
+        .group:hover .group-hover\:blur-md {
+            filter: blur(8px) !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-cyan-500/30 selection:text-cyan-200">

@@ -446,15 +446,15 @@ function renderItems() {
                 <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" referrerpolicy="no-referrer">
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none p-6 text-center backdrop-blur-sm">
-                    <div class="transform translate-y-8 group-hover:translate-y-0 transition-all duration-500 ease-out">
-                        <div class="w-16 h-16 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-[0_0_40px_rgba(34,211,238,0.6)] mb-6 mx-auto group-hover:scale-110 transition-transform">
+                <div class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-zinc-950/90 opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 text-center">
+                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 ease-out">
+                        <div class="w-16 h-16 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)] mb-4 mx-auto group-hover:scale-110 transition-transform">
                             <i class="bi bi-play-fill text-4xl ml-1"></i>
                         </div>
                         <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Launch Game</h2>
                         <div class="flex items-center justify-center gap-2">
                             <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
-                            <p class="text-cyan-400 font-mono text-[10px] uppercase tracking-[0.5em] font-bold">Uplink Ready</p>
+                            <p class="text-cyan-400 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Uplink Ready</p>
                         </div>
                     </div>
                 </div>
@@ -463,7 +463,7 @@ function renderItems() {
                     <span class="text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20">${nodeId}</span>
                 </div>
             </div>
-            <div class="p-6 relative transition-all duration-500 group-hover:translate-x-1">
+            <div class="p-6 relative">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex flex-wrap gap-2">
                         ${categories.map(cat => `
@@ -517,8 +517,8 @@ function renderRecentlyPlayed() {
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-60"></div>
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 z-50 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/80 flex flex-col items-center justify-center pointer-events-none p-6 text-center backdrop-blur-sm">
-                    <div class="transform translate-y-8 group-hover:translate-y-0 transition-all duration-500">
+                <div class="absolute inset-0 z-40 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-zinc-950/90 flex flex-col items-center justify-center p-6 text-center">
+                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
                         <div class="w-14 h-14 rounded-full bg-white flex items-center justify-center text-black shadow-[0_0_30px_rgba(255,255,255,0.4)] mb-4 mx-auto group-hover:scale-110 transition-transform">
                             <i class="bi bi-play-fill text-3xl ml-1"></i>
                         </div>
