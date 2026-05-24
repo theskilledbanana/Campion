@@ -264,16 +264,26 @@ if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
 }
 
 function init() {
+    console.log("VaultPortal Initializing...");
+    
+    // Explicitly reset initial state
+    currentCategory = 'All';
+    currentSearch = '';
+    if (searchInput) searchInput.value = '';
+
     try {
-        renderCategories();
-        renderRecentlyPlayed();
-        renderItems();
-        setupEventListeners();
-        showDisclaimer();
-        startSystemTicker();
-        initBadgeSubscription();
+        // Individual safety wrappers for core rendering
+        safeCall(renderCategories, "Categories");
+        safeCall(renderRecentlyPlayed, "Recent");
+        safeCall(renderItems, "Items");
+        
+        // Non-critical systems
+        safeCall(setupEventListeners, "Events");
+        safeCall(showDisclaimer, "Disclaimer");
+        safeCall(startSystemTicker, "Ticker");
+        safeCall(initBadgeSubscription, "BadgeSub");
     } catch (err) {
-        console.error("Initialization failed:", err);
+        console.error("Initialization sequence fatal error:", err);
     }
     
     // Auto-load cloaked title
@@ -281,6 +291,14 @@ function init() {
     if (savedTitle) {
         document.title = savedTitle;
         if (cloakInput) cloakInput.value = savedTitle;
+    }
+}
+
+function safeCall(fn, name) {
+    try {
+        fn();
+    } catch (e) {
+        console.error(`Sub-system failure [${name}]:`, e);
     }
 }
 
@@ -317,26 +335,32 @@ function hideDisclaimer() {
 
 function renderCategories() {
     if (!categoriesNav) return;
-    const rawCategories = [...new Set(allEntries.flatMap(e => e.categories))];
-    const sortedCategories = rawCategories.sort((a, b) => {
+    
+    const entries = Array.isArray(allEntries) ? allEntries : [];
+    const rawCategories = [...new Set(entries.flatMap(e => e.categories || []))];
+    const sortedCategories = rawCategories.filter(Boolean).sort((a, b) => {
         if (a === 'Trending Games') return -1;
         if (b === 'Trending Games') return 1;
-        return a.localeCompare(b);
+        return String(a).localeCompare(String(b));
     });
     
-    const categories = ['All', ...sortedCategories];
+    const categoriesList = ['All', ...sortedCategories];
     
-    // Clear existing buttons (except the label)
-    const label = categoriesNav.querySelector('div');
-    if (label) {
-        categoriesNav.innerHTML = '';
-        categoriesNav.appendChild(label);
-    }
+    // Static HTML for the filter label to ensure it's always there
+    const labelHTML = `
+        <div class="flex items-center gap-3 pr-6 border-r border-white/5 mr-3 flex-shrink-0">
+            <i class="bi bi-filter-left text-zinc-500 text-xl"></i>
+            <span class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Filter</span>
+        </div>
+    `;
+    
+    categoriesNav.innerHTML = labelHTML;
 
-    categories.forEach(category => {
+    categoriesList.forEach(category => {
         const btn = document.createElement('button');
+        const isActive = currentCategory === category;
         btn.className = `whitespace-nowrap px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${
-            currentCategory === category 
+            isActive 
             ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)] translate-y-[-1px]' 
             : 'bg-white/5 text-zinc-500 border-white/5 hover:bg-white/10 hover:text-zinc-300 hover:border-white/10'
         }`;
@@ -354,10 +378,15 @@ function renderItems() {
     if (!itemsGrid) return;
     itemsGrid.innerHTML = '';
     
+    const term = (currentSearch || '').toLowerCase();
+    const cat = currentCategory || 'All';
+
     const filtered = allEntries.filter(item => {
-        const matchesCategory = currentCategory === 'All' || item.categories.includes(currentCategory);
-        const matchesSearch = item.title.toLowerCase().includes(currentSearch.toLowerCase()) || 
-                             item.description.toLowerCase().includes(currentSearch.toLowerCase());
+        if (!item) return false;
+        const matchesCategory = cat === 'All' || (Array.isArray(item.categories) && item.categories.includes(cat));
+        const title = (item.title || '').toLowerCase();
+        const desc = (item.description || '').toLowerCase();
+        const matchesSearch = title.includes(term) || desc.includes(term);
         return matchesCategory && matchesSearch;
     });
 
@@ -370,7 +399,7 @@ function renderItems() {
                     </div>
                     <h3 class="text-2xl font-black text-white tracking-tight uppercase">Void Detected</h3>
                     <p class="text-zinc-500 mt-2 font-medium max-w-xs mx-auto">No interactive modules match your current decryption parameters.</p>
-                    <button onclick="currentSearch=''; searchInput.value=''; renderItems();" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
+                    <button onclick="document.getElementById('search-input').value=''; window.dispatchEvent(new Event('input'));" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
                 </div>
             </div>`;
         return;
