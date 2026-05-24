@@ -816,6 +816,8 @@ function setupEventListeners() {
         // Mark as read when opening
         const broadcastBadge = document.getElementById('broadcast-badge');
         if (broadcastBadge) broadcastBadge.classList.add('hidden');
+        const forumBtn = document.getElementById('forum-btn');
+        if (forumBtn) forumBtn.classList.remove('ring-2', 'ring-indigo-500/50', 'animate-pulse');
         
         syncForumMessages();
     };
@@ -860,7 +862,7 @@ function setupEventListeners() {
                     content,
                     authorId: user ? user.uid : (isManualDev ? 'passcode-admin-001' : 'guest'),
                     authorName: isManualDev ? 'CEO' : (user ? (user.displayName || user.email.split('@')[0]) : 'Guest'),
-                    authorPhoto: user ? user.photoURL : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${isManualDev ? 'ceo-vault' : 'guest'}`,
+                    authorPhoto: user ? user.photoURL : (isManualDev ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=guest`),
                     createdAt: serverTimestamp()
                 });
 
@@ -917,8 +919,12 @@ function initBadgeSubscription() {
 
             if (newestTime > lastReadTime) {
                 broadcastBadge.classList.remove('hidden');
+                const forumBtn = document.getElementById('forum-btn');
+                if (forumBtn) forumBtn.classList.add('ring-2', 'ring-indigo-500/50', 'animate-pulse');
             } else {
                 broadcastBadge.classList.add('hidden');
+                const forumBtn = document.getElementById('forum-btn');
+                if (forumBtn) forumBtn.classList.remove('ring-2', 'ring-indigo-500/50', 'animate-pulse');
             }
         }, (err) => {
             console.warn("Badge sync unavailable:", err);
