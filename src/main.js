@@ -446,12 +446,12 @@ function renderItems() {
                 <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-6 transition-transform duration-700 group-hover:scale-110 group-hover:blur-[2px]" referrerpolicy="no-referrer">
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center p-4">
-                    <div class="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-full mb-3 scale-75 group-hover:scale-100 transition-transform duration-500">
-                        <i class="bi bi-play-fill text-3xl text-cyan-400"></i>
+                <div class="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-4 backdrop-blur-[2px]">
+                    <div class="bg-white text-black px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-[0_0_30px_rgba(255,255,255,0.3)] transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 flex items-center gap-2">
+                        <span>Initialize Link</span>
+                        <i class="bi bi-cpu-fill text-lg"></i>
                     </div>
-                    <span class="text-[10px] font-black text-cyan-400 uppercase tracking-[0.4em] translate-y-2 group-hover:translate-y-0 transition-all duration-500">Initialize Link</span>
-                    <h4 class="text-white font-black text-xs mt-2 uppercase tracking-tight opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">Ready for Uplink</h4>
+                    <span class="mt-4 text-[8px] font-black text-cyan-400 uppercase tracking-[0.4em] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">Secure Uplink Ready</span>
                 </div>
                 
                 <div class="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
@@ -510,11 +510,11 @@ function renderRecentlyPlayed() {
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80"></div>
                 
                 <!-- Hover Overlay -->
-                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center p-4">
-                    <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                        <i class="bi bi-play-fill text-2xl ml-1"></i>
+                <div class="absolute inset-0 bg-zinc-950/60 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-4 backdrop-blur-[2px]">
+                    <div class="bg-white text-black px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 flex items-center gap-2">
+                        <span>Resume Link</span>
+                        <i class="bi bi-arrow-right-short text-xl"></i>
                     </div>
-                    <span class="mt-4 text-[9px] font-black text-white uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100 italic">Resume Link</span>
                 </div>
                 
                 <div class="absolute top-3 left-3">
