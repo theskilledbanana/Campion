@@ -413,11 +413,7 @@ function renderCategories() {
     
     nav.innerHTML = labelHTML;
 
-    const categoriesList = ['All'];
-    if (userData.favorites && userData.favorites.length > 0) {
-        categoriesList.push('Favorites ⭐');
-    }
-    categoriesList.push(...sortedCategories);
+    const categoriesList = ['All', 'Favorites ⭐', ...sortedCategories];
     
     categoriesList.forEach(category => {
         const btn = document.createElement('button');
@@ -446,6 +442,7 @@ function toggleFavorite(e, gameId) {
         userData.favorites.splice(index, 1);
     }
     saveUserData();
+    renderCategories();
     renderItems();
 }
 
