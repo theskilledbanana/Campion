@@ -1287,6 +1287,59 @@ function syncForumMessages() {
 
     const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'asc'));
     
+    const ensureCeoAuth = async (skipConfirm = false) => {
+        if (localStorage.getItem('vp_chat_role') !== 'ceo') return false;
+        
+        try {
+            let currentUser = auth.currentUser;
+            
+            // If already signed in as the master CEO, return true immediately
+            if (currentUser && currentUser.email === 'mandyfmcgregor@gmail.com') {
+                return true;
+            }
+
+            if (!currentUser) {
+                if (skipConfirm || confirm("MASTER LINK REQUIRED: To perform remote deletions, you must authorize via Google. Establish link now?")) {
+                    const provider = new GoogleAuthProvider();
+                    const cred = await signInWithPopup(auth, provider);
+                    currentUser = cred.user;
+                } else {
+                    return false;
+                }
+            }
+            
+            if (currentUser) {
+                try {
+                    await setDoc(doc(db, 'authorized_users', currentUser.uid), {
+                        role: 'ceo',
+                        status: 'active',
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                } catch (setDocErr) {
+                    console.warn("CEO Role sync failed (likely Rules restricted), but proceeding as primary user:", setDocErr);
+                    // If it's Mandy, she's authorized via email rule anyway, so we can ignore sync failure
+                    if (currentUser.email === 'mandyfmcgregor@gmail.com') {
+                        return true;
+                    }
+                    throw setDocErr;
+                }
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.error("CEO Auth verification failed:", err);
+            if (err.code === 'auth/popup-blocked') {
+                alert("AUTHENTICATION BLOCKED: Please enable popups for this site to establish the Master Link.");
+            } else if (err.code === 'auth/cancelled-popup-request') {
+                console.warn("Silent popup cancel.");
+                return false;
+            } else {
+                alert("AUTHENTICATION ERROR: " + err.message + " [" + (err.code || 'UNKNOWN') + "]");
+            }
+            return false;
+        }
+    };
+
     unsubscribeForum = onSnapshot(messagesQuery, (snapshot) => {
         if (snapshot.empty) {
             forumMessagesView.innerHTML = `
@@ -1348,101 +1401,59 @@ function syncForumMessages() {
                 </div>
             `;
             forumMessagesView.appendChild(msgEl);
-        });
+    });
 
-        // Attach listeners
-        const ensureCeoAuth = async () => {
-            if (localStorage.getItem('vp_chat_role') !== 'ceo') return false;
+    // Attach listeners
+    document.querySelectorAll('.delete-msg-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+            const msgId = btn.getAttribute('data-id');
+            const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
             
-            try {
-                let currentUser = auth.currentUser;
-                
-                if (!currentUser) {
-                    if (confirm("MASTER LINK REQUIRED: To perform remote deletions, you must authorize via Google. Establish link now?")) {
-                        const provider = new GoogleAuthProvider();
-                        const cred = await signInWithPopup(auth, provider);
-                        currentUser = cred.user;
+            if (isCeoLocal && !auth.currentUser) {
+                const authed = await ensureCeoAuth(true); // skipConfirm to keep interaction token
+                if (!authed) return;
+            }
+
+            if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
+                try {
+                    await deleteDoc(doc(db, 'forum_messages', msgId));
+                } catch (err) {
+                    console.error("Deletion failed:", err);
+                    if (err.code === 'permission-denied') {
+                        alert("PERMISSION DENIED: Access unauthorized for remote deletion. Try re-logging with CEO passcode.");
                     } else {
-                        return false;
+                        alert("DELETION ERROR: " + err.message);
                     }
                 }
-                
-                if (currentUser) {
-                    await setDoc(doc(db, 'authorized_users', currentUser.uid), {
-                        role: 'ceo',
-                        status: 'active',
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                    return true;
-                }
-                return false;
-            } catch (err) {
-                console.error("CEO Auth verification failed:", err);
-                if (err.code === 'auth/popup-blocked') {
-                    alert("AUTHENTICATION BLOCKED: Please enable popups for this site to establish the Master Link.");
-                } else {
-                    alert("AUTHENTICATION FAILURE: " + err.message);
-                }
-                return false;
             }
         };
+    });
 
-        document.querySelectorAll('.delete-msg-btn').forEach(btn => {
-            btn.onclick = async (e) => {
-                const msgId = btn.getAttribute('data-id');
-                const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
-                
-                if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
-                    try {
-                        if (isCeoLocal) {
-                            const authed = await ensureCeoAuth();
-                            if (!authed) {
-                                alert("AUTHENTICATION FAILURE: Unable to establish secure link for deletion.");
-                                return;
-                            }
-                        }
-                        
-                        await deleteDoc(doc(db, 'forum_messages', msgId));
-                    } catch (err) {
-                        console.error("Deletion failed:", err);
-                        if (err.code === 'permission-denied') {
-                            alert("PERMISSION DENIED: Access unauthorized for remote deletion. Try re-logging with CEO passcode.");
-                        } else {
-                            alert("DELETION ERROR: " + err.message);
-                        }
-                    }
+    document.querySelectorAll('.revoke-access-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+            const authorId = btn.getAttribute('data-authorid');
+            const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
+
+            if (isCeoLocal && !auth.currentUser) {
+                const authed = await ensureCeoAuth(true); // skipConfirm
+                if (!authed) return;
+            }
+
+            if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
+                try {
+                    await setDoc(doc(db, 'banned_clients', authorId), {
+                        status: 'banned',
+                        bannedAt: serverTimestamp(),
+                        bannedBy: 'CEO'
+                    });
+                    alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
+                } catch (err) {
+                    console.error("Revoke failed:", err);
+                    alert("REVOKE ERROR: " + err.message);
                 }
-            };
-        });
-
-        document.querySelectorAll('.revoke-access-btn').forEach(btn => {
-            btn.onclick = async (e) => {
-                const authorId = btn.getAttribute('data-authorid');
-                const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
-
-                if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
-                    try {
-                        if (isCeoLocal) {
-                            const authed = await ensureCeoAuth();
-                            if (!authed) {
-                                alert("AUTHENTICATION FAILURE: Unable to establish secure link for revocation.");
-                                return;
-                            }
-                        }
-
-                        await setDoc(doc(db, 'banned_clients', authorId), {
-                            status: 'banned',
-                            bannedAt: serverTimestamp(),
-                            bannedBy: 'CEO'
-                        });
-                        alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
-                    } catch (err) {
-                        console.error("Revoke failed:", err);
-                        alert("REVOKE ERROR: " + err.message);
-                    }
-                }
-            };
-        });
+            }
+        };
+    });
 
         // Update last read since we are viewing
         localStorage.setItem('vp_last_read_broadcast', latestTime.toString());
