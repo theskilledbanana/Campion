@@ -215,6 +215,7 @@ let updateSiteBtn, updateModal, updateContainer, closeUpdateBtn, devApplyBtn, de
 let devContainer, closeDevBtn, disclaimerModal, disclaimerContainer, acceptDisclaimerBtn;
 let surpriseBtn, terminalModal, terminalContainer, terminalInput, terminalResults;
 let cloakTabBtn, cloakModal, cloakContainer, closeCloakBtn, cloakInput, applyCloakBtn, resetCloakBtn;
+let versionTag, devTerminalOverlay, terminalPassInput, terminalStatusLog, terminalAuthSubmit, closeTerminalBtn;
 
 const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
@@ -286,6 +287,14 @@ function init() {
     cloakInput = document.getElementById('cloak-input');
     applyCloakBtn = document.getElementById('apply-cloak');
     resetCloakBtn = document.getElementById('reset-cloak');
+
+    // Dev Terminal Selectors
+    versionTag = document.getElementById('version-tag');
+    devTerminalOverlay = document.getElementById('dev-terminal-overlay');
+    terminalPassInput = document.getElementById('terminal-pass-input');
+    terminalStatusLog = document.getElementById('terminal-status-log');
+    terminalAuthSubmit = document.getElementById('terminal-auth-submit');
+    closeTerminalBtn = document.getElementById('close-terminal');
 
     // Explicitly reset initial state
     currentCategory = 'All';
@@ -752,6 +761,145 @@ function setupEventListeners() {
         };
     }
 
+    // Secret Dev Terminal Gesture
+    if (versionTag) {
+        let clickCount = 0;
+        let lastClick = 0;
+        versionTag.onclick = () => {
+            const now = Date.now();
+            if (now - lastClick < 500) {
+                clickCount++;
+            } else {
+                clickCount = 1;
+            }
+            lastClick = now;
+
+            if (clickCount >= 3) {
+                clickCount = 0;
+                openDevTerminal();
+            }
+        };
+    }
+
+    const openDevTerminal = () => {
+        if (!devTerminalOverlay) return;
+        devTerminalOverlay.classList.remove('hidden');
+        setTimeout(() => {
+            devTerminalOverlay.classList.remove('opacity-0');
+            terminalPassInput?.focus();
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeDevTerminal = () => {
+        if (!devTerminalOverlay) return;
+        devTerminalOverlay.classList.add('opacity-0');
+        setTimeout(() => {
+            devTerminalOverlay.classList.add('hidden');
+            document.body.style.overflow = '';
+            if (terminalPassInput) terminalPassInput.value = '';
+            if (terminalStatusLog) terminalStatusLog.textContent = 'Awaiting encrypted handshake...';
+        }, 500);
+    };
+
+    if (closeTerminalBtn) closeTerminalBtn.onclick = closeDevTerminal;
+    if (devTerminalOverlay) {
+        devTerminalOverlay.onclick = (e) => {
+            if (e.target === devTerminalOverlay) closeDevTerminal();
+        };
+    }
+
+    // Terminal Authorization Procedure
+    const handleTerminalAuth = async () => {
+        const code = terminalPassInput?.value;
+        if (!code) return;
+
+        const isCeoKey = code === 'VAULT_CEO_MASTER_9921_XQ_PROTOCOL_BETA';
+        const isDevKey = code === 'VAULT_DEV_UPLINK_5012_ZM_SECURE_LINK';
+
+        if (isCeoKey || isDevKey) {
+            const isCeo = isCeoKey;
+            try {
+                if (!auth || !db) throw new Error("FIREBASE_NOT_INITIALIZED");
+                
+                if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING SECURE UPLINK...';
+                if (terminalAuthSubmit) terminalAuthSubmit.disabled = true;
+                
+                // Always ensure we have a Firebase UID
+                let user = auth.currentUser;
+                if (!user) {
+                    try {
+                        const cred = await signInAnonymously(auth);
+                        user = cred.user;
+                    } catch (signInErr) {
+                        console.error("Identity Link Error:", signInErr);
+                        if (signInErr.code === 'auth/operation-not-allowed' || signInErr.code === 'auth/admin-restricted-operation') {
+                            const promptMsg = signInErr.code === 'auth/admin-restricted-operation' 
+                                ? "RESTRICTION: SECURITY INTERFERENCE DETECTED. PROCEED WITH GOOGLE LINK?"
+                                : "RESTRICTION: ANONYMOUS AUTH DISABLED. PROCEED WITH GOOGLE LINK?";
+                            
+                            if (confirm(promptMsg)) {
+                                const provider = new GoogleAuthProvider();
+                                const cred = await signInWithPopup(auth, provider);
+                                user = cred.user;
+                            } else {
+                                throw new Error("AUTH_BLOCKED");
+                            }
+                        } else {
+                            throw new Error("AUTH_FAILED");
+                        }
+                    }
+                }
+                
+                if (!user) throw new Error("IDENTITY_LINK_FAILED");
+                
+                // Check status
+                const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
+                if (userDoc.exists() && userDoc.data().status === 'banned') {
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL FATAL: ACCESS PERMANENTLY REVOKED.';
+                    throw new Error("BANNED");
+                }
+                
+                // Register
+                const role = isCeo ? 'ceo' : 'dev';
+                await setDoc(doc(db, 'authorized_users', user.uid), {
+                    role: role,
+                    status: 'active',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                
+                localStorage.setItem('vp_chat_role', role);
+                localStorage.setItem('vp_chat_authorized', 'true');
+                
+                if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ESTABLISHED. PROTOCOL SUCCESS.';
+                
+                setTimeout(() => {
+                    closeDevTerminal();
+                    updateForumAuthUI(user);
+                    alert(isCeo ? "MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
+                }, 1000);
+
+            } catch (err) {
+                console.error("Terminal Auth Error:", err);
+                if (terminalStatusLog) terminalStatusLog.textContent = `ERROR: ${err.message || 'UPLINK FAILED'}`;
+                if (terminalAuthSubmit) terminalAuthSubmit.disabled = false;
+            }
+        } else {
+            if (terminalStatusLog) terminalStatusLog.textContent = 'IDENTITY ERROR: INVALID PAYLOAD.';
+            if (terminalPassInput) {
+                terminalPassInput.classList.add('border-red-500/50');
+                setTimeout(() => terminalPassInput.classList.remove('border-red-500/50'), 1000);
+            }
+        }
+    };
+
+    if (terminalAuthSubmit) terminalAuthSubmit.onclick = handleTerminalAuth;
+    if (terminalPassInput) {
+        terminalPassInput.onkeydown = (e) => {
+            if (e.key === 'Enter') handleTerminalAuth();
+        };
+    }
+
     // Global Keybinds
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -759,6 +907,7 @@ function setupEventListeners() {
             closeCloakModal();
             closeDevModal();
             closeForumModal();
+            closeDevTerminal();
         }
     });
 
@@ -788,6 +937,8 @@ function setupEventListeners() {
         }
     }
 
+    // User identification container removed
+    
     // Developer Authorization Logic
     const isChatAuthorized = () => {
         return localStorage.getItem('vp_chat_authorized') === 'true';
@@ -797,7 +948,6 @@ function setupEventListeners() {
         const forumInputArea = document.getElementById('forum-input-area');
         const forumAuthPrompt = document.getElementById('forum-auth-prompt');
         const promptText = forumAuthPrompt?.querySelector('p');
-        const devLoginBtn = document.getElementById('dev-login-btn');
         
         if (!user && auth.currentUser) user = auth.currentUser;
 
@@ -826,19 +976,11 @@ function setupEventListeners() {
         if (isAuthorized) {
             forumInputArea?.classList.remove('hidden');
             forumAuthPrompt?.classList.add('hidden');
-            if (devLoginBtn) {
-                devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-                devLoginBtn.disabled = true;
-            }
         } else {
             forumInputArea?.classList.add('hidden');
             forumAuthPrompt?.classList.remove('hidden');
-            if (devLoginBtn) {
-                devLoginBtn.textContent = isBanned ? 'ACCESS REVOKED' : 'AUTHORIZE LINK';
-                devLoginBtn.disabled = isBanned;
-            }
             if (promptText) {
-                promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "READ-ONLY TERMINAL // AUTHORIZATION REQUIRED TO BROADCAST";
+                promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "PROTOCOL ERROR: DECRYPTED IDENTITY REQUIRED TO BROADCAST";
             }
         }
     };
@@ -849,115 +991,6 @@ function setupEventListeners() {
         });
     }
 
-    // Developer Login Button (Passcode implementation)
-    const devLoginBtn = document.getElementById('dev-login-btn');
-    if (devLoginBtn) {
-        devLoginBtn.onclick = async () => {
-            const code = prompt("ENTER AUTHORIZATION PASSCODE:");
-            if (code === '5012' || code === '7102') {
-                const isCeo = code === '7102';
-                try {
-                    if (!auth || !db) throw new Error("FIREBASE_NOT_INITIALIZED");
-                    
-                    devLoginBtn.textContent = 'LINKING...';
-                    devLoginBtn.disabled = true;
-                    
-                    // Always ensure we have a Firebase UID
-                    let user = auth.currentUser;
-                    if (!user) {
-                        try {
-                            const cred = await signInAnonymously(auth);
-                            user = cred.user;
-                        } catch (signInErr) {
-                            console.error("Anonymous Auth Error:", signInErr);
-                            
-                            let errorMsg = "AUTH_SERVICE_UNAVAILABLE";
-                            if (signInErr.code === 'auth/operation-not-allowed') {
-                                errorMsg = "ANONYMOUS_AUTH_DISABLED";
-                                const fix = confirm("PROTOCOL FAILURE: Anonymous Authentication is disabled in your Firebase Console.\n\nWould you like to try Google Authorization instead?");
-                                if (fix) {
-                                    const provider = new GoogleAuthProvider();
-                                    const cred = await signInWithPopup(auth, provider);
-                                    user = cred.user;
-                                } else {
-                                    throw new Error(errorMsg);
-                                }
-                            } else {
-                                throw new Error(`AUTH_SERVICE_UNAVAILABLE [${signInErr.code || 'UNKNOWN'}]`);
-                            }
-                        }
-                    }
-                    
-                    if (!user) throw new Error("IDENTITY_LINK_FAILED");
-                    
-                    // Check if already banned
-                    let userDoc;
-                    try {
-                        userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
-                    } catch (readErr) {
-                        console.error("Read error:", readErr);
-                        throw new Error(`DATABASE_READ_DENIED [${readErr.code || 'UNKNOWN'}]`);
-                    }
-
-                    if (userDoc.exists() && userDoc.data().status === 'banned') {
-                        alert("PROTOCOL FATAL: ACCESS HAS BEEN PERMANENTLY REVOKED BY CEO.");
-                        devLoginBtn.textContent = 'ACCESS REVOKED';
-                        devLoginBtn.disabled = true;
-                        return;
-                    }
-                    
-                    // Register dev/ceo in Firestore
-                    const role = isCeo ? 'ceo' : 'dev';
-                    try {
-                        await setDoc(doc(db, 'authorized_users', user.uid), {
-                            role: role,
-                            status: 'active',
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
-                    } catch (writeErr) {
-                        console.error("Write error:", writeErr);
-                        throw new Error(`DATABASE_WRITE_DENIED [${writeErr.code || 'UNKNOWN'}]`);
-                    }
-                    
-                    localStorage.setItem('vp_chat_role', role);
-                    localStorage.setItem('vp_chat_authorized', 'true');
-                    
-                    alert(isCeo ? "CEO UPLINK ESTABLISHED. MASTER CONTROL ACTIVE." : "PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
-                    devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-                    updateForumAuthUI(user);
-                } catch (err) {
-                    console.error("Auth process error:", err);
-                    
-                    let friendlyMsg = err.message || 'UPLINK FAILED';
-                    if (err.message === "ANONYMOUS_AUTH_DISABLED") {
-                        friendlyMsg = "ANONYMOUS_AUTH_DISABLED. Please enable it in the Firebase Console (Build > Authentication > Sign-in method).";
-                    }
-                    
-                    alert(`PROTOCOL ERROR: ${friendlyMsg}`);
-                    devLoginBtn.textContent = 'LINK FAILED';
-                    devLoginBtn.disabled = false;
-                }
-            } else if (code !== null) {
-                alert("PROTOCOL ERROR: INVALID PASSCODE.");
-                setTimeout(() => {
-                    devLoginBtn.textContent = 'LINK FAILED';
-                    setTimeout(() => {
-                        devLoginBtn.textContent = 'AUTHORIZE LINK';
-                    }, 2000);
-                }, 100);
-            }
-        };
-        
-        if (isChatAuthorized()) {
-            devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-            devLoginBtn.disabled = true;
-        }
-
-        // Keep UI in sync with Auth
-        onAuthStateChanged(auth, (user) => {
-            updateForumAuthUI(user);
-        });
-    }
 
     // Forum Management
     const forumBtn = document.getElementById('forum-btn');
