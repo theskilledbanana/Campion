@@ -67,28 +67,24 @@ service cloud.firestore {
     }
 
     function isCeo() {
-      return isSignedIn() && exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
     }
 
-    // 4. Collection Match Blocks
-
-    // Authorized Users
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if (isSignedIn() && request.auth.uid == userId) || isCeo();
+      allow update: if isSignedIn() && (request.auth.uid == userId || isCeo());
       allow delete: if isCeo();
     }
 
-    // Forum Messages (Real-time Chat)
     match /forum_messages/{msgId} {
       allow read: if true;
       allow create: if isPasscodeAuth(incoming()) 
                    && isValidMessage(incoming())
                    && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
       allow update: if false;
-      allow delete: if isCeo() 
-                   || (isSignedIn() && exists(/databases/$(database)/documents/forum_messages/$(msgId)) && existing().firebaseUid == request.auth.uid);
+      allow delete: if isCeo() || (isSignedIn() && existing().firebaseUid == request.auth.uid);
     }
 
     match /banned_clients/{clientId} {

@@ -1258,7 +1258,9 @@ function syncForumMessages() {
         let latestTime = 0;
         forumMessagesView.innerHTML = '';
         const currentUserRole = localStorage.getItem('vp_chat_role');
-        const isCeo = currentUserRole === 'ceo';
+        const isLocalCeo = currentUserRole === 'ceo';
+        const isFirebaseCeo = auth.currentUser && isLocalCeo; // Basic check, accurate check is via rules
+        const isCeo = isLocalCeo;
 
         snapshot.forEach(docSnap => {
             const msg = docSnap.data();
@@ -1269,6 +1271,9 @@ function syncForumMessages() {
             const msgEl = document.createElement('div');
             const isMsgCeo = msg.authorRole === 'ceo';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
+            
+            // Show buttons if either role is CEO or is owner
+            // But warn that Firebase Auth is needed for CEO actions to succeed
             const canDelete = isCeo || isOwnMsg;
             const canRevoke = isCeo && !isMsgCeo;
             
@@ -1303,13 +1308,17 @@ function syncForumMessages() {
         // Attach listeners
         document.querySelectorAll('.delete-msg-btn').forEach(btn => {
             btn.onclick = async (e) => {
+                if (!auth.currentUser && localStorage.getItem('vp_chat_role') === 'ceo') {
+                    alert("AUTHORIZATION REQUIRED: You must be signed in with a Master Account to delete logs.");
+                    return;
+                }
                 const msgId = btn.getAttribute('data-id');
                 if (confirm("PROTOCOL: PERMANENTLY DELETE THIS LOG FROM THE GRID?")) {
                     try {
                         await deleteDoc(doc(db, 'forum_messages', msgId));
                     } catch (err) {
                         console.error("Purge failed:", err);
-                        alert("PURGE ERROR: " + err.message);
+                        alert("PURGE ERROR: " + err.message + "\n\nTip: You must sign in with a verified account to gain write access.");
                     }
                 }
             };
@@ -1317,6 +1326,10 @@ function syncForumMessages() {
 
         document.querySelectorAll('.revoke-access-btn').forEach(btn => {
             btn.onclick = async (e) => {
+                if (!auth.currentUser && localStorage.getItem('vp_chat_role') === 'ceo') {
+                    alert("AUTHORIZATION REQUIRED: Master Account verify is required for Client Revoke.");
+                    return;
+                }
                 const authorId = btn.getAttribute('data-authorid');
                 if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                     try {
