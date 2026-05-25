@@ -1029,7 +1029,6 @@ function setupEventListeners() {
     const masterControlBtn = document.getElementById('master-control-btn');
     const masterPanel = document.getElementById('ceo-master-panel');
     const closeMasterBtn = document.getElementById('close-master-panel');
-    const purgeAllBtn = document.getElementById('purge-all-logs-btn');
 
     if (masterControlBtn) {
         masterControlBtn.onclick = () => {
@@ -1048,33 +1047,6 @@ function setupEventListeners() {
     if (closeMasterBtn) {
         closeMasterBtn.onclick = () => {
             masterPanel?.classList.add('hidden');
-        };
-    }
-
-    if (purgeAllBtn) {
-        purgeAllBtn.onclick = async () => {
-            if (confirm("CRITICAL: THIS WILL PERMANENTLY ERASE ALL MESSAGES FROM THE GRID. PROCEED?")) {
-                try {
-                    purgeAllBtn.disabled = true;
-                    purgeAllBtn.textContent = 'EXECUTING PURGE...';
-                    const snap = await getDocs(collection(db, 'forum_messages'));
-                    let count = 0;
-                    for (const d of snap.docs) {
-                        try {
-                            await deleteDoc(doc(db, 'forum_messages', d.id));
-                            count++;
-                        } catch (e) {
-                            console.warn(`Failed to delete msg ${d.id}:`, e);
-                        }
-                    }
-                    alert(`SYSTEM PURGE COMPLETE. ${count} LOGS ERASED.`);
-                } catch (err) {
-                    alert("PURGE FAILED: " + err.message);
-                } finally {
-                    purgeAllBtn.disabled = false;
-                    purgeAllBtn.textContent = 'Purge All Global Logs';
-                }
-            }
         };
     }
 
@@ -1109,8 +1081,7 @@ function setupEventListeners() {
 
                     if (isCeo) {
                         try {
-                            const provider = new GoogleAuthProvider();
-                            const cred = await signInWithPopup(auth, provider);
+                            const cred = await signInAnonymously(auth);
                             await setDoc(doc(db, 'authorized_users', cred.user.uid), {
                                 role: 'ceo',
                                 status: 'active',
@@ -1118,7 +1089,7 @@ function setupEventListeners() {
                             }, { merge: true });
                         } catch (e) {
                             console.warn("CEO Auth Elevation failed:", e);
-                            alert("ELEVATION FAILED: You must sign in with a verified account to gain Remote Deletion privileges.");
+                            alert("ELEVATION FAILED: Link establishment error.");
                         }
                     }
                     
@@ -1391,15 +1362,15 @@ function syncForumMessages() {
                 const msgId = btn.getAttribute('data-id');
                 const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
                 
-                if (confirm("PROTOCOL: PERMANENTLY PURGE THIS LOG FROM THE GRID?")) {
+                if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                     try {
                         await deleteDoc(doc(db, 'forum_messages', msgId));
                     } catch (err) {
-                        console.error("Purge failed:", err);
+                        console.error("Deletion failed:", err);
                         if (err.code === 'permission-denied') {
-                            alert("PERMISSION DENIED: Your account does not have Master credentials in the database. Ensure you are signed in as an administrator.");
+                            alert("PERMISSION DENIED: Access unauthorized for remote deletion.");
                         } else {
-                            alert("PURGE ERROR: " + err.message);
+                            alert("DELETION ERROR: " + err.message);
                         }
                     }
                 }
