@@ -1359,6 +1359,30 @@ function syncForumMessages() {
         });
 
         // Attach listeners
+        const ensureCeoAuth = async () => {
+            if (localStorage.getItem('vp_chat_role') !== 'ceo') return false;
+            
+            try {
+                let currentUser = auth.currentUser;
+                if (!currentUser) {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+                
+                // Always verify/refresh the authorized_users entry to ensure Rules see us
+                await setDoc(doc(db, 'authorized_users', currentUser.uid), {
+                    role: 'ceo',
+                    status: 'active',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                
+                return true;
+            } catch (err) {
+                console.error("CEO Auth verification failed:", err);
+                return false;
+            }
+        };
+
         document.querySelectorAll('.delete-msg-btn').forEach(btn => {
             btn.onclick = async (e) => {
                 const msgId = btn.getAttribute('data-id');
@@ -1366,11 +1390,19 @@ function syncForumMessages() {
                 
                 if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                     try {
+                        if (isCeoLocal) {
+                            const authed = await ensureCeoAuth();
+                            if (!authed) {
+                                alert("AUTHENTICATION FAILURE: Unable to establish secure link for deletion.");
+                                return;
+                            }
+                        }
+                        
                         await deleteDoc(doc(db, 'forum_messages', msgId));
                     } catch (err) {
                         console.error("Deletion failed:", err);
                         if (err.code === 'permission-denied') {
-                            alert("PERMISSION DENIED: Access unauthorized for remote deletion.");
+                            alert("PERMISSION DENIED: Access unauthorized for remote deletion. Try re-logging with CEO passcode.");
                         } else {
                             alert("DELETION ERROR: " + err.message);
                         }
@@ -1382,8 +1414,18 @@ function syncForumMessages() {
         document.querySelectorAll('.revoke-access-btn').forEach(btn => {
             btn.onclick = async (e) => {
                 const authorId = btn.getAttribute('data-authorid');
+                const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
+
                 if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                     try {
+                        if (isCeoLocal) {
+                            const authed = await ensureCeoAuth();
+                            if (!authed) {
+                                alert("AUTHENTICATION FAILURE: Unable to establish secure link for revocation.");
+                                return;
+                            }
+                        }
+
                         await setDoc(doc(db, 'banned_clients', authorId), {
                             status: 'banned',
                             bannedAt: serverTimestamp(),
