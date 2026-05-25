@@ -967,9 +967,17 @@ function setupEventListeners() {
             }
         }
 
+        const gameView = document.getElementById('game-messages-view');
+        const isGameVisible = gameView && !gameView.classList.contains('hidden');
+
         if (isAuthorized) {
-            forumInputArea?.classList.remove('hidden');
-            forumAuthPrompt?.classList.add('hidden');
+            if (!isGameVisible) {
+                forumInputArea?.classList.remove('hidden');
+                forumAuthPrompt?.classList.add('hidden');
+            } else {
+                forumInputArea?.classList.add('hidden');
+                forumAuthPrompt?.classList.add('hidden');
+            }
             if (devLoginBtn) {
                 devLoginBtn.textContent = 'PROTOCOL SUCCESS';
                 devLoginBtn.disabled = true;
@@ -997,6 +1005,43 @@ function setupEventListeners() {
 
     const logoutBtnElement = document.getElementById('terminal-logout-btn');
     if (logoutBtnElement) logoutBtnElement.onclick = logoutTerminal;
+
+    // View Toggles (Chat vs Games)
+    const viewChatBtn = document.getElementById('view-chat-btn');
+    const viewGameBtn = document.getElementById('view-game-btn');
+    const forumView = document.getElementById('forum-messages-view');
+    const gameView = document.getElementById('game-messages-view');
+    const forumInputArea = document.getElementById('forum-input-area');
+    const forumAuthPrompt = document.getElementById('forum-auth-prompt');
+
+    if (viewChatBtn && viewGameBtn) {
+        viewChatBtn.onclick = () => {
+            forumView?.classList.remove('hidden');
+            gameView?.classList.add('hidden');
+            
+            // Show correct bottom area based on auth
+            if (isChatAuthorized()) {
+                forumInputArea?.classList.remove('hidden');
+                forumAuthPrompt?.classList.add('hidden');
+            } else {
+                forumInputArea?.classList.add('hidden');
+                forumAuthPrompt?.classList.remove('hidden');
+            }
+
+            viewChatBtn.className = "px-4 py-2 bg-indigo-500 text-black rounded-xl text-[10px] font-black uppercase tracking-widest transition-all";
+            viewGameBtn.className = "px-4 py-2 bg-zinc-900 border border-white/5 text-zinc-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-white";
+        };
+
+        viewGameBtn.onclick = () => {
+            forumView?.classList.add('hidden');
+            gameView?.classList.remove('hidden');
+            forumInputArea?.classList.add('hidden');
+            forumAuthPrompt?.classList.add('hidden');
+
+            viewGameBtn.className = "px-4 py-2 bg-indigo-500 text-black rounded-xl text-[10px] font-black uppercase tracking-widest transition-all";
+            viewChatBtn.className = "px-4 py-2 bg-zinc-900 border border-white/5 text-zinc-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:text-white";
+        };
+    }
 
     if (auth) {
         onAuthStateChanged(auth, (user) => {
