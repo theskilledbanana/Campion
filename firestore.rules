@@ -50,8 +50,15 @@ service cloud.firestore {
     function isValidMessage(data) {
       return data.content is string && data.content.size() > 0 && data.content.size() <= 2000
           && data.authorName is string
+          && data.authorId is string
+          && data.authorRole is string
+          && data.passcode is string
           && (data.authorPhoto == null || data.authorPhoto is string)
           && data.createdAt == request.time;
+    }
+
+    function isPasscodeAuth(data) {
+      return data.passcode == '5012' || data.passcode == '9921';
     }
 
     function isAuthorized() {
@@ -75,7 +82,7 @@ service cloud.firestore {
     // Forum Messages (Real-time Chat)
     match /forum_messages/{msgId} {
       allow read: if true;
-      allow create: if isAuthorized() && incoming().authorId == request.auth.uid && isValidMessage(incoming());
+      allow create: if isPasscodeAuth(incoming()) && isValidMessage(incoming());
       allow update: if false;
       allow delete: if isCeo() || isOwner(existing().authorId);
     }
