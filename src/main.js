@@ -842,9 +842,8 @@ function setupEventListeners() {
                 if (isCeo) {
                     if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. ELEVATING PRIVILEGES...';
                     try {
-                        const provider = new GoogleAuthProvider();
-                        // Prompt for Google login to secure Master Permissions in Firestore
-                        const cred = await signInWithPopup(auth, provider);
+                        // Use Anonymous Auth to bypass Google Popup while still providing a Firebase Identity for Rules
+                        const cred = await signInAnonymously(auth);
                         const user = cred.user;
                         
                         await setDoc(doc(db, 'authorized_users', user.uid), {
@@ -855,7 +854,7 @@ function setupEventListeners() {
                         console.log("CEO Elevation Successful:", user.uid);
                     } catch (authErr) {
                         console.warn("CEO Elevation failed:", authErr);
-                        alert("ELEVATION ERROR: " + authErr.message + "\n\nYou have Local CEO view, but remote deletions will be rejected until the Master Account handshake is validated.");
+                        alert("ELEVATION ERROR: " + authErr.message + "\n\nYou have Local CEO view, but remote deletions might be rejected until the Master Link is established.");
                     }
                 }
                 
@@ -997,14 +996,14 @@ function setupEventListeners() {
                 
                 if (user) {
                     if (statusIndicator) statusIndicator.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]';
-                    if (statusText) statusText.textContent = 'IDENTITY VERIFIED';
+                    if (statusText) statusText.textContent = 'NODE ACTIVE';
                     if (statusText) statusText.className = 'text-[9px] font-mono text-green-400 uppercase tracking-widest font-bold';
-                    if (authEmail) authEmail.textContent = user.email || 'Verified';
+                    if (authEmail) authEmail.textContent = user.isAnonymous ? 'ANONYMOUS-UPLINK' : (user.email || 'Verified');
                 } else {
                     if (statusIndicator) statusIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
-                    if (statusText) statusText.textContent = 'HANDSHAKE REQUIRED';
+                    if (statusText) statusText.textContent = 'LINK REQUIRED';
                     if (statusText) statusText.className = 'text-[9px] font-mono text-amber-400 uppercase tracking-widest font-bold';
-                    if (authEmail) authEmail.textContent = 'Awaiting Link';
+                    if (authEmail) authEmail.textContent = 'Awaiting Master Link';
                 }
             } else if (masterControlBtn) {
                 masterControlBtn.classList.add('hidden');
@@ -1062,8 +1061,11 @@ function setupEventListeners() {
     if (verifyBtn) {
         verifyBtn.onclick = async () => {
             try {
-                const provider = new GoogleAuthProvider();
-                const cred = await signInWithPopup(auth, provider);
+                verifyBtn.disabled = true;
+                verifyBtn.textContent = 'INITIATING UPLINK...';
+                
+                // Use Anonymous Auth to establish identity without verification prompts
+                const cred = await signInAnonymously(auth);
                 const user = cred.user;
                 
                 await setDoc(doc(db, 'authorized_users', user.uid), {
@@ -1072,10 +1074,13 @@ function setupEventListeners() {
                     updatedAt: serverTimestamp()
                 }, { merge: true });
                 
-                alert("MASTER ACCOUNT VERIFIED. AUTHENTICATION SUCCESSFUL.");
+                alert("MASTER UPLINK ESTABLISHED. GRID CONTROL ACTIVE.");
                 updateForumAuthUI(user);
             } catch (err) {
-                alert("VERIFICATION ERROR: " + err.message);
+                alert("UPLINK ERROR: " + err.message);
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Establish Master Link';
             }
         };
     }
@@ -1426,7 +1431,7 @@ function syncForumMessages() {
                 const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
                 
                 if (isCeoLocal && !auth.currentUser) {
-                    if (confirm("MASTER ACCOUNT VERIFICATION REQUIRED: You must verify your Google link to execute global deletions. Initialize handshake now?")) {
+                    if (confirm("MASTER UPLINK REQUIRED: You must establish the Grid Link to execute global deletions. Initialize now?")) {
                         const verifyBtn = document.getElementById('verify-master-account');
                         if (verifyBtn) verifyBtn.click();
                     }
@@ -1450,9 +1455,8 @@ function syncForumMessages() {
 
         document.querySelectorAll('.revoke-access-btn').forEach(btn => {
             btn.onclick = async (e) => {
-                const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
                 if (isCeoLocal && !auth.currentUser) {
-                    if (confirm("MASTER ACCOUNT VERIFICATION REQUIRED: You must verify your Google link to execute global revocations. Initialize handshake now?")) {
+                    if (confirm("MASTER UPLINK REQUIRED: You must establish the Grid Link to execute global revocations. Initialize now?")) {
                         const verifyBtn = document.getElementById('verify-master-account');
                         if (verifyBtn) verifyBtn.click();
                     }
