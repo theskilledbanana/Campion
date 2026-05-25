@@ -1026,7 +1026,7 @@ function renderBadges(grid, countEl) {
     BADGES.forEach(badge => {
         const isUnlocked = userData.badges.includes(badge.id);
         const card = document.createElement('div');
-        card.className = `p-6 rounded-[2rem] border transition-all duration-500 scale-95 hover:scale-100 overflow-hidden relative group ${isUnlocked ? 'bg-zinc-900 border-white/10 hover:border-cyan-500/40' : 'bg-black/50 border-white/5 grayscale pointer-events-none opacity-50'}`;
+        card.className = `p-6 rounded-[2rem] border transition-all duration-500 scale-95 hover:scale-100 overflow-hidden relative group ${isUnlocked ? 'bg-zinc-900 border-white/10 hover:border-cyan-500/40' : 'bg-black/50 border-white/5 grayscale pointer-events-none opacity-80'}`;
         
         card.innerHTML = `
             <div class="flex items-start gap-4 mb-4 relative z-10">
@@ -1035,7 +1035,7 @@ function renderBadges(grid, countEl) {
                 </div>
                 <div>
                     <h3 class="font-black text-white italic uppercase tracking-tighter leading-none mb-1 text-lg">${badge.name}</h3>
-                    <p class="text-zinc-500 text-[10px] font-mono leading-tight">${badge.desc}</p>
+                    <p class="text-zinc-300 text-xs font-mono leading-relaxed mt-2">${badge.desc}</p>
                 </div>
             </div>
             
