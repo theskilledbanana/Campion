@@ -20,7 +20,8 @@ import {
 import { 
     onAuthStateChanged,
     GoogleAuthProvider,
-    signInWithPopup
+    signInWithPopup,
+    signInAnonymously
 } from 'firebase/auth';
 
 const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
@@ -789,24 +790,55 @@ function setupEventListeners() {
 
     // Developer Authorization Logic
     const isChatAuthorized = () => {
-        return localStorage.getItem('vp_chat_authorized') === 'true' || localStorage.getItem('vp_dev_override') === 'true';
+        return localStorage.getItem('vp_chat_authorized') === 'true';
     };
 
-    const updateForumAuthUI = (user) => {
+    const updateForumAuthUI = async (user) => {
         const forumInputArea = document.getElementById('forum-input-area');
         const forumAuthPrompt = document.getElementById('forum-auth-prompt');
         const promptText = forumAuthPrompt?.querySelector('p');
+        const devLoginBtn = document.getElementById('dev-login-btn');
         
-        const isAuthorized = isChatAuthorized();
+        if (!user && auth.currentUser) user = auth.currentUser;
+
+        let isAuthorized = isChatAuthorized();
+        let isBanned = false;
+
+        if (user && isAuthorized) {
+            try {
+                const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    if (data.status === 'banned') {
+                        isAuthorized = false;
+                        isBanned = true;
+                        localStorage.removeItem('vp_chat_authorized');
+                        localStorage.removeItem('vp_chat_role');
+                    } else {
+                        localStorage.setItem('vp_chat_role', data.role);
+                    }
+                }
+            } catch (err) {
+                console.warn("Auth verification failed:", err);
+            }
+        }
 
         if (isAuthorized) {
             forumInputArea?.classList.remove('hidden');
             forumAuthPrompt?.classList.add('hidden');
+            if (devLoginBtn) {
+                devLoginBtn.textContent = 'PROTOCOL SUCCESS';
+                devLoginBtn.disabled = true;
+            }
         } else {
             forumInputArea?.classList.add('hidden');
             forumAuthPrompt?.classList.remove('hidden');
+            if (devLoginBtn) {
+                devLoginBtn.textContent = isBanned ? 'ACCESS REVOKED' : 'AUTHORIZE LINK';
+                devLoginBtn.disabled = isBanned;
+            }
             if (promptText) {
-                promptText.textContent = "READ-ONLY TERMINAL // AUTHORIZATION REQUIRED TO BROADCAST";
+                promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "READ-ONLY TERMINAL // AUTHORIZATION REQUIRED TO BROADCAST";
             }
         }
     };
@@ -820,14 +852,50 @@ function setupEventListeners() {
     // Developer Login Button (Passcode implementation)
     const devLoginBtn = document.getElementById('dev-login-btn');
     if (devLoginBtn) {
-        devLoginBtn.onclick = () => {
+        devLoginBtn.onclick = async () => {
             const code = prompt("ENTER AUTHORIZATION PASSCODE:");
-            if (code === '3012') {
-                alert("PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
-                localStorage.setItem('vp_chat_authorized', 'true');
-                devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-                devLoginBtn.disabled = true;
-                updateForumAuthUI(auth?.currentUser);
+            if (code === '5012' || code === '7102') {
+                const isCeo = code === '7102';
+                try {
+                    devLoginBtn.textContent = 'LINKING...';
+                    devLoginBtn.disabled = true;
+                    
+                    // Always ensure we have a Firebase UID
+                    let user = auth.currentUser;
+                    if (!user) {
+                        const cred = await signInAnonymously(auth);
+                        user = cred.user;
+                    }
+                    
+                    // Check if already banned
+                    const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
+                    if (userDoc.exists() && userDoc.data().status === 'banned') {
+                        alert("PROTOCOL FATAL: ACCESS HAS BEEN PERMANENTLY REVOKED BY CEO.");
+                        devLoginBtn.textContent = 'ACCESS REVOKED';
+                        devLoginBtn.disabled = true;
+                        return;
+                    }
+                    
+                    // Register dev/ceo in Firestore
+                    const role = isCeo ? 'ceo' : 'dev';
+                    await setDoc(doc(db, 'authorized_users', user.uid), {
+                        role: role,
+                        status: 'active',
+                        updatedAt: serverTimestamp()
+                    });
+                    
+                    localStorage.setItem('vp_chat_role', role);
+                    localStorage.setItem('vp_chat_authorized', 'true');
+                    
+                    alert(isCeo ? "CEO UPLINK ESTABLISHED. MASTER CONTROL ACTIVE." : "PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
+                    devLoginBtn.textContent = 'PROTOCOL SUCCESS';
+                    updateForumAuthUI(user);
+                } catch (err) {
+                    console.error("Auth error:", err);
+                    alert("PROTOCOL ERROR: UPLINK FAILED");
+                    devLoginBtn.textContent = 'LINK FAILED';
+                    devLoginBtn.disabled = false;
+                }
             } else if (code !== null) {
                 alert("PROTOCOL ERROR: INVALID PASSCODE.");
                 setTimeout(() => {
@@ -909,11 +977,15 @@ function setupEventListeners() {
                 sendForumMsgBtn.disabled = true;
                 sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
+                const role = localStorage.getItem('vp_chat_role') || 'dev';
+                const name = role === 'ceo' ? 'CEO' : 'Developer';
+
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
-                    authorId: 'passcode-admin-001',
-                    authorName: 'CEO',
-                    authorPhoto: `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal`,
+                    authorId: user ? user.uid : 'passcode-admin-001',
+                    authorName: name,
+                    authorRole: role,
+                    authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user ? user.uid : 'dev'}`,
                     createdAt: serverTimestamp()
                 });
 
@@ -1022,6 +1094,9 @@ function syncForumMessages() {
 
         let latestTime = 0;
         forumMessagesView.innerHTML = '';
+        const currentUserRole = localStorage.getItem('vp_chat_role');
+        const isCeo = currentUserRole === 'ceo';
+
         snapshot.forEach(docSnap => {
             const msg = docSnap.data();
             if (msg.createdAt?.toMillis() > latestTime) latestTime = msg.createdAt.toMillis();
@@ -1029,23 +1104,33 @@ function syncForumMessages() {
             const date = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
             
             const msgEl = document.createElement('div');
-            const isAuthor = (msg.authorId === auth.currentUser?.uid) || (msg.authorId === 'passcode-admin-001' && localStorage.getItem('vp_chat_authorized') === 'true');
+            const isMsgCeo = msg.authorRole === 'ceo';
+            const isOwnMsg = msg.authorId === auth.currentUser?.uid;
+            const canDelete = isCeo || isOwnMsg;
+            const canRevoke = isCeo && !isMsgCeo;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
                 <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + msg.authorId}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black text-white uppercase italic leading-none">${msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : 'text-white'} uppercase italic leading-none">${msg.authorName}</span>
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative">
                         ${msg.content}
-                        ${isAuthor ? `
-                            <button class="delete-msg-btn absolute -right-8 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-red-500 opacity-0 group-hover/msg:opacity-100 transition-all p-2" data-id="${docSnap.id}">
-                                <i class="bi bi-trash-fill text-xs"></i>
-                            </button>
-                        ` : ''}
+                        <div class="absolute -right-12 top-0 flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-all">
+                            ${canDelete ? `
+                                <button class="delete-msg-btn text-zinc-600 hover:text-red-500 p-2" data-id="${docSnap.id}" title="Delete Message">
+                                    <i class="bi bi-trash-fill text-xs"></i>
+                                </button>
+                            ` : ''}
+                            ${canRevoke ? `
+                                <button class="revoke-access-btn text-zinc-600 hover:text-amber-500 p-2" data-uid="${msg.authorId}" title="Revoke Access">
+                                    <i class="bi bi-person-x-fill text-xs"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -1059,10 +1144,27 @@ function syncForumMessages() {
                 if (confirm("PROTOCOL: PERMANENTLY DELETE THIS LOG FROM THE GRID?")) {
                     try {
                         await deleteDoc(doc(db, 'forum_messages', msgId));
-                        console.log("Log purged.");
                     } catch (err) {
                         console.error("Purge failed:", err);
                         alert("PURGE ERROR: " + err.message);
+                    }
+                }
+            };
+        });
+
+        document.querySelectorAll('.revoke-access-btn').forEach(btn => {
+            btn.onclick = async (e) => {
+                const uid = btn.getAttribute('data-uid');
+                if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR ID [${uid.substring(0, 8)}]?`)) {
+                    try {
+                        await updateDoc(doc(db, 'authorized_users', uid), {
+                            status: 'banned',
+                            updatedAt: serverTimestamp()
+                        });
+                        alert("ACCESS DEACTIVATED.");
+                    } catch (err) {
+                        console.error("Revoke failed:", err);
+                        alert("REVOKE ERROR: " + err.message);
                     }
                 }
             };
