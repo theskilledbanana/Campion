@@ -1026,38 +1026,33 @@ function renderBadges(grid, countEl) {
     BADGES.forEach(badge => {
         const isUnlocked = userData.badges.includes(badge.id);
         const card = document.createElement('div');
-        card.className = `p-8 md:p-10 rounded-[2.5rem] border transition-all duration-500 hover:scale-[1.02] overflow-hidden relative group flex flex-col items-center text-center h-full ${isUnlocked ? 'bg-zinc-900/60 border-white/10 shadow-2xl hover:border-cyan-500/40' : 'bg-black/40 border-white/5 grayscale opacity-50'}`;
+        card.className = `group relative p-4 rounded-[2rem] border transition-all duration-500 hover:bg-white/[0.02] flex flex-col items-center text-center ${
+            isUnlocked 
+            ? 'bg-zinc-900 border-white/10 hover:border-cyan-500/40' 
+            : 'bg-black/40 border-white/5 grayscale opacity-40'
+        }`;
         
         card.innerHTML = `
-            <div class="relative z-10 flex flex-col items-center h-full w-full">
-                <!-- Icon Container -->
-                <div class="w-20 h-20 md:w-24 md:h-24 mb-6 rounded-3xl flex items-center justify-center bg-zinc-950 border border-white/5 shadow-inner shrink-0 transition-all duration-700 group-hover:scale-110 group-hover:bg-cyan-500/10 group-hover:border-cyan-500/30">
-                    <i class="bi ${badge.icon} ${isUnlocked ? badge.color : 'text-zinc-800'} text-4xl md:text-5xl"></i>
-                    ${isUnlocked ? '<div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-cyan-500 shadow-[0_0_15px_rgba(34,211,238,0.8)] animate-pulse"></div>' : ''}
-                </div>
-                
-                <!-- Content -->
-                <div class="flex-1 flex flex-col items-center">
-                    <h3 class="font-black text-white italic uppercase tracking-tighter leading-tight text-2xl md:text-3xl mb-3 group-hover:text-cyan-400 transition-colors uppercase">
-                        ${badge.name}
-                    </h3>
-                    <p class="text-zinc-400 text-xs md:text-sm font-mono leading-relaxed mb-6 max-w-[280px]">
-                        ${badge.desc}
-                    </p>
-                </div>
-                
-                <!-- Footer Status -->
-                <div class="w-full pt-6 border-t border-white/5 mt-auto">
-                    <div class="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-white/5 border border-white/10">
-                        <span class="text-[10px] font-mono ${isUnlocked ? 'text-cyan-400' : 'text-zinc-600'} uppercase tracking-[0.2em] font-black">
-                            ${isUnlocked ? 'Status: Captured' : 'Status: Encrypted'}
-                        </span>
-                    </div>
+            <div class="w-full aspect-square rounded-2xl bg-zinc-950 border border-white/5 flex items-center justify-center mb-4 transition-all duration-700 group-hover:scale-105 group-hover:bg-cyan-500/5 group-hover:border-cyan-500/20 shadow-inner relative overflow-hidden">
+                <i class="bi ${badge.icon} ${isUnlocked ? badge.color : 'text-zinc-800'} text-4xl"></i>
+                ${isUnlocked ? '<div class="absolute top-2 right-2 w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.6)] animate-pulse"></div>' : ''}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center pb-2">
+                    <span class="text-[8px] font-mono text-cyan-400 uppercase tracking-widest font-black">Archive Active</span>
                 </div>
             </div>
+            
+            <h3 class="font-black text-white italic uppercase tracking-tighter text-sm mb-1 group-hover:text-cyan-400 transition-colors truncate w-full px-2">
+                ${badge.name}
+            </h3>
+            <p class="text-zinc-500 text-[10px] font-mono leading-tight line-clamp-2 px-2 h-6 mb-2">
+                ${badge.desc}
+            </p>
 
-            <!-- Enhanced Background FX -->
-            <div class="absolute -bottom-24 -right-24 w-56 h-56 bg-cyan-500/5 rounded-full blur-[100px] transition-all duration-1000 group-hover:scale-150 group-hover:bg-cyan-500/10"></div>
+            <div class="mt-auto w-full pt-2 border-t border-white/5">
+                 <span class="text-[8px] font-mono ${isUnlocked ? 'text-cyan-600' : 'text-zinc-700'} uppercase tracking-widest font-black">
+                    ${isUnlocked ? 'Uplink: Primary' : 'Uplink: Offline'}
+                 </span>
+            </div>
         `;
         grid.appendChild(card);
     });
