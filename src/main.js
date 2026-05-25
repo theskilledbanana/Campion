@@ -226,6 +226,7 @@ let devContainer, closeDevBtn, disclaimerModal, disclaimerContainer, acceptDiscl
 let surpriseBtn, terminalModal, terminalContainer, terminalInput, terminalResults;
 let cloakTabBtn, cloakModal, cloakContainer, closeCloakBtn, cloakInput, applyCloakBtn, resetCloakBtn;
 let versionTag, devTerminalOverlay, terminalPassInput, terminalStatusLog, terminalAuthSubmit, closeTerminalBtn;
+let forumModal, forumContainer, closeForumBtn, sendForumMsgBtn;
 let detailsModal, detailsContainer, closeDetailsBtn, detailsImg, detailsTitle, detailsCategories;
 let detailsDesc, likeBtn, dislikeBtn, likeCount, dislikeCount, launchFromDetailsBtn;
 let reviewsList, reviewInput, submitReviewBtn;
@@ -368,6 +369,12 @@ function init() {
     cloakInput = document.getElementById('cloak-input');
     applyCloakBtn = document.getElementById('apply-cloak');
     resetCloakBtn = document.getElementById('reset-cloak');
+    
+    // Forum Modal
+    forumModal = document.getElementById('forum-modal');
+    forumContainer = document.getElementById('forum-container');
+    closeForumBtn = document.getElementById('close-forum');
+    sendForumMsgBtn = document.getElementById('send-forum-msg');
     
     // Details Modal
     detailsModal = document.getElementById('details-modal');
