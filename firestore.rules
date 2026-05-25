@@ -11,8 +11,8 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function isOwner(authorId) {
-      return isSignedIn() && request.auth.uid == authorId;
+    function isOwner(data) {
+      return isSignedIn() && data.firebaseUid == request.auth.uid;
     }
 
     function isValidId(id) {
@@ -54,6 +54,7 @@ service cloud.firestore {
           && data.authorRole is string
           && data.passcode is string
           && (data.authorPhoto == null || data.authorPhoto is string)
+          && (data.firebaseUid == null || data.firebaseUid is string)
           && data.createdAt == request.time;
     }
 
@@ -86,7 +87,7 @@ service cloud.firestore {
                    && isValidMessage(incoming())
                    && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
       allow update: if false;
-      allow delete: if isCeo() || isOwner(existing().authorId);
+      allow delete: if isCeo() || isOwner(existing());
     }
 
     match /banned_clients/{clientId} {

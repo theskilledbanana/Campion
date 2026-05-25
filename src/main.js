@@ -21,7 +21,8 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
-    signInAnonymously
+    signInAnonymously,
+    signOut
 } from 'firebase/auth';
 
 const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
@@ -834,6 +835,7 @@ function setupEventListeners() {
                     if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. ELEVATING PRIVILEGES...';
                     try {
                         const provider = new GoogleAuthProvider();
+                        // Prompt for Google login to secure Master Permissions in Firestore
                         const cred = await signInWithPopup(auth, provider);
                         const user = cred.user;
                         
@@ -844,8 +846,8 @@ function setupEventListeners() {
                         }, { merge: true });
                         
                     } catch (authErr) {
-                        console.warn("CEO Handshake elevation inhibited:", authErr);
-                        alert("ELEVATION WARNING: Handshake verification failed. Local access only.");
+                        console.warn("CEO Elevation failed:", authErr);
+                        alert("ELEVATION ERROR: Remote authority rejected handshake. You have Local CEO view, but deletions will fail until you sign in with a Master Account.");
                     }
                 }
                 
@@ -1027,6 +1029,7 @@ function setupEventListeners() {
                             }, { merge: true });
                         } catch (e) {
                             console.warn("CEO Auth Elevation failed:", e);
+                            alert("ELEVATION FAILED: You must sign in with a verified account to gain Remote Deletion privileges.");
                         }
                     }
                     
