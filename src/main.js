@@ -857,18 +857,34 @@ function setupEventListeners() {
             if (code === '5012' || code === '7102') {
                 const isCeo = code === '7102';
                 try {
+                    if (!auth || !db) throw new Error("FIREBASE_NOT_INITIALIZED");
+                    
                     devLoginBtn.textContent = 'LINKING...';
                     devLoginBtn.disabled = true;
                     
                     // Always ensure we have a Firebase UID
                     let user = auth.currentUser;
                     if (!user) {
-                        const cred = await signInAnonymously(auth);
-                        user = cred.user;
+                        try {
+                            const cred = await signInAnonymously(auth);
+                            user = cred.user;
+                        } catch (signInErr) {
+                            console.error("Sign-in error:", signInErr);
+                            // If anonymous fails, we might still be able to proceed if we have a UID from elsewhere, 
+                            // but usually this means Auth is disabled.
+                            throw new Error("AUTH_SERVICE_UNAVAILABLE");
+                        }
                     }
                     
                     // Check if already banned
-                    const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
+                    let userDoc;
+                    try {
+                        userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
+                    } catch (readErr) {
+                        console.error("Read error:", readErr);
+                        throw new Error("DATABASE_READ_DENIED");
+                    }
+
                     if (userDoc.exists() && userDoc.data().status === 'banned') {
                         alert("PROTOCOL FATAL: ACCESS HAS BEEN PERMANENTLY REVOKED BY CEO.");
                         devLoginBtn.textContent = 'ACCESS REVOKED';
@@ -878,11 +894,16 @@ function setupEventListeners() {
                     
                     // Register dev/ceo in Firestore
                     const role = isCeo ? 'ceo' : 'dev';
-                    await setDoc(doc(db, 'authorized_users', user.uid), {
-                        role: role,
-                        status: 'active',
-                        updatedAt: serverTimestamp()
-                    });
+                    try {
+                        await setDoc(doc(db, 'authorized_users', user.uid), {
+                            role: role,
+                            status: 'active',
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    } catch (writeErr) {
+                        console.error("Write error:", writeErr);
+                        throw new Error("DATABASE_WRITE_DENIED");
+                    }
                     
                     localStorage.setItem('vp_chat_role', role);
                     localStorage.setItem('vp_chat_authorized', 'true');
@@ -891,10 +912,14 @@ function setupEventListeners() {
                     devLoginBtn.textContent = 'PROTOCOL SUCCESS';
                     updateForumAuthUI(user);
                 } catch (err) {
-                    console.error("Auth error:", err);
-                    alert("PROTOCOL ERROR: UPLINK FAILED");
+                    console.error("Auth process error:", err);
+                    alert(`PROTOCOL ERROR: ${err.message || 'UPLINK FAILED'}`);
                     devLoginBtn.textContent = 'LINK FAILED';
                     devLoginBtn.disabled = false;
+                    
+                    if (err.message === "AUTH_SERVICE_UNAVAILABLE") {
+                        alert("HINT: Anonymous Authentication might be disabled in the Firebase Console.");
+                    }
                 }
             } else if (code !== null) {
                 alert("PROTOCOL ERROR: INVALID PASSCODE.");
