@@ -1081,7 +1081,9 @@ function setupEventListeners() {
 
                     if (isCeo) {
                         try {
-                            const cred = await signInAnonymously(auth);
+                            // If anonymous is blocked, use Google Sign-In for the CEO role
+                            const provider = new GoogleAuthProvider();
+                            const cred = await signInWithPopup(auth, provider);
                             await setDoc(doc(db, 'authorized_users', cred.user.uid), {
                                 role: 'ceo',
                                 status: 'active',
@@ -1089,7 +1091,7 @@ function setupEventListeners() {
                             }, { merge: true });
                         } catch (e) {
                             console.warn("CEO Auth Elevation failed:", e);
-                            alert("ELEVATION FAILED: Link establishment error.");
+                            alert("ELEVATION FAILED: You must sign in with a Google account to gain Master deletion privileges.");
                         }
                     }
                     
@@ -1364,24 +1366,26 @@ function syncForumMessages() {
             
             try {
                 let currentUser = auth.currentUser;
+                
+                // If not logged in, we need the user to sign in to get a UID
                 if (!currentUser) {
-                    console.log("No current user, signing in anonymously...");
-                    const cred = await signInAnonymously(auth);
+                    const provider = new GoogleAuthProvider();
+                    const cred = await signInWithPopup(auth, provider);
                     currentUser = cred.user;
                 }
                 
-                console.log("Verifying CEO document for UID:", currentUser.uid);
-                // Always verify/refresh the authorized_users entry to ensure Rules see us
-                await setDoc(doc(db, 'authorized_users', currentUser.uid), {
-                    role: 'ceo',
-                    status: 'active',
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-                
-                return true;
+                if (currentUser) {
+                    // Update role mapping
+                    await setDoc(doc(db, 'authorized_users', currentUser.uid), {
+                        role: 'ceo',
+                        status: 'active',
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    return true;
+                }
+                return false;
             } catch (err) {
                 console.error("CEO Auth verification failed:", err);
-                alert("DEBUG AUTH ERROR: " + err.message + (err.code ? " ["+err.code+"]" : ""));
                 return false;
             }
         };
