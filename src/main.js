@@ -987,25 +987,19 @@ function setupEventListeners() {
             if (logoutBtn) logoutBtn.classList.remove('hidden');
             
             if (masterControlBtn && role === 'ceo') {
-                masterControlBtn.classList.remove('hidden');
-                
-                // Update Monitor
-                const statusIndicator = document.getElementById('master-status-indicator');
-                const statusText = document.getElementById('master-status-text');
-                const authEmail = document.getElementById('master-auth-email');
-                
-                if (user) {
-                    if (statusIndicator) statusIndicator.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]';
-                    if (statusText) statusText.textContent = 'NODE ACTIVE';
-                    if (statusText) statusText.className = 'text-[9px] font-mono text-green-400 uppercase tracking-widest font-bold';
-                    if (authEmail) authEmail.textContent = user.isAnonymous ? 'ANONYMOUS-UPLINK' : (user.email || 'Verified');
-                } else {
-                    if (statusIndicator) statusIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
-                    if (statusText) statusText.textContent = 'LINK REQUIRED';
-                    if (statusText) statusText.className = 'text-[9px] font-mono text-amber-400 uppercase tracking-widest font-bold';
-                    if (authEmail) authEmail.textContent = 'Awaiting Master Link';
-                }
-            } else if (masterControlBtn) {
+            masterControlBtn.classList.remove('hidden');
+            
+            // Auto-uplink if not authenticated
+            if (!auth.currentUser) {
+                signInAnonymously(auth).then(cred => {
+                    setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                        role: 'ceo',
+                        status: 'active',
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                }).catch(err => console.error("Auto-uplink failed:", err));
+            }
+        } else if (masterControlBtn) {
                 masterControlBtn.classList.add('hidden');
                 masterPanel?.classList.add('hidden');
             }
@@ -1035,7 +1029,6 @@ function setupEventListeners() {
     const masterControlBtn = document.getElementById('master-control-btn');
     const masterPanel = document.getElementById('ceo-master-panel');
     const closeMasterBtn = document.getElementById('close-master-panel');
-    const verifyBtn = document.getElementById('verify-master-account');
     const purgeAllBtn = document.getElementById('purge-all-logs-btn');
 
     if (masterControlBtn) {
@@ -1058,40 +1051,8 @@ function setupEventListeners() {
         };
     }
 
-    if (verifyBtn) {
-        verifyBtn.onclick = async () => {
-            try {
-                verifyBtn.disabled = true;
-                verifyBtn.textContent = 'INITIATING UPLINK...';
-                
-                // Use Anonymous Auth to establish identity without verification prompts
-                const cred = await signInAnonymously(auth);
-                const user = cred.user;
-                
-                await setDoc(doc(db, 'authorized_users', user.uid), {
-                    role: 'ceo',
-                    status: 'active',
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-                
-                alert("MASTER UPLINK ESTABLISHED. GRID CONTROL ACTIVE.");
-                updateForumAuthUI(user);
-            } catch (err) {
-                alert("UPLINK ERROR: " + err.message);
-            } finally {
-                verifyBtn.disabled = false;
-                verifyBtn.textContent = 'Establish Master Link';
-            }
-        };
-    }
-
     if (purgeAllBtn) {
         purgeAllBtn.onclick = async () => {
-            if (!auth.currentUser) {
-                alert("AUTHORIZATION REQUIRED: Verify Master Account link first.");
-                return;
-            }
-
             if (confirm("CRITICAL: THIS WILL PERMANENTLY ERASE ALL MESSAGES FROM THE GRID. PROCEED?")) {
                 try {
                     purgeAllBtn.disabled = true;
@@ -1430,14 +1391,6 @@ function syncForumMessages() {
                 const msgId = btn.getAttribute('data-id');
                 const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
                 
-                if (isCeoLocal && !auth.currentUser) {
-                    if (confirm("MASTER UPLINK REQUIRED: You must establish the Grid Link to execute global deletions. Initialize now?")) {
-                        const verifyBtn = document.getElementById('verify-master-account');
-                        if (verifyBtn) verifyBtn.click();
-                    }
-                    return;
-                }
-
                 if (confirm("PROTOCOL: PERMANENTLY PURGE THIS LOG FROM THE GRID?")) {
                     try {
                         await deleteDoc(doc(db, 'forum_messages', msgId));
@@ -1455,18 +1408,6 @@ function syncForumMessages() {
 
         document.querySelectorAll('.revoke-access-btn').forEach(btn => {
             btn.onclick = async (e) => {
-                if (isCeoLocal && !auth.currentUser) {
-                    if (confirm("MASTER UPLINK REQUIRED: You must establish the Grid Link to execute global revocations. Initialize now?")) {
-                        const verifyBtn = document.getElementById('verify-master-account');
-                        if (verifyBtn) verifyBtn.click();
-                    }
-                    return;
-                }
-
-                if (!auth.currentUser) {
-                    alert("AUTHORIZATION REQUIRED: Master Account verify is required for Client Revoke.");
-                    return;
-                }
                 const authorId = btn.getAttribute('data-authorid');
                 if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                     try {
