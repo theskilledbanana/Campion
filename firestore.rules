@@ -67,7 +67,7 @@ service cloud.firestore {
     }
 
     function isCeo() {
-      return isSignedIn() && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
+      return isSignedIn() && exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
     }
 
     // 4. Collection Match Blocks
@@ -75,8 +75,8 @@ service cloud.firestore {
     // Authorized Users
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isCeo();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if (isSignedIn() && request.auth.uid == userId) || isCeo();
       allow delete: if isCeo();
     }
 
@@ -87,7 +87,8 @@ service cloud.firestore {
                    && isValidMessage(incoming())
                    && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
       allow update: if false;
-      allow delete: if isCeo() || isOwner(existing());
+      allow delete: if isCeo() 
+                   || (isSignedIn() && exists(/databases/$(database)/documents/forum_messages/$(msgId)) && existing().firebaseUid == request.auth.uid);
     }
 
     match /banned_clients/{clientId} {

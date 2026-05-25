@@ -844,10 +844,10 @@ function setupEventListeners() {
                             status: 'active',
                             updatedAt: serverTimestamp()
                         }, { merge: true });
-                        
+                        console.log("CEO Elevation Successful");
                     } catch (authErr) {
                         console.warn("CEO Elevation failed:", authErr);
-                        alert("ELEVATION ERROR: Remote authority rejected handshake. You have Local CEO view, but deletions will fail until you sign in with a Master Account.");
+                        alert("ELEVATION ERROR: " + authErr.message + "\n\nYou have Local CEO view, but remote deletions will be rejected until the Master Account handshake is validated.");
                     }
                 }
                 
@@ -986,6 +986,12 @@ function setupEventListeners() {
             if (promptText) {
                 promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "Official Developer Access Required to Post";
             }
+        }
+        
+        // Refresh forum if currently open to show/hide delete buttons
+        const forumModal = document.getElementById('forum-modal');
+        if (forumModal && !forumModal.classList.contains('hidden')) {
+            syncForumMessages();
         }
     };
 
