@@ -883,7 +883,7 @@ function setupEventListeners() {
                                     throw new Error(errorMsg);
                                 }
                             } else {
-                                throw new Error("AUTH_SERVICE_UNAVAILABLE");
+                                throw new Error(`AUTH_SERVICE_UNAVAILABLE [${signInErr.code || 'UNKNOWN'}]`);
                             }
                         }
                     }
@@ -896,7 +896,7 @@ function setupEventListeners() {
                         userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
                     } catch (readErr) {
                         console.error("Read error:", readErr);
-                        throw new Error("DATABASE_READ_DENIED");
+                        throw new Error(`DATABASE_READ_DENIED [${readErr.code || 'UNKNOWN'}]`);
                     }
 
                     if (userDoc.exists() && userDoc.data().status === 'banned') {
@@ -916,7 +916,7 @@ function setupEventListeners() {
                         }, { merge: true });
                     } catch (writeErr) {
                         console.error("Write error:", writeErr);
-                        throw new Error("DATABASE_WRITE_DENIED");
+                        throw new Error(`DATABASE_WRITE_DENIED [${writeErr.code || 'UNKNOWN'}]`);
                     }
                     
                     localStorage.setItem('vp_chat_role', role);
