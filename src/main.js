@@ -869,12 +869,26 @@ function setupEventListeners() {
                             const cred = await signInAnonymously(auth);
                             user = cred.user;
                         } catch (signInErr) {
-                            console.error("Sign-in error:", signInErr);
-                            // If anonymous fails, we might still be able to proceed if we have a UID from elsewhere, 
-                            // but usually this means Auth is disabled.
-                            throw new Error("AUTH_SERVICE_UNAVAILABLE");
+                            console.error("Anonymous Auth Error:", signInErr);
+                            
+                            let errorMsg = "AUTH_SERVICE_UNAVAILABLE";
+                            if (signInErr.code === 'auth/operation-not-allowed') {
+                                errorMsg = "ANONYMOUS_AUTH_DISABLED";
+                                const fix = confirm("PROTOCOL FAILURE: Anonymous Authentication is disabled in your Firebase Console.\n\nWould you like to try Google Authorization instead?");
+                                if (fix) {
+                                    const provider = new GoogleAuthProvider();
+                                    const cred = await signInWithPopup(auth, provider);
+                                    user = cred.user;
+                                } else {
+                                    throw new Error(errorMsg);
+                                }
+                            } else {
+                                throw new Error("AUTH_SERVICE_UNAVAILABLE");
+                            }
                         }
                     }
+                    
+                    if (!user) throw new Error("IDENTITY_LINK_FAILED");
                     
                     // Check if already banned
                     let userDoc;
@@ -913,13 +927,15 @@ function setupEventListeners() {
                     updateForumAuthUI(user);
                 } catch (err) {
                     console.error("Auth process error:", err);
-                    alert(`PROTOCOL ERROR: ${err.message || 'UPLINK FAILED'}`);
+                    
+                    let friendlyMsg = err.message || 'UPLINK FAILED';
+                    if (err.message === "ANONYMOUS_AUTH_DISABLED") {
+                        friendlyMsg = "ANONYMOUS_AUTH_DISABLED. Please enable it in the Firebase Console (Build > Authentication > Sign-in method).";
+                    }
+                    
+                    alert(`PROTOCOL ERROR: ${friendlyMsg}`);
                     devLoginBtn.textContent = 'LINK FAILED';
                     devLoginBtn.disabled = false;
-                    
-                    if (err.message === "AUTH_SERVICE_UNAVAILABLE") {
-                        alert("HINT: Anonymous Authentication might be disabled in the Firebase Console.");
-                    }
                 }
             } else if (code !== null) {
                 alert("PROTOCOL ERROR: INVALID PASSCODE.");
@@ -936,6 +952,11 @@ function setupEventListeners() {
             devLoginBtn.textContent = 'PROTOCOL SUCCESS';
             devLoginBtn.disabled = true;
         }
+
+        // Keep UI in sync with Auth
+        onAuthStateChanged(auth, (user) => {
+            updateForumAuthUI(user);
+        });
     }
 
     // Forum Management
