@@ -1336,17 +1336,19 @@ function syncForumMessages() {
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : 'text-white'} uppercase italic leading-none">${msg.authorName}</span>
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
-                    <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative">
+                    <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
                         ${msg.content}
-                        <div class="absolute -right-12 top-0 flex flex-col gap-1 opacity-0 group-hover/msg:opacity-100 transition-all">
+                        <div class="flex items-center gap-2 mt-3 pt-3 border-t border-white/5 empty:hidden">
                             ${canDelete ? `
-                                <button class="delete-msg-btn text-zinc-600 hover:text-red-500 p-2" data-id="${docSnap.id}" title="Delete Message">
-                                    <i class="bi bi-trash-fill text-xs"></i>
+                                <button class="delete-msg-btn text-zinc-500 hover:text-red-400 flex items-center gap-1.5 transition-colors" data-id="${docSnap.id}">
+                                    <i class="bi bi-trash"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest">Delete Log</span>
                                 </button>
                             ` : ''}
                             ${canRevoke ? `
-                                <button class="revoke-access-btn text-zinc-600 hover:text-amber-500 p-2" data-authorid="${msg.authorId}" title="Revoke Access">
-                                    <i class="bi bi-person-x-fill text-xs"></i>
+                                <button class="revoke-access-btn text-zinc-500 hover:text-amber-400 flex items-center gap-1.5 transition-colors" data-authorid="${msg.authorId}">
+                                    <i class="bi bi-person-x"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest">Revoke Access</span>
                                 </button>
                             ` : ''}
                         </div>
