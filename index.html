@@ -182,12 +182,50 @@
                     <i class="bi bi-shield-shaded text-lg group-hover:scale-110 transition-transform duration-300"></i>
                     <span>Tab Cloak</span>
                 </button>
+                <button id="badges-btn" class="flex items-center gap-2.5 px-5 py-3 bg-zinc-900/50 border border-white/10 hover:border-cyan-500/40 hover:bg-zinc-800/80 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-cyan-400 group active:scale-95 shadow-[0_0_20px_-10px_rgba(34,211,238,0.2)]">
+                    <i class="bi bi-trophy text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                    <span>Achievements</span>
+                </button>
                 <!-- Auth container removed -->
             </div>
         </div>
     </header>
 
     <!-- Auth and Profile Modals Removed -->
+
+    <!-- Badges Modal -->
+    <div id="badges-modal" class="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl hidden opacity-0 transition-all duration-500">
+        <div class="bg-zinc-950 border border-white/10 rounded-[3rem] p-8 md:p-12 max-w-4xl w-full h-[80vh] flex flex-col shadow-2xl relative scale-90 transition-all duration-500" id="badges-container">
+            <button id="close-badges" class="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10">
+                <i class="bi bi-x-lg"></i>
+            </button>
+
+            <div class="mb-10">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center border border-cyan-500/20">
+                        <i class="bi bi-trophy-fill text-cyan-400 text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-black text-white italic uppercase tracking-tighter leading-none">Archives of Achievement</h2>
+                        <p class="text-zinc-500 text-[10px] font-mono font-bold uppercase tracking-widest mt-1">Uplink-Synchronized Status Badges</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="badges-grid" class="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pr-4 custom-scrollbar">
+                <!-- Badges go here -->
+            </div>
+            
+            <div class="mt-8 pt-8 border-t border-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="text-zinc-600 font-mono text-[10px] uppercase tracking-widest leading-none">
+                        Badge Integrity: <span class="text-cyan-400">Verified</span>
+                    </div>
+                </div>
+                <div id="badge-count" class="text-zinc-500 font-mono text-[10px] uppercase tracking-widest font-bold">0/8 ARCHIVED</div>
+            </div>
+        </div>
+    </div>
 
     <!-- Tab Cloak Modal -->
     <div id="cloak-modal" class="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md hidden opacity-0 transition-opacity duration-500">

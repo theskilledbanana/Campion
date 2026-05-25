@@ -237,14 +237,27 @@ let gameMetrics = {};
 let unsubscribeMetrics = null;
 let unsubscribeReviews = null;
 
+const BADGES = [
+    { id: 'early_adopter', name: 'Early Adopter', icon: 'bi-rocket-takeoff', desc: 'Sync with the network in the alpha stage.', color: 'text-indigo-400', condition: () => true },
+    { id: 'time_traveler', name: 'Time Traveler', icon: 'bi-hourglass-split', desc: 'Amass over 1 hour of total play time.', color: 'text-cyan-400', condition: (data) => data.totalSeconds > 3600 },
+    { id: 'novice_pilot', name: 'Novice Pilot', icon: 'bi-controller', desc: 'Successfully launch 5 unique modules.', color: 'text-green-400', condition: (data) => (data.recentlyPlayed || []).length >= 5 },
+    { id: 'specialist', name: 'Module Specialist', icon: 'bi-stars', desc: 'Successfully launch 10 unique modules.', color: 'text-blue-400', condition: (data) => (data.recentlyPlayed || []).length >= 10 },
+    { id: 'veteran_uplink', name: 'Veteran Uplink', icon: 'bi-cpu', desc: 'Successfully launch 20 unique modules.', color: 'text-purple-400', condition: (data) => (data.recentlyPlayed || []).length >= 20 },
+    { id: 'bug_hunter', name: 'Bug Hunter', icon: 'bi-bug', desc: 'Successfully reported a technical anomaly.', color: 'text-orange-400', manual: true },
+    { id: 'contributor', name: 'Site Contributor', icon: 'bi-patch-plus', desc: 'Suggested a module integrated into the archive.', color: 'text-cyan-500', manual: true },
+    { id: 'loyalty_core', name: 'Loyalty Core', icon: 'bi-shield-check', desc: 'Initiate over 50 uplink sessions.', color: 'text-pink-400', condition: (data) => data.sessions >= 50 }
+];
+
 let userData;
 try {
-    userData = JSON.parse(localStorage.getItem('vp_user_data')) || {
+    const raw = localStorage.getItem('vp_user_data');
+    userData = raw ? JSON.parse(raw) : {
         username: '',
         totalSeconds: 0,
         sessions: 0,
         recentlyPlayed: [],
-        favorites: []
+        favorites: [],
+        badges: ['early_adopter']
     };
 } catch (e) {
     console.error("Failed to load user data:", e);
@@ -253,20 +266,66 @@ try {
         totalSeconds: 0,
         sessions: 0,
         recentlyPlayed: [],
-        favorites: []
+        favorites: [],
+        badges: ['early_adopter']
     };
 }
 
-// Migration for existing users
-if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
-    userData.recentlyPlayed = [];
+// Migration and session tracking
+if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) userData.recentlyPlayed = [];
+if (!userData.favorites || !Array.isArray(userData.favorites)) userData.favorites = [];
+if (!userData.badges || !Array.isArray(userData.badges)) userData.badges = ['early_adopter'];
+userData.sessions = (userData.sessions || 0) + 1;
+
+function saveUserData() {
+    checkBadges();
+    localStorage.setItem('vp_user_data', JSON.stringify(userData));
 }
-if (!userData.favorites || !Array.isArray(userData.favorites)) {
-    userData.favorites = [];
+
+function checkBadges() {
+    let changed = false;
+    BADGES.forEach(badge => {
+        if (!badge.manual && !userData.badges.includes(badge.id)) {
+            if (badge.condition(userData)) {
+                userData.badges.push(badge.id);
+                changed = true;
+                showBadgeNotification(badge);
+            }
+        }
+    });
+    return changed;
+}
+
+function showBadgeNotification(badge) {
+    const toast = document.createElement('div');
+    toast.className = "fixed bottom-8 left-8 z-[200] bg-zinc-900 border border-cyan-500/50 rounded-2xl p-6 shadow-2xl flex items-center gap-4 animate-in slide-in-from-left-full duration-500";
+    toast.innerHTML = `
+        <div class="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20">
+            <i class="bi ${badge.icon} text-cyan-400 text-xl"></i>
+        </div>
+        <div>
+            <h4 class="text-[10px] font-black text-cyan-400 uppercase tracking-widest leading-none mb-1">Achievement Unlocked</h4>
+            <p class="text-white font-bold text-sm">${badge.name}</p>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('animate-out', 'fade-out', 'slide-out-to-left-full');
+        setTimeout(() => toast.remove(), 500);
+    }, 5000);
+}
+
+function safeCall(fn, name) {
+    try {
+        fn();
+    } catch (e) {
+        console.error(`Sub-system failure [${name}]:`, e);
+    }
 }
 
 function init() {
     console.log("VaultPortal [UPLINK ACTIVE] Initializing System Core...");
+    saveUserData();
     
     // Initialize UI Selectors
     itemsGrid = document.getElementById('items-grid');
@@ -378,12 +437,615 @@ function init() {
     }
 }
 
-function safeCall(fn, name) {
-    try {
-        fn();
-    } catch (e) {
-        console.error(`Sub-system failure [${name}]:`, e);
+function openUpdateModal() {
+    if (!updateModal) return;
+    updateModal.classList.remove('hidden');
+    setTimeout(() => {
+        updateModal.classList.remove('opacity-0');
+        updateContainer.classList.add('scale-100');
+    }, 10);
+}
+
+function closeUpdateModal() {
+    if (!updateModal) return;
+    updateModal.classList.add('opacity-0');
+    updateContainer.classList.remove('scale-100');
+    setTimeout(() => updateModal.classList.add('hidden'), 300);
+}
+
+function openDevModal() {
+    if (!devModal) return;
+    devModal.classList.remove('hidden');
+    setTimeout(() => {
+        devModal.classList.remove('opacity-0');
+        devContainer.classList.add('scale-100');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDevModal() {
+    if (!devModal) return;
+    devModal.classList.add('opacity-0');
+    devContainer.classList.remove('scale-100');
+    setTimeout(() => {
+        devModal.classList.add('hidden');
+        if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }, 300);
+}
+
+function openDevTerminal() {
+    if (!devTerminalOverlay) return;
+    devTerminalOverlay.classList.remove('hidden');
+    setTimeout(() => {
+        devTerminalOverlay.classList.remove('opacity-0');
+        terminalPassInput?.focus();
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDevTerminal() {
+    if (!devTerminalOverlay) return;
+    devTerminalOverlay.classList.add('opacity-0');
+    setTimeout(() => {
+        devTerminalOverlay.classList.add('hidden');
+        if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+        if (terminalPassInput) terminalPassInput.value = '';
+        if (terminalStatusLog) terminalStatusLog.textContent = 'Awaiting encrypted handshake...';
+    }, 500);
+}
+
+async function handleTerminalAuth() {
+    const code = terminalPassInput?.value;
+    if (!code) return;
+
+    const isCeo = code === '3012';
+    const isDev = code === '5012';
+
+    if (isCeo || isDev) {
+        try {
+            if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
+            
+            const role = isCeo ? 'ceo' : 'dev';
+            localStorage.setItem('vp_chat_role', role);
+            localStorage.setItem('vp_chat_passcode', code);
+            localStorage.setItem('vp_chat_authorized', 'true');
+            
+            if (!localStorage.getItem('vp_uplink_id')) {
+                localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
+            }
+
+            if (isCeo) {
+                if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
+                try {
+                    const cred = await signInAnonymously(auth);
+                    await setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                        role: 'ceo',
+                        status: 'active',
+                        updatedAt: serverTimestamp()
+                    }, { merge: true });
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
+                } catch (authErr) {
+                    console.error("Master Link Failure:", authErr);
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: REMOTE REJECTED.';
+                }
+            }
+            
+            if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL ACCEPTED. UPLINK ACTIVE.';
+            
+            setTimeout(() => {
+                closeDevTerminal();
+                updateForumAuthUI();
+                alert(isCeo ? "CEO MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
+            }, 800);
+
+        } catch (err) {
+            console.error("Terminal Auth Error:", err);
+            if (terminalStatusLog) terminalStatusLog.textContent = `ERROR: ${err.message || 'UPLINK FAILED'}`;
+        }
+    } else {
+        if (terminalStatusLog) terminalStatusLog.textContent = 'IDENTITY ERROR: INVALID PAYLOAD.';
+        if (terminalPassInput) {
+            terminalPassInput.classList.add('border-red-500/50');
+            setTimeout(() => terminalPassInput.classList.remove('border-red-500/50'), 1000);
+        }
     }
+}
+
+function openCloakModal() {
+    if (!cloakModal) return;
+    cloakModal.classList.remove('hidden');
+    setTimeout(() => {
+        cloakModal.classList.remove('opacity-0');
+        cloakContainer.classList.add('scale-100');
+        cloakInput.focus();
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCloakModal() {
+    if (!cloakModal) return;
+    cloakModal.classList.add('opacity-0');
+    cloakContainer.classList.remove('scale-100');
+    setTimeout(() => {
+        cloakModal.classList.add('hidden');
+        if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }, 500);
+}
+
+function applyCloak() {
+    const val = cloakInput.value.trim();
+    if (val) {
+        document.title = val;
+        localStorage.setItem('vp_cloaked_title', val);
+        closeCloakModal();
+    }
+}
+
+function resetCloak() {
+    document.title = ORIGINAL_TITLE;
+    localStorage.removeItem('vp_cloaked_title');
+    cloakInput.value = '';
+    closeCloakModal();
+}
+
+function openForumModal() {
+    if (!forumModal) return;
+    forumModal.classList.remove('hidden');
+    setTimeout(() => {
+        forumModal.classList.remove('opacity-0');
+        forumContainer.classList.remove('scale-90');
+        forumContainer.classList.add('scale-100');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+    
+    localStorage.setItem('vp_last_read_broadcast', Date.now().toString());
+    const broadcastBadge = document.getElementById('broadcast-badge');
+    if (broadcastBadge) broadcastBadge.classList.add('hidden');
+    const forumBtn = document.getElementById('forum-btn');
+    if (forumBtn) forumBtn.classList.remove('ring-2', 'ring-indigo-500/50', 'animate-pulse');
+    
+    syncForumMessages();
+}
+
+function closeForumModal() {
+    if (!forumModal) return;
+    forumModal.classList.add('opacity-0');
+    forumContainer.classList.remove('scale-100');
+    forumContainer.classList.add('scale-90');
+    
+    if (unsubscribeForum) {
+        unsubscribeForum();
+        unsubscribeForum = null;
+    }
+
+    setTimeout(() => {
+        forumModal.classList.add('hidden');
+        if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }, 300);
+}
+
+async function postForumMessage() {
+    const forumMsgInput = document.getElementById('forum-msg-input');
+    const content = forumMsgInput.value.trim();
+    if (!content) return;
+
+    const user = auth ? auth.currentUser : null;
+    const isManualDev = localStorage.getItem('vp_dev_override') === 'true' || localStorage.getItem('vp_chat_authorized') === 'true';
+
+    if (!user && !isManualDev) {
+        alert("PROTOCOL ERROR: YOU MUST BE AUTHORIZED TO BROADCAST");
+        return;
+    }
+
+    try {
+        sendForumMsgBtn.disabled = true;
+        sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
+
+        const role = localStorage.getItem('vp_chat_role') || 'dev';
+        const name = role === 'ceo' ? 'CEO' : 'Developer';
+        const passcode = localStorage.getItem('vp_chat_passcode');
+        const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
+
+        await addDoc(collection(db, 'forum_messages'), {
+            content,
+            authorId: authorId,
+            firebaseUid: auth.currentUser?.uid || null,
+            authorName: name,
+            authorRole: role,
+            authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
+            passcode: passcode,
+            createdAt: serverTimestamp()
+        });
+
+        forumMsgInput.value = '';
+        forumMsgInput.style.height = 'auto';
+        const forumMessagesView = document.getElementById('forum-messages-view');
+        if (forumMessagesView) forumMessagesView.scrollTo({ top: forumMessagesView.scrollHeight, behavior: 'smooth' });
+    } catch (error) {
+        console.error("Transmission failed:", error);
+        alert("Cloud Sync Failure: " + error.message);
+    } finally {
+        sendForumMsgBtn.disabled = false;
+        sendForumMsgBtn.innerHTML = '<i class="bi bi-send-fill text-xl group-hover:rotate-12 transition-transform"></i>';
+    }
+}
+
+async function logoutTerminal() {
+    if (confirm("PROTOCOL: INITIATE TERMINAL DISCONNECT?")) {
+        localStorage.removeItem('vp_chat_authorized');
+        localStorage.removeItem('vp_chat_role');
+        localStorage.removeItem('vp_chat_passcode');
+        if (auth && auth.currentUser) {
+            await signOut(auth);
+        }
+        updateForumAuthUI();
+        alert("TERMINAL DISCONNECTED. PROTOCOL OFFLINE.");
+    }
+}
+
+async function updateForumAuthUI(user) {
+    const forumInputArea = document.getElementById('forum-input-area');
+    const forumAuthPrompt = document.getElementById('forum-auth-prompt');
+    const promptText = forumAuthPrompt?.querySelector('p');
+    const devLoginBtn = document.getElementById('dev-login-btn');
+    const logoutBtn = document.getElementById('terminal-logout-btn');
+    const masterControlBtn = document.getElementById('master-control-btn');
+    const masterPanel = document.getElementById('ceo-master-panel');
+    
+    if (!user && auth && auth.currentUser) user = auth.currentUser;
+
+    let isAuthorized = localStorage.getItem('vp_chat_authorized') === 'true';
+    let isBanned = false;
+    const role = localStorage.getItem('vp_chat_role');
+
+    if (user && isAuthorized) {
+        try {
+            const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                if (data.status === 'banned') {
+                    isAuthorized = false;
+                    isBanned = true;
+                    localStorage.removeItem('vp_chat_authorized');
+                    localStorage.removeItem('vp_chat_role');
+                } else {
+                    localStorage.setItem('vp_chat_role', data.role);
+                }
+            }
+        } catch (err) {
+            console.warn("Auth verification failed:", err);
+        }
+    }
+
+    if (isAuthorized) {
+        forumInputArea?.classList.remove('hidden');
+        forumAuthPrompt?.classList.add('hidden');
+        if (devLoginBtn) {
+            devLoginBtn.textContent = 'PROTOCOL SUCCESS';
+            devLoginBtn.disabled = true;
+        }
+        if (logoutBtn) logoutBtn.classList.remove('hidden');
+        
+        if (masterControlBtn && role === 'ceo') {
+            masterControlBtn.classList.remove('hidden');
+        } else if (masterControlBtn) {
+            masterControlBtn.classList.add('hidden');
+            masterPanel?.classList.add('hidden');
+        }
+    } else {
+        forumInputArea?.classList.add('hidden');
+        forumAuthPrompt?.classList.remove('hidden');
+        if (devLoginBtn) {
+            devLoginBtn.textContent = isBanned ? 'ACCESS REVOKED' : 'AUTHORIZE LINK';
+            devLoginBtn.disabled = isBanned;
+        }
+        if (logoutBtn) logoutBtn.classList.add('hidden');
+        if (masterControlBtn) masterControlBtn.classList.add('hidden');
+        if (masterPanel) masterPanel.classList.add('hidden');
+        if (promptText) {
+            promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "Official Developer Access Required to Post";
+        }
+    }
+    
+    const forumModal = document.getElementById('forum-modal');
+    if (forumModal && !forumModal.classList.contains('hidden')) {
+        syncForumMessages();
+    }
+}
+
+function launchRandomGame() {
+    const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
+    if (randomItem) openPlayer(randomItem);
+}
+
+function hideLoader() {
+    if (iframeLoader) iframeLoader.classList.add('hidden');
+    if (gameIframe) gameIframe.classList.remove('opacity-0');
+}
+
+function setupEventListeners() {
+    // Nav Buttons
+    const badgesBtn = document.getElementById('badges-btn');
+    const badgesModal = document.getElementById('badges-modal');
+    const badgesContainer = document.getElementById('badges-container');
+    const closeBadgesBtn = document.getElementById('close-badges');
+    const badgesGrid = document.getElementById('badges-grid');
+    const badgeCountEl = document.getElementById('badge-count');
+
+    if (badgesBtn) {
+        badgesBtn.onclick = () => {
+            renderBadges(badgesGrid, badgeCountEl);
+            badgesModal.classList.remove('hidden');
+            setTimeout(() => {
+                badgesModal.classList.remove('opacity-0');
+                badgesContainer.classList.remove('scale-90');
+                badgesContainer.classList.add('scale-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        };
+    }
+
+    if (closeBadgesBtn) {
+        closeBadgesBtn.onclick = () => {
+            badgesModal.classList.add('opacity-0');
+            badgesContainer.classList.remove('scale-100');
+            badgesContainer.classList.add('scale-90');
+            setTimeout(() => badgesModal.classList.add('hidden'), 500);
+            if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+                document.body.style.overflow = '';
+            }
+        };
+    }
+
+    if (badgesModal) {
+        badgesModal.onclick = (e) => {
+            if (e.target === badgesModal) closeBadgesBtn.click();
+        };
+    }
+
+    // Search Functionality
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value.toLowerCase();
+            renderRecentlyPlayed();
+            renderItems();
+        });
+    }
+
+    // Player Controls
+    if (closePlayerBtn) closePlayerBtn.onclick = closePlayer;
+    if (mobileBackButton) mobileBackButton.onclick = closePlayer;
+    
+    if (refreshPlayerBtn) {
+        refreshPlayerBtn.onclick = () => {
+            const src = gameIframe.src;
+            gameIframe.src = '';
+            setTimeout(() => gameIframe.src = src, 10);
+        };
+    }
+
+    if (fullscreenPlayerBtn) {
+        fullscreenPlayerBtn.onclick = () => {
+            if (gameIframe.requestFullscreen) gameIframe.requestFullscreen();
+        };
+    }
+
+    // Modal Triggers
+    if (updateSiteBtn) updateSiteBtn.onclick = openUpdateModal;
+    if (closeUpdateBtn) closeUpdateBtn.onclick = closeUpdateModal;
+    
+    if (devApplyBtn) devApplyBtn.onclick = openDevModal;
+    if (closeDevBtn) closeDevBtn.onclick = closeDevModal;
+
+    if (surpriseBtn) surpriseBtn.onclick = launchRandomGame;
+
+    if (cloakTabBtn) cloakTabBtn.onclick = openCloakModal;
+    if (closeCloakBtn) closeCloakBtn.onclick = closeCloakModal;
+    if (applyCloakBtn) applyCloakBtn.onclick = applyCloak;
+    if (resetCloakBtn) resetCloakBtn.onclick = resetCloak;
+
+    // Terminal
+    if (terminalAuthSubmit) terminalAuthSubmit.onclick = handleTerminalAuth;
+    if (terminalPassInput) {
+        terminalPassInput.onkeydown = (e) => {
+            if (e.key === 'Enter') handleTerminalAuth();
+        };
+    }
+
+    // Details Modal Listeners
+    if (closeDetailsBtn) closeDetailsBtn.onclick = closeDetails;
+    if (likeBtn) likeBtn.onclick = () => handleRating('likes');
+    if (dislikeBtn) dislikeBtn.onclick = () => handleRating('dislikes');
+    if (submitReviewBtn) submitReviewBtn.onclick = submitReview;
+    if (launchFromDetailsBtn) {
+        launchFromDetailsBtn.onclick = () => {
+            const item = allEntries.find(g => g.id === activeDetailsGameId);
+            if (item) {
+                closeDetails();
+                openPlayer(item);
+            }
+        };
+    }
+
+    if (reviewInput) {
+        reviewInput.onkeydown = (e) => {
+            if (e.key === 'Enter') submitReview();
+        };
+    }
+
+    // Forum
+    const forumBtn = document.getElementById('forum-btn');
+    if (forumBtn) forumBtn.onclick = openForumModal;
+    if (closeForumBtn) closeForumBtn.onclick = closeForumModal;
+    if (sendForumMsgBtn) sendForumMsgBtn.onclick = postForumMessage;
+
+    // Developer Login (Integrated into Terminal logic usually, but keep for UI compatibility)
+    const terminalLogoutBtn = document.getElementById('terminal-logout-btn');
+    if (terminalLogoutBtn) terminalLogoutBtn.onclick = logoutTerminal;
+
+    const devLoginBtnElement = document.getElementById('dev-login-btn');
+    if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
+        const code = prompt("ENTER AUTHORIZATION PASSCODE:");
+        if (code === '5012' || code === '3012') {
+            terminalPassInput.value = code;
+            handleTerminalAuth();
+        } else if (code !== null) {
+            alert("PROTOCOL ERROR: INVALID PASSCODE.");
+        }
+    };
+
+    // Master Control Logic
+    const masterControlBtn = document.getElementById('master-control-btn');
+    const masterPanel = document.getElementById('ceo-master-panel');
+    const closeMasterBtn = document.getElementById('close-master-panel');
+
+    if (masterControlBtn) {
+        masterControlBtn.onclick = () => {
+            if (masterPanel) {
+                const isHidden = masterPanel.classList.contains('hidden');
+                if (isHidden) {
+                    masterPanel.classList.remove('hidden');
+                    setTimeout(() => masterPanel.classList.add('opacity-100'), 10);
+                } else {
+                    masterPanel.classList.add('hidden');
+                }
+            }
+        };
+    }
+
+    if (closeMasterBtn) {
+        closeMasterBtn.onclick = () => {
+            masterPanel?.classList.add('hidden');
+        };
+    }
+
+    // Global Key Events
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+            e.preventDefault();
+            openDevTerminal();
+        }
+        if (e.key === 'Escape') {
+            closePlayer();
+            closeUpdateModal();
+            closeDevModal();
+            closeDevTerminal();
+            closeCloakModal();
+            closeDetails();
+            closeForumModal();
+            if (closeBadgesBtn) closeBadgesBtn.click();
+        }
+    });
+
+    // Dismiss Initial Overlays
+    if (acceptDisclaimerBtn) acceptDisclaimerBtn.onclick = hideDisclaimer;
+    if (dismissLoaderBtn) dismissLoaderBtn.onclick = hideLoader;
+
+    // Secret Dev Terminal Gesture
+    if (versionTag) {
+        let clickCount = 0;
+        let lastClick = 0;
+        versionTag.onclick = () => {
+            const now = Date.now();
+            if (now - lastClick < 500) {
+                clickCount++;
+            } else {
+                clickCount = 1;
+            }
+            lastClick = now;
+
+            if (clickCount >= 3) {
+                clickCount = 0;
+                openDevTerminal();
+            }
+        };
+    }
+
+    // System Indicator logic
+    const systemIndicator = document.getElementById('system-indicator');
+    if (systemIndicator) {
+        let clickCount = 0;
+        systemIndicator.onclick = () => {
+            clickCount++;
+            if (clickCount >= 5) {
+                clickCount = 0;
+                const key = prompt("ENTER MANUAL UPLINK KEY:");
+                if (key === 'VAULT-OVERRIDE-2026') {
+                    localStorage.setItem('vp_dev_override', 'true');
+                    location.reload();
+                }
+            }
+        };
+    }
+
+    // Backdrop Clicks
+    const modals = [
+        { id: 'update-modal', close: closeUpdateModal },
+        { id: 'dev-modal', close: closeDevModal },
+        { id: 'disclaimer-modal', close: hideDisclaimer },
+        { id: 'dev-terminal-overlay', close: closeDevTerminal },
+        { id: 'cloak-modal', close: closeCloakModal },
+        { id: 'forum-modal', close: closeForumModal },
+        { id: 'details-modal', close: closeDetails }
+    ];
+
+    modals.forEach(m => {
+        const el = document.getElementById(m.id);
+        if (el) {
+            el.onclick = (e) => {
+                if (e.target === el) m.close();
+            };
+        }
+    });
+
+    // Keep UI in sync with Auth
+    onAuthStateChanged(auth, (user) => {
+        updateForumAuthUI(user);
+    });
+}
+
+function renderBadges(grid, countEl) {
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    BADGES.forEach(badge => {
+        const isUnlocked = userData.badges.includes(badge.id);
+        const card = document.createElement('div');
+        card.className = `p-6 rounded-[2rem] border transition-all duration-500 scale-95 hover:scale-100 overflow-hidden relative group ${isUnlocked ? 'bg-zinc-900 border-white/10 hover:border-cyan-500/40' : 'bg-black/50 border-white/5 grayscale pointer-events-none opacity-50'}`;
+        
+        card.innerHTML = `
+            <div class="flex items-start gap-4 mb-4 relative z-10">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center bg-zinc-950 border border-white/5 transition-all duration-500 group-hover:scale-110 group-hover:bg-cyan-500/10 group-hover:border-cyan-500/20">
+                    <i class="bi ${badge.icon} ${isUnlocked ? badge.color : 'text-zinc-700'} text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-white italic uppercase tracking-tighter leading-none mb-1 text-lg">${badge.name}</h3>
+                    <p class="text-zinc-500 text-[10px] font-mono leading-tight">${badge.desc}</p>
+                </div>
+            </div>
+            
+            ${isUnlocked ? `
+                <div class="absolute top-4 right-4 z-10 w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+                <div class="text-[8px] font-mono text-cyan-500 uppercase tracking-widest font-black mt-2">Status: Archived</div>
+            ` : `
+                <div class="text-[8px] font-mono text-zinc-700 uppercase tracking-widest font-black mt-2">Status: Locked</div>
+            `}
+
+            <!-- Background FX -->
+            <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-gradient-to-br ${isUnlocked ? 'from-cyan-500/10 to-transparent' : 'from-transparent to-transparent'} rounded-full blur-2xl transition-all duration-500 group-hover:scale-150"></div>
+        `;
+        grid.appendChild(card);
+    });
+    
+    if (countEl) countEl.textContent = `${userData.badges.length}/${BADGES.length} ARCHIVED`;
 }
 
 function startSystemTicker() {
@@ -662,10 +1324,6 @@ function renderRecentlyPlayed() {
     });
 }
 
-function saveUserData() {
-    localStorage.setItem('vp_user_data', JSON.stringify(userData));
-}
-
 function openPlayer(item) {
     if (!item) return;
     
@@ -689,19 +1347,16 @@ function openPlayer(item) {
                 notify.classList.remove('translate-y-0');
                 notify.classList.add('-translate-y-full');
                 
-                // Track and Open
-                trackAndRedirect(item);
+                trackAndLaunch(item);
             };
-            
-            // Do NOT redirect immediately for Baseball Bros
             return;
         }
     }
     
-    trackAndRedirect(item);
+    trackAndLaunch(item);
 }
 
-function trackAndRedirect(item) {
+function trackAndLaunch(item) {
     // Update Recently Played
     if (!Array.isArray(userData.recentlyPlayed)) userData.recentlyPlayed = [];
     userData.recentlyPlayed = [item.id, ...userData.recentlyPlayed.filter(id => id !== item.id)].slice(0, 8);
@@ -713,7 +1368,37 @@ function trackAndRedirect(item) {
     saveUserData();
     renderRecentlyPlayed();
 
-    window.open(item.iframeUrl, '_blank');
+    // Show Player UI
+    if (!playerOverlay) return;
+    
+    playerOverlay.classList.remove('hidden');
+    playerTitle.textContent = item.title;
+    playerCategory.textContent = (item.categories || []).join(' // ');
+    
+    const externalLink = document.getElementById('external-link');
+    const loaderExternalLink = document.getElementById('loader-external-link');
+    if (externalLink) externalLink.href = item.iframeUrl;
+    if (loaderExternalLink) loaderExternalLink.href = item.iframeUrl;
+
+    if (iframeLoader) iframeLoader.classList.remove('hidden');
+    if (gameIframe) {
+        gameIframe.classList.add('opacity-0');
+        gameIframe.src = item.iframeUrl;
+        
+        if (item.customStyles) {
+            gameIframe.style = item.customStyles;
+        } else {
+            gameIframe.style = "";
+        }
+
+        gameIframe.onload = () => {
+            setTimeout(() => {
+                if (iframeLoader) iframeLoader.classList.add('hidden');
+                gameIframe.classList.remove('opacity-0');
+            }, 1500);
+        };
+    }
+    document.body.style.overflow = 'hidden';
 }
 
 function closePlayer() {
@@ -728,608 +1413,6 @@ function closePlayer() {
     gameIframe.src = '';
     gameIframe.classList.add('opacity-0');
     document.body.style.overflow = '';
-}
-
-function setupEventListeners() {
-    // Search Functionality
-    searchInput.addEventListener('input', (e) => {
-        currentSearch = e.target.value;
-        renderRecentlyPlayed();
-        renderItems();
-    });
-
-    // Player Controls
-    closePlayerBtn.onclick = closePlayer;
-    if (mobileBackButton) mobileBackButton.onclick = closePlayer;
-    
-    refreshPlayerBtn.onclick = () => {
-        const src = gameIframe.src;
-        gameIframe.src = '';
-        setTimeout(() => gameIframe.src = src, 10);
-    };
-
-    fullscreenPlayerBtn.onclick = () => {
-        if (gameIframe.requestFullscreen) gameIframe.requestFullscreen();
-    };
-
-    if (dismissLoaderBtn) {
-        dismissLoaderBtn.onclick = () => {
-            iframeLoader.classList.add('hidden');
-            gameIframe.classList.remove('opacity-0');
-        };
-    }
-
-    // Disclaimer
-    acceptDisclaimerBtn.onclick = hideDisclaimer;
-
-    // Surprise Me
-    surpriseBtn.onclick = () => {
-        const randomItem = allEntries[Math.floor(Math.random() * allEntries.length)];
-        openPlayer(randomItem);
-    };
-
-    // Purge History
-    if (clearRecentBtn) {
-        clearRecentBtn.onclick = () => {
-            if (confirm("PURGE SESSION RESUME DATA?")) {
-                userData.recentlyPlayed = [];
-                saveUserData();
-                renderRecentlyPlayed();
-            }
-        };
-    }
-
-    // Tab Cloak
-    const openCloakModal = () => {
-        cloakModal.classList.remove('hidden');
-        setTimeout(() => {
-            cloakModal.classList.remove('opacity-0');
-            cloakContainer.classList.add('scale-100');
-            cloakInput.focus();
-        }, 10);
-        document.body.style.overflow = 'hidden';
-    };
-
-    const closeCloakModal = () => {
-        cloakModal.classList.add('opacity-0');
-        cloakContainer.classList.remove('scale-100');
-        setTimeout(() => cloakModal.classList.add('hidden'), 500);
-        document.body.style.overflow = '';
-    };
-
-    if (cloakTabBtn) cloakTabBtn.onclick = openCloakModal;
-    if (closeCloakBtn) closeCloakBtn.onclick = closeCloakModal;
-
-    applyCloakBtn.onclick = () => {
-        const val = cloakInput.value.trim();
-        if (val) {
-            document.title = val;
-            localStorage.setItem('vp_cloaked_title', val);
-            closeCloakModal();
-        }
-    };
-
-    resetCloakBtn.onclick = () => {
-        document.title = ORIGINAL_TITLE;
-        localStorage.removeItem('vp_cloaked_title');
-        cloakInput.value = '';
-        closeCloakModal();
-    };
-
-    // Update Modal
-    updateSiteBtn.onclick = () => {
-        updateModal.classList.remove('hidden');
-        setTimeout(() => {
-            updateModal.classList.remove('opacity-0');
-            updateContainer.classList.add('scale-100');
-        }, 10);
-    };
-
-    closeUpdateBtn.onclick = () => {
-        updateModal.classList.add('opacity-0');
-        updateContainer.classList.remove('scale-100');
-        setTimeout(() => updateModal.classList.add('hidden'), 300);
-    };
-
-    // Dev Application
-    const openDevModal = () => {
-        devModal.classList.remove('hidden');
-        setTimeout(() => {
-            devModal.classList.remove('opacity-0');
-            devContainer.classList.add('scale-100');
-        }, 10);
-        document.body.style.overflow = 'hidden';
-    };
-
-    const closeDevModal = () => {
-        devModal.classList.add('opacity-0');
-        devContainer.classList.remove('scale-100');
-        setTimeout(() => {
-            devModal.classList.add('hidden');
-            if (playerOverlay.classList.contains('hidden')) {
-                document.body.style.overflow = '';
-            }
-        }, 300);
-    };
-
-    if (devApplyBtn) devApplyBtn.onclick = openDevModal;
-    if (closeDevBtn) closeDevBtn.onclick = closeDevModal;
-
-    // Details Modal Listeners
-    if (closeDetailsBtn) closeDetailsBtn.onclick = closeDetails;
-    if (likeBtn) likeBtn.onclick = () => handleRating('likes');
-    if (dislikeBtn) dislikeBtn.onclick = () => handleRating('dislikes');
-    if (submitReviewBtn) submitReviewBtn.onclick = submitReview;
-    if (launchFromDetailsBtn) {
-        launchFromDetailsBtn.onclick = () => {
-            const item = allEntries.find(g => g.id === activeDetailsGameId);
-            if (item) {
-                closeDetails();
-                openPlayer(item);
-            }
-        };
-    }
-    if (reviewInput) {
-        reviewInput.onkeydown = (e) => {
-            if (e.key === 'Enter') submitReview();
-        };
-    }
-    
-    if (devModal) {
-        devModal.onclick = (e) => {
-            if (e.target === devModal) closeDevModal();
-        };
-    }
-
-    // Secret Dev Terminal Gesture
-    if (versionTag) {
-        let clickCount = 0;
-        let lastClick = 0;
-        versionTag.onclick = () => {
-            const now = Date.now();
-            if (now - lastClick < 500) {
-                clickCount++;
-            } else {
-                clickCount = 1;
-            }
-            lastClick = now;
-
-            if (clickCount >= 3) {
-                clickCount = 0;
-                openDevTerminal();
-            }
-        };
-    }
-
-    const openDevTerminal = () => {
-        if (!devTerminalOverlay) return;
-        devTerminalOverlay.classList.remove('hidden');
-        setTimeout(() => {
-            devTerminalOverlay.classList.remove('opacity-0');
-            terminalPassInput?.focus();
-        }, 10);
-        document.body.style.overflow = 'hidden';
-    };
-
-    const closeDevTerminal = () => {
-        if (!devTerminalOverlay) return;
-        devTerminalOverlay.classList.add('opacity-0');
-        setTimeout(() => {
-            devTerminalOverlay.classList.add('hidden');
-            document.body.style.overflow = '';
-            if (terminalPassInput) terminalPassInput.value = '';
-            if (terminalStatusLog) terminalStatusLog.textContent = 'Awaiting encrypted handshake...';
-        }, 500);
-    };
-
-    if (closeTerminalBtn) closeTerminalBtn.onclick = closeDevTerminal;
-    if (devTerminalOverlay) {
-        devTerminalOverlay.onclick = (e) => {
-            if (e.target === devTerminalOverlay) closeDevTerminal();
-        };
-    }
-
-    // Terminal Authorization Procedure
-    const handleTerminalAuth = async () => {
-        const code = terminalPassInput?.value;
-        if (!code) return;
-
-        const isCeo = code === '3012';
-        const isDev = code === '5012';
-
-        if (isCeo || isDev) {
-            try {
-                if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
-                
-                const role = isCeo ? 'ceo' : 'dev';
-                localStorage.setItem('vp_chat_role', role);
-                localStorage.setItem('vp_chat_passcode', code);
-                localStorage.setItem('vp_chat_authorized', 'true');
-                
-                if (!localStorage.getItem('vp_uplink_id')) {
-                    localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
-                }
-
-                if (isCeo) {
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
-                    try {
-                        const cred = await signInAnonymously(auth);
-                        await setDoc(doc(db, 'authorized_users', cred.user.uid), {
-                            role: 'ceo',
-                            status: 'active',
-                            updatedAt: serverTimestamp()
-                        }, { merge: true });
-                        if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
-                    } catch (authErr) {
-                        console.error("Master Link Failure:", authErr);
-                        if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: REMOTE REJECTED.';
-                    }
-                }
-                
-                if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL ACCEPTED. UPLINK ACTIVE.';
-                
-                setTimeout(() => {
-                    closeDevTerminal();
-                    updateForumAuthUI();
-                    alert(isCeo ? "CEO MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
-                }, 800);
-
-            } catch (err) {
-                console.error("Terminal Auth Error:", err);
-                if (terminalStatusLog) terminalStatusLog.textContent = `ERROR: ${err.message || 'UPLINK FAILED'}`;
-            }
-        } else {
-            if (terminalStatusLog) terminalStatusLog.textContent = 'IDENTITY ERROR: INVALID PAYLOAD.';
-            if (terminalPassInput) {
-                terminalPassInput.classList.add('border-red-500/50');
-                setTimeout(() => terminalPassInput.classList.remove('border-red-500/50'), 1000);
-            }
-        }
-    };
-
-    if (terminalAuthSubmit) terminalAuthSubmit.onclick = handleTerminalAuth;
-    if (terminalPassInput) {
-        terminalPassInput.onkeydown = (e) => {
-            if (e.key === 'Enter') handleTerminalAuth();
-        };
-    }
-
-    // Global Keybinds
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closePlayer();
-            closeCloakModal();
-            closeDevModal();
-            closeForumModal();
-            closeDevTerminal();
-        }
-    });
-
-    // Use a safer selector for the system indicator
-    const systemIndicator = document.getElementById('system-indicator') || document.querySelector('p.text-cyan-400\\/70');
-    const isDevOverridden = localStorage.getItem('vp_dev_override') === 'true';
-
-    if (systemIndicator) {
-        let clickCount = 0;
-        systemIndicator.style.cursor = 'pointer';
-        systemIndicator.onclick = () => {
-            clickCount++;
-            if (clickCount >= 5) {
-                clickCount = 0;
-                const key = prompt("ENTER MANUAL UPLINK KEY:");
-                if (key === 'VAULT-OVERRIDE-2026') {
-                    alert("MANUAL UPLINK AUTHENTICATED. DEV ACCESS GRANTED.");
-                    localStorage.setItem('vp_dev_override', 'true');
-                    location.reload();
-                } else if (key) {
-                    alert("INVALID UPLINK KEY. ACCESS DENIED.");
-                }
-            }
-        };
-        if (isDevOverridden) {
-            systemIndicator.textContent = 'SYSTEM: [OVERRIDE_ACTIVE]';
-        }
-    }
-
-    // User identification container removed
-    
-    // Developer Authorization Logic
-    const isChatAuthorized = () => {
-        return localStorage.getItem('vp_chat_authorized') === 'true';
-    };
-
-    const logoutTerminal = async () => {
-        if (confirm("PROTOCOL: INITIATE TERMINAL DISCONNECT?")) {
-            localStorage.removeItem('vp_chat_authorized');
-            localStorage.removeItem('vp_chat_role');
-            localStorage.removeItem('vp_chat_passcode');
-            if (auth && auth.currentUser) {
-                await signOut(auth);
-            }
-            updateForumAuthUI();
-            alert("TERMINAL DISCONNECTED. PROTOCOL OFFLINE.");
-        }
-    };
-
-    const updateForumAuthUI = async (user) => {
-        const forumInputArea = document.getElementById('forum-input-area');
-        const forumAuthPrompt = document.getElementById('forum-auth-prompt');
-        const promptText = forumAuthPrompt?.querySelector('p');
-        const devLoginBtn = document.getElementById('dev-login-btn');
-        const logoutBtn = document.getElementById('terminal-logout-btn');
-        const masterControlBtn = document.getElementById('master-control-btn');
-        const masterPanel = document.getElementById('ceo-master-panel');
-        
-        if (!user && auth && auth.currentUser) user = auth.currentUser;
-
-        let isAuthorized = isChatAuthorized();
-        let isBanned = false;
-        const role = localStorage.getItem('vp_chat_role');
-
-        if (user && isAuthorized) {
-            try {
-                const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
-                if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    if (data.status === 'banned') {
-                        isAuthorized = false;
-                        isBanned = true;
-                        localStorage.removeItem('vp_chat_authorized');
-                        localStorage.removeItem('vp_chat_role');
-                    } else {
-                        localStorage.setItem('vp_chat_role', data.role);
-                    }
-                }
-            } catch (err) {
-                console.warn("Auth verification failed:", err);
-            }
-        }
-
-        if (isAuthorized) {
-            forumInputArea?.classList.remove('hidden');
-            forumAuthPrompt?.classList.add('hidden');
-            if (devLoginBtn) {
-                devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-                devLoginBtn.disabled = true;
-            }
-            if (logoutBtn) logoutBtn.classList.remove('hidden');
-            
-            if (masterControlBtn && role === 'ceo') {
-            masterControlBtn.classList.remove('hidden');
-            
-            // Master link handled on-demand during delete/revoke actions to avoid unrequested popups
-        } else if (masterControlBtn) {
-                masterControlBtn.classList.add('hidden');
-                masterPanel?.classList.add('hidden');
-            }
-        } else {
-            forumInputArea?.classList.add('hidden');
-            forumAuthPrompt?.classList.remove('hidden');
-            if (devLoginBtn) {
-                devLoginBtn.textContent = isBanned ? 'ACCESS REVOKED' : 'AUTHORIZE LINK';
-                devLoginBtn.disabled = isBanned;
-            }
-            if (logoutBtn) logoutBtn.classList.add('hidden');
-            if (masterControlBtn) masterControlBtn.classList.add('hidden');
-            if (masterPanel) masterPanel.classList.add('hidden');
-            if (promptText) {
-                promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "Official Developer Access Required to Post";
-            }
-        }
-        
-        // Refresh forum if currently open
-        const forumModal = document.getElementById('forum-modal');
-        if (forumModal && !forumModal.classList.contains('hidden')) {
-            syncForumMessages();
-        }
-    };
-
-    // Master Control Logic
-    const masterControlBtn = document.getElementById('master-control-btn');
-    const masterPanel = document.getElementById('ceo-master-panel');
-    const closeMasterBtn = document.getElementById('close-master-panel');
-
-    if (masterControlBtn) {
-        masterControlBtn.onclick = () => {
-            if (masterPanel) {
-                const isHidden = masterPanel.classList.contains('hidden');
-                if (isHidden) {
-                    masterPanel.classList.remove('hidden');
-                    setTimeout(() => masterPanel.classList.add('opacity-100'), 10);
-                } else {
-                    masterPanel.classList.add('hidden');
-                }
-            }
-        };
-    }
-
-    if (closeMasterBtn) {
-        closeMasterBtn.onclick = () => {
-            masterPanel?.classList.add('hidden');
-        };
-    }
-
-    const logoutBtnElement = document.getElementById('terminal-logout-btn');
-    if (logoutBtnElement) logoutBtnElement.onclick = logoutTerminal;
-
-    if (auth) {
-        onAuthStateChanged(auth, (user) => {
-            updateForumAuthUI(user);
-        });
-    }
-
-    // Developer Login Button (Passcode implementation)
-    const devLoginBtn = document.getElementById('dev-login-btn');
-    if (devLoginBtn) {
-        devLoginBtn.onclick = async () => {
-            const code = prompt("ENTER AUTHORIZATION PASSCODE:");
-            if (code === '5012' || code === '3012') {
-                const isCeo = code === '3012';
-                try {
-                    devLoginBtn.textContent = 'LINKING...';
-                    devLoginBtn.disabled = true;
-                    
-                    const role = isCeo ? 'ceo' : 'dev';
-                    localStorage.setItem('vp_chat_role', role);
-                    localStorage.setItem('vp_chat_passcode', code);
-                    localStorage.setItem('vp_chat_authorized', 'true');
-
-                    if (!localStorage.getItem('vp_uplink_id')) {
-                        localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
-                    }
-
-                    if (isCeo) {
-                        devLoginBtn.textContent = 'ESTABLISHING...';
-                        try {
-                            const cred = await signInAnonymously(auth);
-                            await setDoc(doc(db, 'authorized_users', cred.user.uid), {
-                                role: 'ceo',
-                                status: 'active',
-                                updatedAt: serverTimestamp()
-                            }, { merge: true });
-                            console.log("CEO Uplink role established.");
-                        } catch (e) {
-                            console.error("CEO Remote Auth failed:", e);
-                        }
-                    }
-                    
-                    alert(isCeo ? "CEO UPLINK ESTABLISHED. MASTER CONTROL ACTIVE." : "PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
-                    devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-                    updateForumAuthUI(auth?.currentUser);
-                } catch (err) {
-                    console.error("Local Auth Error:", err);
-                    localStorage.setItem('vp_chat_authorized', 'true');
-                    localStorage.setItem('vp_chat_passcode', code);
-                    localStorage.setItem('vp_chat_role', code === '3012' ? 'ceo' : 'dev');
-                    devLoginBtn.textContent = 'LINKING BYPASS';
-                    updateForumAuthUI(auth?.currentUser);
-                }
-            } else if (code !== null) {
-                alert("PROTOCOL ERROR: INVALID PASSCODE.");
-                setTimeout(() => {
-                    devLoginBtn.textContent = 'LINK FAILED';
-                    setTimeout(() => {
-                        devLoginBtn.textContent = 'AUTHORIZE LINK';
-                    }, 2000);
-                }, 100);
-            }
-        };
-
-        if (isChatAuthorized()) {
-            devLoginBtn.textContent = 'PROTOCOL SUCCESS';
-            devLoginBtn.disabled = true;
-        }
-
-        // Keep UI in sync with Auth
-        onAuthStateChanged(auth, (user) => {
-            updateForumAuthUI(user);
-        });
-    }
-
-    // Forum Management
-    const forumBtn = document.getElementById('forum-btn');
-    const closeForumBtn = document.getElementById('close-forum');
-    const forumModal = document.getElementById('forum-modal');
-    const forumContainer = document.getElementById('forum-container');
-    const forumMessagesView = document.getElementById('forum-messages-view');
-    const forumMsgInput = document.getElementById('forum-msg-input');
-    const sendForumMsgBtn = document.getElementById('send-forum-msg');
-
-    const openForumModal = () => {
-        forumModal.classList.remove('hidden');
-        setTimeout(() => {
-            forumModal.classList.remove('opacity-0');
-            forumContainer.classList.remove('scale-90');
-            forumContainer.classList.add('scale-100');
-        }, 10);
-        document.body.style.overflow = 'hidden';
-        
-        // Mark as read when opening
-        localStorage.setItem('vp_last_read_broadcast', Date.now().toString());
-        const broadcastBadge = document.getElementById('broadcast-badge');
-        if (broadcastBadge) broadcastBadge.classList.add('hidden');
-        const forumBtn = document.getElementById('forum-btn');
-        if (forumBtn) forumBtn.classList.remove('ring-2', 'ring-indigo-500/50', 'animate-pulse');
-        
-        syncForumMessages();
-    };
-
-    const closeForumModal = () => {
-        forumModal.classList.add('opacity-0');
-        forumContainer.classList.remove('scale-100');
-        forumContainer.classList.add('scale-90');
-        
-        if (unsubscribeForum) {
-            unsubscribeForum();
-            unsubscribeForum = null;
-        }
-
-        setTimeout(() => {
-            forumModal.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 300);
-    };
-
-    if (forumBtn) forumBtn.onclick = openForumModal;
-    if (closeForumBtn) closeForumBtn.onclick = closeForumModal;
-
-    if (sendForumMsgBtn && db) {
-        sendForumMsgBtn.onclick = async () => {
-            const content = forumMsgInput.value.trim();
-            if (!content) return;
-
-            const user = auth ? auth.currentUser : null;
-            const isManualDev = localStorage.getItem('vp_dev_override') === 'true' || localStorage.getItem('vp_chat_authorized') === 'true';
-
-            if (!user && !isManualDev) {
-                alert("PROTOCOL ERROR: YOU MUST BE AUTHORIZED TO BROADCAST");
-                return;
-            }
-
-            try {
-                sendForumMsgBtn.disabled = true;
-                sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
-
-                const role = localStorage.getItem('vp_chat_role') || 'dev';
-                const name = role === 'ceo' ? 'CEO' : 'Developer';
-                const passcode = localStorage.getItem('vp_chat_passcode');
-                const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
-
-                await addDoc(collection(db, 'forum_messages'), {
-                    content,
-                    authorId: authorId,
-                    firebaseUid: auth.currentUser?.uid || null,
-                    authorName: name,
-                    authorRole: role,
-                    authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
-                    passcode: passcode,
-                    createdAt: serverTimestamp()
-                });
-
-                forumMsgInput.value = '';
-                forumMsgInput.style.height = 'auto';
-                forumMessagesView.scrollTo({ top: forumMessagesView.scrollHeight, behavior: 'smooth' });
-            } catch (error) {
-                console.error("Transmission failed:", error);
-                alert("Cloud Sync Failure: " + error.message);
-            } finally {
-                sendForumMsgBtn.disabled = false;
-                sendForumMsgBtn.innerHTML = '<i class="bi bi-send-fill text-xl group-hover:rotate-12 transition-transform"></i>';
-            }
-        };
-
-        forumMsgInput.oninput = () => {
-            forumMsgInput.style.height = 'auto';
-            forumMsgInput.style.height = (forumMsgInput.scrollHeight) + 'px';
-        };
-
-        forumMsgInput.onkeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendForumMsgBtn.click();
-            }
-        };
-    }
 }
 
 
