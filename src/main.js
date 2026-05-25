@@ -814,75 +814,30 @@ function setupEventListeners() {
         const code = terminalPassInput?.value;
         if (!code) return;
 
-        const isCeoKey = code === 'VAULT_CEO_MASTER_9921_XQ_PROTOCOL_BETA';
-        const isDevKey = code === 'VAULT_DEV_UPLINK_5012_ZM_SECURE_LINK';
+        const isCeo = code === '9921';
+        const isDev = code === '5012';
 
-        if (isCeoKey || isDevKey) {
-            const isCeo = isCeoKey;
+        if (isCeo || isDev) {
             try {
-                if (!auth || !db) throw new Error("FIREBASE_NOT_INITIALIZED");
+                if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
                 
-                if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING SECURE UPLINK...';
-                if (terminalAuthSubmit) terminalAuthSubmit.disabled = true;
-                
-                // Always ensure we have a Firebase UID
-                let user = auth.currentUser;
-                if (!user) {
-                    try {
-                        const cred = await signInAnonymously(auth);
-                        user = cred.user;
-                    } catch (signInErr) {
-                        console.error("Identity Link Error:", signInErr);
-                        if (signInErr.code === 'auth/operation-not-allowed' || signInErr.code === 'auth/admin-restricted-operation') {
-                            const promptMsg = signInErr.code === 'auth/admin-restricted-operation' 
-                                ? "RESTRICTION: SECURITY INTERFERENCE DETECTED. PROCEED WITH GOOGLE LINK?"
-                                : "RESTRICTION: ANONYMOUS AUTH DISABLED. PROCEED WITH GOOGLE LINK?";
-                            
-                            if (confirm(promptMsg)) {
-                                const provider = new GoogleAuthProvider();
-                                const cred = await signInWithPopup(auth, provider);
-                                user = cred.user;
-                            } else {
-                                throw new Error("AUTH_BLOCKED");
-                            }
-                        } else {
-                            throw new Error("AUTH_FAILED");
-                        }
-                    }
-                }
-                
-                if (!user) throw new Error("IDENTITY_LINK_FAILED");
-                
-                // Check status
-                const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
-                if (userDoc.exists() && userDoc.data().status === 'banned') {
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL FATAL: ACCESS PERMANENTLY REVOKED.';
-                    throw new Error("BANNED");
-                }
-                
-                // Register
+                // Pure Passcode Logic: We don't link with Firebase Auth anymore to avoid admin restrictions
                 const role = isCeo ? 'ceo' : 'dev';
-                await setDoc(doc(db, 'authorized_users', user.uid), {
-                    role: role,
-                    status: 'active',
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-                
                 localStorage.setItem('vp_chat_role', role);
+                localStorage.setItem('vp_chat_passcode', code);
                 localStorage.setItem('vp_chat_authorized', 'true');
                 
-                if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ESTABLISHED. PROTOCOL SUCCESS.';
+                if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL ACCEPTED. UPLINK ACTIVE.';
                 
                 setTimeout(() => {
                     closeDevTerminal();
-                    updateForumAuthUI(user);
+                    updateForumAuthUI();
                     alert(isCeo ? "MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
-                }, 1000);
+                }, 800);
 
             } catch (err) {
                 console.error("Terminal Auth Error:", err);
                 if (terminalStatusLog) terminalStatusLog.textContent = `ERROR: ${err.message || 'UPLINK FAILED'}`;
-                if (terminalAuthSubmit) terminalAuthSubmit.disabled = false;
             }
         } else {
             if (terminalStatusLog) terminalStatusLog.textContent = 'IDENTITY ERROR: INVALID PAYLOAD.';
@@ -944,34 +899,12 @@ function setupEventListeners() {
         return localStorage.getItem('vp_chat_authorized') === 'true';
     };
 
-    const updateForumAuthUI = async (user) => {
+    const updateForumAuthUI = (user) => {
         const forumInputArea = document.getElementById('forum-input-area');
         const forumAuthPrompt = document.getElementById('forum-auth-prompt');
         const promptText = forumAuthPrompt?.querySelector('p');
         
-        if (!user && auth.currentUser) user = auth.currentUser;
-
         let isAuthorized = isChatAuthorized();
-        let isBanned = false;
-
-        if (user && isAuthorized) {
-            try {
-                const userDoc = await getDoc(doc(db, 'authorized_users', user.uid));
-                if (userDoc.exists()) {
-                    const data = userDoc.data();
-                    if (data.status === 'banned') {
-                        isAuthorized = false;
-                        isBanned = true;
-                        localStorage.removeItem('vp_chat_authorized');
-                        localStorage.removeItem('vp_chat_role');
-                    } else {
-                        localStorage.setItem('vp_chat_role', data.role);
-                    }
-                }
-            } catch (err) {
-                console.warn("Auth verification failed:", err);
-            }
-        }
 
         if (isAuthorized) {
             forumInputArea?.classList.remove('hidden');
@@ -980,7 +913,7 @@ function setupEventListeners() {
             forumInputArea?.classList.add('hidden');
             forumAuthPrompt?.classList.remove('hidden');
             if (promptText) {
-                promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "PROTOCOL ERROR: DECRYPTED IDENTITY REQUIRED TO BROADCAST";
+                promptText.textContent = "PROTOCOL ERROR: DECRYPTED IDENTITY REQUIRED TO BROADCAST";
             }
         }
     };
@@ -1058,13 +991,15 @@ function setupEventListeners() {
 
                 const role = localStorage.getItem('vp_chat_role') || 'dev';
                 const name = role === 'ceo' ? 'CEO' : 'Developer';
+                const passcode = localStorage.getItem('vp_chat_passcode');
 
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
-                    authorId: user ? user.uid : 'passcode-admin-001',
+                    authorId: auth.currentUser ? auth.currentUser.uid : 'anon-uplink',
                     authorName: name,
                     authorRole: role,
-                    authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${user ? user.uid : 'dev'}`,
+                    authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
+                    passcode: passcode,
                     createdAt: serverTimestamp()
                 });
 
@@ -1184,13 +1119,11 @@ function syncForumMessages() {
             
             const msgEl = document.createElement('div');
             const isMsgCeo = msg.authorRole === 'ceo';
-            const isOwnMsg = msg.authorId === auth.currentUser?.uid;
-            const canDelete = isCeo || isOwnMsg;
-            const canRevoke = isCeo && !isMsgCeo;
+            const canDelete = isCeo; // Only CEO can delete in this new simplified system
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
-                <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + msg.authorId}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
+                <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'dev')}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : 'text-white'} uppercase italic leading-none">${msg.authorName}</span>
@@ -1202,11 +1135,6 @@ function syncForumMessages() {
                             ${canDelete ? `
                                 <button class="delete-msg-btn text-zinc-600 hover:text-red-500 p-2" data-id="${docSnap.id}" title="Delete Message">
                                     <i class="bi bi-trash-fill text-xs"></i>
-                                </button>
-                            ` : ''}
-                            ${canRevoke ? `
-                                <button class="revoke-access-btn text-zinc-600 hover:text-amber-500 p-2" data-uid="${msg.authorId}" title="Revoke Access">
-                                    <i class="bi bi-person-x-fill text-xs"></i>
                                 </button>
                             ` : ''}
                         </div>
@@ -1226,24 +1154,6 @@ function syncForumMessages() {
                     } catch (err) {
                         console.error("Purge failed:", err);
                         alert("PURGE ERROR: " + err.message);
-                    }
-                }
-            };
-        });
-
-        document.querySelectorAll('.revoke-access-btn').forEach(btn => {
-            btn.onclick = async (e) => {
-                const uid = btn.getAttribute('data-uid');
-                if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR ID [${uid.substring(0, 8)}]?`)) {
-                    try {
-                        await updateDoc(doc(db, 'authorized_users', uid), {
-                            status: 'banned',
-                            updatedAt: serverTimestamp()
-                        });
-                        alert("ACCESS DEACTIVATED.");
-                    } catch (err) {
-                        console.error("Revoke failed:", err);
-                        alert("REVOKE ERROR: " + err.message);
                     }
                 }
             };

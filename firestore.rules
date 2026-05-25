@@ -54,12 +54,12 @@ service cloud.firestore {
           && data.createdAt == request.time;
     }
 
-    function isAuthorized() {
-      return isSignedIn() && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.status == 'active';
+    function isPasscodeAuth(data) {
+      return data.passcode == '5012' || data.passcode == '9921';
     }
 
-    function isCeo() {
-      return isSignedIn() && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
+    function isPasscodeCeo(data) {
+      return data.passcode == '9921';
     }
 
     // 4. Collection Match Blocks
@@ -67,19 +67,16 @@ service cloud.firestore {
     // Authorized Users
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isOwner(userId) 
-          && (incoming().role == 'dev' || incoming().role == 'ceo') 
-          && incoming().status == 'active';
-      allow update: if isCeo() || (isOwner(userId) && incoming().role == existing().role && incoming().status == existing().status);
-      allow delete: if isCeo();
+      allow create, update, delete: if false; // Replaced by passcode logic
     }
 
     // Forum Messages (Real-time Chat)
     match /forum_messages/{msgId} {
       allow read: if true;
-      allow create: if isAuthorized() && incoming().authorId == request.auth.uid && isValidMessage(incoming());
+      allow create: if isPasscodeAuth(incoming()) && isValidMessage(incoming());
       allow update: if false;
-      allow delete: if isCeo() || isOwner(existing().authorId);
+      allow delete: if (isSignedIn() && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo')
+                   || (request.auth != null && request.auth.uid == existing().authorId);
     }
     
     // Forum Posts (Legacy)
