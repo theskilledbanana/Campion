@@ -70,6 +70,7 @@ service cloud.firestore {
 
     function isCeo() {
       return isSignedIn() && 
+             exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
     }
 

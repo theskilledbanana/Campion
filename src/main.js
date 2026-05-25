@@ -1365,10 +1365,12 @@ function syncForumMessages() {
             try {
                 let currentUser = auth.currentUser;
                 if (!currentUser) {
+                    console.log("No current user, signing in anonymously...");
                     const cred = await signInAnonymously(auth);
                     currentUser = cred.user;
                 }
                 
+                console.log("Verifying CEO document for UID:", currentUser.uid);
                 // Always verify/refresh the authorized_users entry to ensure Rules see us
                 await setDoc(doc(db, 'authorized_users', currentUser.uid), {
                     role: 'ceo',
@@ -1379,6 +1381,7 @@ function syncForumMessages() {
                 return true;
             } catch (err) {
                 console.error("CEO Auth verification failed:", err);
+                alert("DEBUG AUTH ERROR: " + err.message + (err.code ? " ["+err.code+"]" : ""));
                 return false;
             }
         };
