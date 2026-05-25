@@ -21,6 +21,7 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
+    signInAnonymously,
     signOut
 } from 'firebase/auth';
 
@@ -234,7 +235,8 @@ try {
         username: '',
         totalSeconds: 0,
         sessions: 0,
-        recentlyPlayed: []
+        recentlyPlayed: [],
+        favorites: []
     };
 } catch (e) {
     console.error("Failed to load user data:", e);
@@ -242,13 +244,17 @@ try {
         username: '',
         totalSeconds: 0,
         sessions: 0,
-        recentlyPlayed: []
+        recentlyPlayed: [],
+        favorites: []
     };
 }
 
 // Migration for existing users
 if (!userData.recentlyPlayed || !Array.isArray(userData.recentlyPlayed)) {
     userData.recentlyPlayed = [];
+}
+if (!userData.favorites || !Array.isArray(userData.favorites)) {
+    userData.favorites = [];
 }
 
 function init() {
@@ -397,8 +403,6 @@ function renderCategories() {
         return String(a).localeCompare(String(b));
     });
     
-    const categoriesList = ['All', ...sortedCategories];
-    
     // Static HTML for the filter label to ensure it's always there
     const labelHTML = `
         <div class="flex items-center gap-3 pr-6 border-r border-white/5 mr-3 flex-shrink-0">
@@ -409,6 +413,12 @@ function renderCategories() {
     
     nav.innerHTML = labelHTML;
 
+    const categoriesList = ['All'];
+    if (userData.favorites && userData.favorites.length > 0) {
+        categoriesList.push('Favorites ⭐');
+    }
+    categoriesList.push(...sortedCategories);
+    
     categoriesList.forEach(category => {
         const btn = document.createElement('button');
         const isActive = currentCategory === category;
@@ -427,6 +437,18 @@ function renderCategories() {
     });
 }
 
+function toggleFavorite(e, gameId) {
+    e.stopPropagation(); // Prevent launching game
+    const index = userData.favorites.indexOf(gameId);
+    if (index === -1) {
+        userData.favorites.push(gameId);
+    } else {
+        userData.favorites.splice(index, 1);
+    }
+    saveUserData();
+    renderItems();
+}
+
 function renderItems() {
     const grid = getEl('items-grid');
     if (!grid) return;
@@ -437,7 +459,16 @@ function renderItems() {
 
     const filtered = allEntries.filter(item => {
         if (!item) return false;
-        const matchesCategory = cat === 'All' || (Array.isArray(item.categories) && item.categories.includes(cat));
+        
+        let matchesCategory = false;
+        if (cat === 'All') {
+            matchesCategory = true;
+        } else if (cat === 'Favorites ⭐') {
+            matchesCategory = userData.favorites.includes(item.id);
+        } else {
+            matchesCategory = Array.isArray(item.categories) && item.categories.includes(cat);
+        }
+        
         const title = (item.title || '').toLowerCase();
         const desc = (item.description || '').toLowerCase();
         const matchesSearch = title.includes(term) || desc.includes(term);
@@ -445,6 +476,9 @@ function renderItems() {
     });
 
     if (filtered.length === 0) {
+        const emptyMsg = cat === 'Favorites ⭐' 
+            ? "Your bookmark archive is currently empty. Star games to add them here." 
+            : "No interactive modules match your current decryption parameters.";
         grid.innerHTML = `
             <div class="col-span-full py-32 text-center">
                 <div class="inline-block p-10 bg-zinc-900/20 rounded-[3rem] border border-dashed border-white/5 backdrop-blur-sm">
@@ -452,7 +486,7 @@ function renderItems() {
                         <i class="bi bi-grid-3x3-gap text-zinc-700 text-2xl"></i>
                     </div>
                     <h3 class="text-2xl font-black text-white tracking-tight uppercase">Void Detected</h3>
-                    <p class="text-zinc-500 mt-2 font-medium max-w-xs mx-auto">No interactive modules match your current decryption parameters.</p>
+                    <p class="text-zinc-500 mt-2 font-medium max-w-xs mx-auto">${emptyMsg}</p>
                     <button onclick="document.getElementById('search-input').value=''; window.dispatchEvent(new Event('input'));" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
                 </div>
             </div>`;
@@ -464,6 +498,7 @@ function renderItems() {
         
         const nodeId = `V-P node [${(index + 101).toString(16).toUpperCase()}]`;
         const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
+        const isFavorited = userData.favorites.includes(item.id);
         
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
@@ -471,6 +506,12 @@ function renderItems() {
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
                 <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" referrerpolicy="no-referrer">
                 
+                <!-- Favorite Toggle -->
+                <button class="favorite-btn absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/60 group/fav" 
+                        data-id="${item.id}">
+                    <i class="bi ${isFavorited ? 'bi-star-fill text-yellow-400' : 'bi-star text-zinc-400'} text-xl group-hover/fav:text-yellow-400 transition-colors"></i>
+                </button>
+
                 <!-- Hover Overlay -->
                 <div class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-zinc-950/90 opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 text-center">
                     <div class="transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 ease-out">
@@ -504,6 +545,11 @@ function renderItems() {
             </div>
         `;
         card.onclick = () => openPlayer(item);
+        
+        // Favorite button click
+        const favBtn = card.querySelector('.favorite-btn');
+        favBtn.onclick = (e) => toggleFavorite(e, item.id);
+
         grid.appendChild(card);
     });
 }
@@ -513,7 +559,7 @@ function renderRecentlyPlayed() {
     const section = getEl('recent-section');
     if (!grid || !section) return;
     
-    if (currentSearch.trim() !== '') {
+    if (currentSearch.trim() !== '' || currentCategory === 'Favorites ⭐') {
         section.classList.add('hidden');
         return;
     }
@@ -839,7 +885,19 @@ function setupEventListeners() {
                 }
 
                 if (isCeo) {
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. MASTER CONTROL ACTIVE.';
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
+                    try {
+                        const cred = await signInAnonymously(auth);
+                        await setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                            role: 'ceo',
+                            status: 'active',
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                        if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
+                    } catch (authErr) {
+                        console.error("Master Link Failure:", authErr);
+                        if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: REMOTE REJECTED.';
+                    }
                 }
                 
                 if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL ACCEPTED. UPLINK ACTIVE.';
@@ -1055,8 +1113,18 @@ function setupEventListeners() {
                     }
 
                     if (isCeo) {
-                        // Remote deletion permissions handled by simplified Firestore Rules
-                        console.log("CEO Uplink role detected locally.");
+                        devLoginBtn.textContent = 'ESTABLISHING...';
+                        try {
+                            const cred = await signInAnonymously(auth);
+                            await setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                                role: 'ceo',
+                                status: 'active',
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                            console.log("CEO Uplink role established.");
+                        } catch (e) {
+                            console.error("CEO Remote Auth failed:", e);
+                        }
                     }
                     
                     alert(isCeo ? "CEO UPLINK ESTABLISHED. MASTER CONTROL ACTIVE." : "PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
@@ -1261,6 +1329,17 @@ function syncForumMessages() {
 
     const messagesQuery = query(collection(db, 'forum_messages'), orderBy('createdAt', 'asc'));
     
+    // Background CEO sync to ensure Master Control is active if already in a session
+    if (localStorage.getItem('vp_chat_role') === 'ceo') {
+        signInAnonymously(auth).then(cred => {
+            setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                role: 'ceo',
+                status: 'active',
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        }).catch(err => console.error("Initial Master Link refresh failed:", err));
+    }
+
     unsubscribeForum = onSnapshot(messagesQuery, (snapshot) => {
         if (snapshot.empty) {
             forumMessagesView.innerHTML = `
@@ -1287,12 +1366,13 @@ function syncForumMessages() {
             const date = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
             
             const msgEl = document.createElement('div');
+            const isCeo = localStorage.getItem('vp_chat_role') === 'ceo';
             const isMsgCeo = msg.authorRole === 'ceo';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
-            // Show buttons to everyone for unauthenticated control as requested
-            const canDelete = true;
-            const canRevoke = true;
+            // Strictly limit buttons to those in a CEO session
+            const canDelete = isCeo;
+            const canRevoke = isCeo && !isMsgCeo;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `

@@ -88,12 +88,12 @@ service cloud.firestore {
                    && isValidMessage(incoming())
                    && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
       allow update: if false;
-      allow delete: if true;
+      allow delete: if isCeo();
     }
 
     match /banned_clients/{clientId} {
       allow read: if true;
-      allow create, update, delete: if true;
+      allow create, update, delete: if isCeo();
     }
     
     // Forum Posts (Legacy)
