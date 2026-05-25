@@ -814,33 +814,29 @@ function setupEventListeners() {
         const code = terminalPassInput?.value;
         if (!code) return;
 
-        const isCeo = code === '9921';
+        const isCeo = code === '3012';
         const isDev = code === '5012';
 
         if (isCeo || isDev) {
             try {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
                 
-                // Pure Passcode Logic: We don't link with Firebase Auth anymore to avoid admin restrictions for devs
                 const role = isCeo ? 'ceo' : 'dev';
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_passcode', code);
                 localStorage.setItem('vp_chat_authorized', 'true');
                 
-                // Generate a persistent local ID for this user if they don't have one
                 if (!localStorage.getItem('vp_uplink_id')) {
                     localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
                 }
 
                 if (isCeo) {
                     if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. ELEVATING PRIVILEGES...';
-                    // CEOs should attempt to sign in for Master Permissions
                     try {
                         const provider = new GoogleAuthProvider();
                         const cred = await signInWithPopup(auth, provider);
                         const user = cred.user;
                         
-                        // Register/Update CEO in authorized_users collection
                         await setDoc(doc(db, 'authorized_users', user.uid), {
                             role: 'ceo',
                             status: 'active',
@@ -849,7 +845,7 @@ function setupEventListeners() {
                         
                     } catch (authErr) {
                         console.warn("CEO Handshake elevation inhibited:", authErr);
-                        alert("ELEVATION ERROR: Google Authentication failed. You will have Local CEO privileges, but remote deletions may be rejected by the host.");
+                        alert("ELEVATION WARNING: Handshake verification failed. Local access only.");
                     }
                 }
                 
@@ -858,7 +854,7 @@ function setupEventListeners() {
                 setTimeout(() => {
                     closeDevTerminal();
                     updateForumAuthUI();
-                    alert(isCeo ? "MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
+                    alert(isCeo ? "CEO MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
                 }, 800);
 
             } catch (err) {
@@ -925,13 +921,27 @@ function setupEventListeners() {
         return localStorage.getItem('vp_chat_authorized') === 'true';
     };
 
+    const logoutTerminal = async () => {
+        if (confirm("PROTOCOL: INITIATE TERMINAL DISCONNECT?")) {
+            localStorage.removeItem('vp_chat_authorized');
+            localStorage.removeItem('vp_chat_role');
+            localStorage.removeItem('vp_chat_passcode');
+            if (auth && auth.currentUser) {
+                await signOut(auth);
+            }
+            updateForumAuthUI();
+            alert("TERMINAL DISCONNECTED. PROTOCOL OFFLINE.");
+        }
+    };
+
     const updateForumAuthUI = async (user) => {
         const forumInputArea = document.getElementById('forum-input-area');
         const forumAuthPrompt = document.getElementById('forum-auth-prompt');
         const promptText = forumAuthPrompt?.querySelector('p');
         const devLoginBtn = document.getElementById('dev-login-btn');
+        const logoutBtn = document.getElementById('terminal-logout-btn');
         
-        if (!user && auth.currentUser) user = auth.currentUser;
+        if (!user && auth && auth.currentUser) user = auth.currentUser;
 
         let isAuthorized = isChatAuthorized();
         let isBanned = false;
@@ -962,6 +972,7 @@ function setupEventListeners() {
                 devLoginBtn.textContent = 'PROTOCOL SUCCESS';
                 devLoginBtn.disabled = true;
             }
+            if (logoutBtn) logoutBtn.classList.remove('hidden');
         } else {
             forumInputArea?.classList.add('hidden');
             forumAuthPrompt?.classList.remove('hidden');
@@ -969,11 +980,15 @@ function setupEventListeners() {
                 devLoginBtn.textContent = isBanned ? 'ACCESS REVOKED' : 'AUTHORIZE LINK';
                 devLoginBtn.disabled = isBanned;
             }
+            if (logoutBtn) logoutBtn.classList.add('hidden');
             if (promptText) {
                 promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "Official Developer Access Required to Post";
             }
         }
     };
+
+    const logoutBtnElement = document.getElementById('terminal-logout-btn');
+    if (logoutBtnElement) logoutBtnElement.onclick = logoutTerminal;
 
     if (auth) {
         onAuthStateChanged(auth, (user) => {
@@ -981,14 +996,13 @@ function setupEventListeners() {
         });
     }
 
-
     // Developer Login Button (Passcode implementation)
     const devLoginBtn = document.getElementById('dev-login-btn');
     if (devLoginBtn) {
         devLoginBtn.onclick = async () => {
             const code = prompt("ENTER AUTHORIZATION PASSCODE:");
-            if (code === '5012' || code === '9921') {
-                const isCeo = code === '9921';
+            if (code === '5012' || code === '3012') {
+                const isCeo = code === '3012';
                 try {
                     devLoginBtn.textContent = 'LINKING...';
                     devLoginBtn.disabled = true;
@@ -1023,7 +1037,7 @@ function setupEventListeners() {
                     console.error("Local Auth Error:", err);
                     localStorage.setItem('vp_chat_authorized', 'true');
                     localStorage.setItem('vp_chat_passcode', code);
-                    localStorage.setItem('vp_chat_role', code === '9921' ? 'ceo' : 'dev');
+                    localStorage.setItem('vp_chat_role', code === '3012' ? 'ceo' : 'dev');
                     devLoginBtn.textContent = 'LINKING BYPASS';
                     updateForumAuthUI(auth?.currentUser);
                 }
