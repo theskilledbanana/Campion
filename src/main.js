@@ -15,6 +15,7 @@ import {
     increment,
     updateDoc,
     limit,
+    where,
     deleteDoc
 } from 'firebase/firestore';
 import { 
@@ -225,9 +226,16 @@ let devContainer, closeDevBtn, disclaimerModal, disclaimerContainer, acceptDiscl
 let surpriseBtn, terminalModal, terminalContainer, terminalInput, terminalResults;
 let cloakTabBtn, cloakModal, cloakContainer, closeCloakBtn, cloakInput, applyCloakBtn, resetCloakBtn;
 let versionTag, devTerminalOverlay, terminalPassInput, terminalStatusLog, terminalAuthSubmit, closeTerminalBtn;
+let detailsModal, detailsContainer, closeDetailsBtn, detailsImg, detailsTitle, detailsCategories;
+let detailsDesc, likeBtn, dislikeBtn, likeCount, dislikeCount, launchFromDetailsBtn;
+let reviewsList, reviewInput, submitReviewBtn;
 
 const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
+let activeDetailsGameId = null;
+let gameMetrics = {};
+let unsubscribeMetrics = null;
+let unsubscribeReviews = null;
 
 let userData;
 try {
@@ -301,6 +309,23 @@ function init() {
     cloakInput = document.getElementById('cloak-input');
     applyCloakBtn = document.getElementById('apply-cloak');
     resetCloakBtn = document.getElementById('reset-cloak');
+    
+    // Details Modal
+    detailsModal = document.getElementById('details-modal');
+    detailsContainer = document.getElementById('details-container');
+    closeDetailsBtn = document.getElementById('close-details');
+    detailsImg = document.getElementById('details-img');
+    detailsTitle = document.getElementById('details-title');
+    detailsCategories = document.getElementById('details-categories');
+    detailsDesc = document.getElementById('details-desc');
+    likeBtn = document.getElementById('like-btn');
+    dislikeBtn = document.getElementById('dislike-btn');
+    likeCount = document.getElementById('like-count');
+    dislikeCount = document.getElementById('dislike-count');
+    launchFromDetailsBtn = document.getElementById('launch-from-details');
+    reviewsList = document.getElementById('reviews-list');
+    reviewInput = document.getElementById('review-input');
+    submitReviewBtn = document.getElementById('submit-review');
 
     // Dev Terminal Selectors
     versionTag = document.getElementById('version-tag');
@@ -325,6 +350,7 @@ function init() {
         console.log(`Diagnostic: Found ${allEntries.length} modules in payload.`);
         
         // Individual safety wrappers for core rendering
+        safeCall(initGameMetrics, "MetricsSub");
         safeCall(renderCategories, "Categories");
         safeCall(renderRecentlyPlayed, "Recent");
         safeCall(renderItems, "Items");
@@ -497,6 +523,16 @@ function renderItems() {
         const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
         const isFavorited = userData.favorites.includes(item.id);
         
+        const metrics = gameMetrics[item.id] || { likes: 0, dislikes: 0 };
+        const total = metrics.likes + metrics.dislikes;
+        const ratingPct = total > 0 ? Math.round((metrics.likes / total) * 100) : 0;
+        const ratingHTML = total > 0 ? `
+            <div class="flex items-center gap-1.5 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 group-hover:border-cyan-500/30 transition-colors">
+                <i class="bi bi-hand-thumbs-up-fill text-[10px] text-cyan-400"></i>
+                <span class="text-[10px] font-black text-white">${ratingPct}%</span>
+            </div>
+        ` : '';
+
         const card = document.createElement('div');
         card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
         card.innerHTML = `
@@ -516,15 +552,19 @@ function renderItems() {
                             <i class="bi bi-play-fill text-4xl ml-1"></i>
                         </div>
                         <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Launch Game</h2>
-                        <div class="flex items-center justify-center gap-2">
-                            <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
-                            <p class="text-cyan-400 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Uplink Ready</p>
+                        <div class="flex items-center justify-center gap-4">
+                             <div class="flex items-center gap-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
+                                <p class="text-cyan-400 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Uplink Ready</p>
+                            </div>
+                            <button class="details-btn px-4 py-1.5 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest text-white transition-all">Details</button>
                         </div>
                     </div>
                 </div>
                 
-                <div class="absolute top-4 left-4 z-10">
-                    <span class="text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20">${nodeId}</span>
+                <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
+                    <span class="text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20 w-fit">${nodeId}</span>
+                    ${ratingHTML}
                 </div>
             </div>
             <div class="p-6 relative">
@@ -546,6 +586,14 @@ function renderItems() {
         // Favorite button click
         const favBtn = card.querySelector('.favorite-btn');
         favBtn.onclick = (e) => toggleFavorite(e, item.id);
+
+        const detailsBtn = card.querySelector('.details-btn');
+        if (detailsBtn) {
+            detailsBtn.onclick = (e) => {
+                e.stopPropagation();
+                openDetails(item);
+            };
+        }
 
         grid.appendChild(card);
     });
@@ -806,6 +854,27 @@ function setupEventListeners() {
 
     if (devApplyBtn) devApplyBtn.onclick = openDevModal;
     if (closeDevBtn) closeDevBtn.onclick = closeDevModal;
+
+    // Details Modal Listeners
+    if (closeDetailsBtn) closeDetailsBtn.onclick = closeDetails;
+    if (likeBtn) likeBtn.onclick = () => handleRating('likes');
+    if (dislikeBtn) dislikeBtn.onclick = () => handleRating('dislikes');
+    if (submitReviewBtn) submitReviewBtn.onclick = submitReview;
+    if (launchFromDetailsBtn) {
+        launchFromDetailsBtn.onclick = () => {
+            const item = allEntries.find(g => g.id === activeDetailsGameId);
+            if (item) {
+                closeDetails();
+                openPlayer(item);
+            }
+        };
+    }
+    if (reviewInput) {
+        reviewInput.onkeydown = (e) => {
+            if (e.key === 'Enter') submitReview();
+        };
+    }
+    
     if (devModal) {
         devModal.onclick = (e) => {
             if (e.target === devModal) closeDevModal();
@@ -1435,16 +1504,178 @@ function syncForumMessages() {
             }
         };
     });
-
-        // Update last read since we are viewing
-        localStorage.setItem('vp_last_read_broadcast', latestTime.toString());
-        
-        setTimeout(() => {
-            forumMessagesView.scrollTo({ top: forumMessagesView.scrollHeight, behavior: 'smooth' });
-        }, 100);
     });
 }
 
+function initGameMetrics() {
+    if (unsubscribeMetrics) unsubscribeMetrics();
+    unsubscribeMetrics = onSnapshot(collection(db, 'game_metrics'), (snapshot) => {
+        snapshot.forEach(doc => {
+            gameMetrics[doc.id] = doc.data();
+        });
+        renderItems();
+    });
+}
+
+async function openDetails(item) {
+    if (!item) return;
+    activeDetailsGameId = item.id;
+    
+    // Fill basic info
+    detailsImg.src = item.thumbnail || '';
+    detailsTitle.textContent = item.title || 'Untitled';
+    detailsDesc.textContent = item.description || '';
+    detailsCategories.innerHTML = (item.categories || []).map(cat => `
+        <span class="text-[9px] font-black text-cyan-400 px-2 py-1 bg-cyan-400/5 border border-cyan-400/10 rounded-full uppercase tracking-widest">${cat}</span>
+    `).join('');
+    
+    // Reset buttons
+    likeBtn.classList.remove('bg-cyan-500', 'text-black');
+    dislikeBtn.classList.remove('bg-red-500', 'text-white');
+    
+    const votedKey = `voted_${activeDetailsGameId}`;
+    const previousVote = localStorage.getItem(votedKey);
+    if (previousVote === 'likes') likeBtn.classList.add('bg-cyan-500', 'text-black');
+    if (previousVote === 'dislikes') dislikeBtn.classList.add('bg-red-500', 'text-white');
+
+    // Fill metrics
+    const metrics = gameMetrics[item.id] || { likes: 0, dislikes: 0 };
+    likeCount.textContent = metrics.likes || 0;
+    dislikeCount.textContent = metrics.dislikes || 0;
+    
+    // Reset review input
+    reviewInput.value = '';
+    
+    // Show modal
+    detailsModal.classList.remove('hidden');
+    setTimeout(() => {
+        detailsModal.classList.remove('opacity-0');
+        detailsContainer.classList.add('scale-100');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+    
+    // Fetch and subscribe to reviews
+    initReviewsSubscription(item.id);
+}
+
+function closeDetails() {
+    activeDetailsGameId = null;
+    if (unsubscribeReviews) unsubscribeReviews();
+    
+    detailsModal.classList.add('opacity-0');
+    detailsContainer.classList.remove('scale-100');
+    setTimeout(() => detailsModal.classList.add('hidden'), 500);
+    
+    if (playerOverlay.classList.contains('hidden')) {
+        document.body.style.overflow = '';
+    }
+}
+
+async function handleRating(type) {
+    if (!activeDetailsGameId) return;
+    
+    const votedKey = `voted_${activeDetailsGameId}`;
+    if (localStorage.getItem(votedKey)) {
+        alert("TRANSMISSION ERROR: Feedback already recorded for this module in current cycle.");
+        return;
+    }
+    
+    try {
+        const metricDoc = doc(db, 'game_metrics', activeDetailsGameId);
+        await setDoc(metricDoc, {
+            [type]: increment(1),
+            lastUpdate: serverTimestamp()
+        }, { merge: true });
+        
+        localStorage.setItem(votedKey, type);
+        
+        // Local UI update
+        if (type === 'likes') {
+            likeCount.textContent = (parseInt(likeCount.textContent) || 0) + 1;
+            likeBtn.classList.add('bg-cyan-500', 'text-black');
+        } else {
+            dislikeCount.textContent = (parseInt(dislikeCount.textContent) || 0) + 1;
+            dislikeBtn.classList.add('bg-red-500', 'text-white');
+        }
+    } catch (err) {
+        console.error("Rating failed:", err);
+    }
+}
+
+async function submitReview() {
+    if (!activeDetailsGameId) return;
+    const content = reviewInput.value.trim();
+    if (!content) return;
+    
+    if (content.length < 3) {
+        alert("PROTOCOL ERROR: Diagnostic report too concise.");
+        return;
+    }
+    
+    submitReviewBtn.disabled = true;
+    submitReviewBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i>';
+    
+    try {
+        const role = localStorage.getItem('vp_chat_role') || 'client';
+        const authorName = localStorage.getItem('vp_chat_name') || 'Anonymous Client';
+        
+        await addDoc(collection(db, 'game_reviews'), {
+            gameId: activeDetailsGameId,
+            authorName: authorName,
+            authorRole: role,
+            content: content,
+            createdAt: serverTimestamp()
+        });
+        
+        reviewInput.value = '';
+    } catch (err) {
+        console.error("Review submission failed:", err);
+        alert("UPLINK FAILURE: Unable to transmit diagnostic data.");
+    } finally {
+        submitReviewBtn.disabled = false;
+        submitReviewBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+    }
+}
+
+function initReviewsSubscription(gameId) {
+    if (unsubscribeReviews) unsubscribeReviews();
+    
+    const q = query(
+        collection(db, 'game_reviews'), 
+        where('gameId', '==', gameId), 
+        orderBy('createdAt', 'desc'),
+        limit(50)
+    );
+    
+    unsubscribeReviews = onSnapshot(q, (snapshot) => {
+        reviewsList.innerHTML = '';
+        
+        if (snapshot.empty) {
+            reviewsList.innerHTML = `<div class="text-center py-10 text-zinc-600 font-mono text-[10px] uppercase tracking-widest">Awaiting sector feedback...</div>`;
+            return;
+        }
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : 'Recent';
+            const isCeo = data.authorRole === 'ceo';
+            
+            const reviewEl = document.createElement('div');
+            reviewEl.className = "p-4 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-1 duration-300";
+            reviewEl.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-black ${isCeo ? 'text-indigo-400' : 'text-cyan-400'} uppercase tracking-widest">${data.authorName}</span>
+                        ${isCeo ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
+                    </div>
+                    <span class="text-[9px] font-mono text-zinc-600 uppercase font-bold">${time}</span>
+                </div>
+                <p class="text-zinc-300 text-xs italic leading-relaxed">"${data.content}"</p>
+            `;
+            reviewsList.appendChild(reviewEl);
+        });
+    });
+}
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
