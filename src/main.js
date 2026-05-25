@@ -21,7 +21,6 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
-    signInAnonymously,
     signOut
 } from 'firebase/auth';
 
@@ -840,10 +839,10 @@ function setupEventListeners() {
                 }
 
                 if (isCeo) {
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. ELEVATING PRIVILEGES...';
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. ELEVATING MASTER LINK...';
                     try {
-                        // Use Anonymous Auth to bypass Google Popup while still providing a Firebase Identity for Rules
-                        const cred = await signInAnonymously(auth);
+                        const provider = new GoogleAuthProvider();
+                        const cred = await signInWithPopup(auth, provider);
                         const user = cred.user;
                         
                         await setDoc(doc(db, 'authorized_users', user.uid), {
@@ -851,10 +850,10 @@ function setupEventListeners() {
                             status: 'active',
                             updatedAt: serverTimestamp()
                         }, { merge: true });
-                        console.log("CEO Elevation Successful:", user.uid);
+                        console.log("CEO Master Link Established:", user.uid);
                     } catch (authErr) {
                         console.warn("CEO Elevation failed:", authErr);
-                        alert("ELEVATION ERROR: " + authErr.message + "\n\nYou have Local CEO view, but remote deletions might be rejected until the Master Link is established.");
+                        alert("MASTER LINK ERROR: " + authErr.message + "\n\nLocal CEO view active, but remote deletions require an active Google link.");
                     }
                 }
                 
@@ -989,16 +988,7 @@ function setupEventListeners() {
             if (masterControlBtn && role === 'ceo') {
             masterControlBtn.classList.remove('hidden');
             
-            // Auto-uplink if not authenticated
-            if (!auth.currentUser) {
-                signInAnonymously(auth).then(cred => {
-                    setDoc(doc(db, 'authorized_users', cred.user.uid), {
-                        role: 'ceo',
-                        status: 'active',
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                }).catch(err => console.error("Auto-uplink failed:", err));
-            }
+            // Master link handled on-demand during delete/revoke actions to avoid unrequested popups
         } else if (masterControlBtn) {
                 masterControlBtn.classList.add('hidden');
                 masterPanel?.classList.add('hidden');
@@ -1367,15 +1357,17 @@ function syncForumMessages() {
             try {
                 let currentUser = auth.currentUser;
                 
-                // If not logged in, we need the user to sign in to get a UID
                 if (!currentUser) {
-                    const provider = new GoogleAuthProvider();
-                    const cred = await signInWithPopup(auth, provider);
-                    currentUser = cred.user;
+                    if (confirm("MASTER LINK REQUIRED: To perform remote deletions, you must authorize via Google. Establish link now?")) {
+                        const provider = new GoogleAuthProvider();
+                        const cred = await signInWithPopup(auth, provider);
+                        currentUser = cred.user;
+                    } else {
+                        return false;
+                    }
                 }
                 
                 if (currentUser) {
-                    // Update role mapping
                     await setDoc(doc(db, 'authorized_users', currentUser.uid), {
                         role: 'ceo',
                         status: 'active',
@@ -1386,6 +1378,11 @@ function syncForumMessages() {
                 return false;
             } catch (err) {
                 console.error("CEO Auth verification failed:", err);
+                if (err.code === 'auth/popup-blocked') {
+                    alert("AUTHENTICATION BLOCKED: Please enable popups for this site to establish the Master Link.");
+                } else {
+                    alert("AUTHENTICATION FAILURE: " + err.message);
+                }
                 return false;
             }
         };

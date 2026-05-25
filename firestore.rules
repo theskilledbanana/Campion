@@ -69,15 +69,16 @@ service cloud.firestore {
     }
 
     function isCeo() {
-      return isSignedIn() && 
-             exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
+      return isSignedIn() && (
+             request.auth.token.email == "mandyfmcgregor@gmail.com" ||
+             (exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
+              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo')
+      );
     }
 
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && (request.auth.uid == userId || isCeo());
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isCeo());
       allow delete: if isCeo();
     }
 
