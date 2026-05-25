@@ -821,11 +821,37 @@ function setupEventListeners() {
             try {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
                 
-                // Pure Passcode Logic: We don't link with Firebase Auth anymore to avoid admin restrictions
+                // Pure Passcode Logic: We don't link with Firebase Auth anymore to avoid admin restrictions for devs
                 const role = isCeo ? 'ceo' : 'dev';
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_passcode', code);
                 localStorage.setItem('vp_chat_authorized', 'true');
+                
+                // Generate a persistent local ID for this user if they don't have one
+                if (!localStorage.getItem('vp_uplink_id')) {
+                    localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
+                }
+
+                if (isCeo) {
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'UPLINK ACCEPTED. ELEVATING PRIVILEGES...';
+                    // CEOs should attempt to sign in for Master Permissions
+                    try {
+                        const provider = new GoogleAuthProvider();
+                        const cred = await signInWithPopup(auth, provider);
+                        const user = cred.user;
+                        
+                        // Register/Update CEO in authorized_users collection
+                        await setDoc(doc(db, 'authorized_users', user.uid), {
+                            role: 'ceo',
+                            status: 'active',
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                        
+                    } catch (authErr) {
+                        console.warn("CEO Handshake elevation inhibited:", authErr);
+                        alert("ELEVATION ERROR: Google Authentication failed. You will have Local CEO privileges, but remote deletions may be rejected by the host.");
+                    }
+                }
                 
                 if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL ACCEPTED. UPLINK ACTIVE.';
                 
@@ -967,23 +993,34 @@ function setupEventListeners() {
                     devLoginBtn.textContent = 'LINKING...';
                     devLoginBtn.disabled = true;
                     
-                    // Attempt an anonymous sign-in in the background, but don't BLOCK on it.
-                    // This gives them a UID for Firestore metrics/rules if it works.
-                    if (auth && !auth.currentUser) {
-                        signInAnonymously(auth).catch(err => console.warn("Background Auth inhibited:", err));
-                    }
-                    
                     const role = isCeo ? 'ceo' : 'dev';
                     localStorage.setItem('vp_chat_role', role);
                     localStorage.setItem('vp_chat_passcode', code);
                     localStorage.setItem('vp_chat_authorized', 'true');
+
+                    if (!localStorage.getItem('vp_uplink_id')) {
+                        localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
+                    }
+
+                    if (isCeo) {
+                        try {
+                            const provider = new GoogleAuthProvider();
+                            const cred = await signInWithPopup(auth, provider);
+                            await setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                                role: 'ceo',
+                                status: 'active',
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                        } catch (e) {
+                            console.warn("CEO Auth Elevation failed:", e);
+                        }
+                    }
                     
                     alert(isCeo ? "CEO UPLINK ESTABLISHED. MASTER CONTROL ACTIVE." : "PROTOCOL ACCEPTED. DEVELOPER ACCESS GRANTED.");
                     devLoginBtn.textContent = 'PROTOCOL SUCCESS';
                     updateForumAuthUI(auth?.currentUser);
                 } catch (err) {
                     console.error("Local Auth Error:", err);
-                    // Even if background sign-in fails, we let them proceed locally
                     localStorage.setItem('vp_chat_authorized', 'true');
                     localStorage.setItem('vp_chat_passcode', code);
                     localStorage.setItem('vp_chat_role', code === '9921' ? 'ceo' : 'dev');
@@ -1079,10 +1116,12 @@ function setupEventListeners() {
                 const role = localStorage.getItem('vp_chat_role') || 'dev';
                 const name = role === 'ceo' ? 'CEO' : 'Developer';
                 const passcode = localStorage.getItem('vp_chat_passcode');
+                const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
 
                 await addDoc(collection(db, 'forum_messages'), {
                     content,
-                    authorId: auth.currentUser?.uid || 'passcode-uplink-' + Math.random().toString(36).substring(7),
+                    authorId: authorId,
+                    firebaseUid: auth.currentUser?.uid || null,
                     authorName: name,
                     authorRole: role,
                     authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
@@ -1206,13 +1245,13 @@ function syncForumMessages() {
             
             const msgEl = document.createElement('div');
             const isMsgCeo = msg.authorRole === 'ceo';
-            const isOwnMsg = msg.authorId === auth.currentUser?.uid;
+            const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             const canDelete = isCeo || isOwnMsg;
             const canRevoke = isCeo && !isMsgCeo;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
-                <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorId || 'dev')}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
+                <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'dev')}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : 'text-white'} uppercase italic leading-none">${msg.authorName}</span>
@@ -1227,7 +1266,7 @@ function syncForumMessages() {
                                 </button>
                             ` : ''}
                             ${canRevoke ? `
-                                <button class="revoke-access-btn text-zinc-600 hover:text-amber-500 p-2" data-uid="${msg.authorId}" title="Revoke Access">
+                                <button class="revoke-access-btn text-zinc-600 hover:text-amber-500 p-2" data-authorid="${msg.authorId}" title="Revoke Access">
                                     <i class="bi bi-person-x-fill text-xs"></i>
                                 </button>
                             ` : ''}
@@ -1255,14 +1294,15 @@ function syncForumMessages() {
 
         document.querySelectorAll('.revoke-access-btn').forEach(btn => {
             btn.onclick = async (e) => {
-                const uid = btn.getAttribute('data-uid');
-                if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR ID [${uid.substring(0, 8)}]?`)) {
+                const authorId = btn.getAttribute('data-authorid');
+                if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                     try {
-                        await updateDoc(doc(db, 'authorized_users', uid), {
+                        await setDoc(doc(db, 'banned_clients', authorId), {
                             status: 'banned',
-                            updatedAt: serverTimestamp()
+                            bannedAt: serverTimestamp(),
+                            bannedBy: 'CEO'
                         });
-                        alert("ACCESS DEACTIVATED.");
+                        alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
                     } catch (err) {
                         console.error("Revoke failed:", err);
                         alert("REVOKE ERROR: " + err.message);
