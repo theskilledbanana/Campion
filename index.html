@@ -204,16 +204,9 @@
                     <i class="bi bi-gift text-lg group-hover:bounce transition-transform duration-300"></i>
                     <span>Surprise Me</span>
                 </button>
-                <button id="leaderboard-btn" class="flex items-center gap-2.5 px-5 py-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-white group active:scale-95">
-                    <i class="bi bi-graph-up-arrow text-lg"></i>
-                    <span>Trophies</span>
-                </button>
-                <button id="profile-btn" class="flex items-center gap-2.5 px-5 py-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-white group active:scale-95">
-                    <i class="bi bi-person-fill text-lg"></i>
-                    <span>Profile</span>
-                </button>
-                <button id="theme-toggle" class="p-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-2xl transition-all text-zinc-400 hover:text-white group active:scale-95" title="Toggle Protocol">
+                <button id="theme-toggle" class="flex items-center gap-2.5 px-5 py-3 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-zinc-400 hover:text-white group active:scale-95" title="Switch Appearance">
                     <i id="theme-icon" class="bi bi-moon-stars-fill text-lg"></i>
+                    <span id="theme-text">Dark Mode</span>
                 </button>
                 <button id="forum-btn" class="relative flex items-center gap-2.5 px-5 py-3 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/50 rounded-2xl transition-all text-xs font-black uppercase tracking-widest text-indigo-400 group active:scale-95 shadow-[0_0_30px_-10px_rgba(99,102,241,0.2)]">
                     <i class="bi bi-chat-left-text text-lg group-hover:scale-110 transition-transform duration-300"></i>
@@ -811,77 +804,6 @@
                             </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Profile Modal -->
-    <div id="profile-modal" class="fixed inset-0 z-[170] flex items-center justify-center p-6 bg-black/98 backdrop-blur-3xl hidden opacity-0 transition-all duration-500">
-        <div class="bg-zinc-950 border border-white/10 rounded-[3rem] p-8 md:p-12 max-w-2xl w-full flex flex-col shadow-2xl relative scale-90 transition-all duration-500" id="profile-container">
-            <button id="close-profile" class="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10">
-                <i class="bi bi-x-lg"></i>
-            </button>
-
-            <div class="mb-10">
-                <div class="flex items-center gap-6">
-                    <div class="w-20 h-20 bg-cyan-500/10 rounded-[2.5rem] flex items-center justify-center border border-cyan-500/20 relative shadow-[0_0_40px_rgba(34,211,238,0.2)]">
-                        <i class="bi bi-person-circle text-cyan-400 text-4xl"></i>
-                        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-zinc-950"></div>
-                    </div>
-                    <div>
-                        <h2 class="text-4xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">Network Profile</h2>
-                        <p id="profile-username-display" class="text-zinc-500 text-[10px] font-mono font-bold uppercase tracking-[0.4em]"></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                <div class="p-6 bg-white/5 border border-white/10 rounded-3xl">
-                    <p class="text-zinc-500 text-[10px] font-mono font-black uppercase tracking-widest mb-4">Total Playtime</p>
-                    <h3 id="profile-playtime" class="text-4xl font-black text-white italic leading-none tabular-nums">00:00:00</h3>
-                </div>
-                <div class="p-6 bg-white/5 border border-white/10 rounded-3xl">
-                    <p class="text-zinc-500 text-[10px] font-mono font-black uppercase tracking-widest mb-4">Sessions</p>
-                    <h3 id="profile-sessions" class="text-4xl font-black text-white italic leading-none">0</h3>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-hidden flex flex-col">
-                <h4 class="text-xs font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
-                    <i class="bi bi-stars text-cyan-400"></i>
-                    Archive Chronology
-                </h4>
-                <div id="profile-recent-grid" class="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                    <!-- Per-game playtime stats will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaderboard Modal -->
-    <div id="leaderboard-modal" class="fixed inset-0 z-[170] flex items-center justify-center p-6 bg-black/98 backdrop-blur-3xl hidden opacity-0 transition-all duration-500">
-        <div class="bg-zinc-950 border border-white/10 rounded-[3rem] p-8 md:p-12 max-w-2xl w-full h-[80vh] flex flex-col shadow-2xl relative scale-90 transition-all duration-500" id="leaderboard-container">
-            <button id="close-leaderboard" class="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors z-10">
-                <i class="bi bi-x-lg"></i>
-            </button>
-
-            <div class="mb-10">
-                <div class="flex items-center gap-6">
-                    <div class="w-20 h-20 bg-yellow-500/10 rounded-[2.5rem] flex items-center justify-center border border-yellow-500/20 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
-                        <i class="bi bi-trophy text-yellow-400 text-4xl"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-4xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">Global Hall</h2>
-                        <p class="text-zinc-500 text-[10px] font-mono font-bold uppercase tracking-[0.4em]">Integrated Archive Scores</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-3" id="leaderboard-list">
-                <!-- Leaderboard entries -->
-                <div class="flex items-center justify-center h-full text-zinc-600 font-mono text-[10px] uppercase tracking-widest italic">
-                    Synchronizing scores with main cluster...
                 </div>
             </div>
         </div>

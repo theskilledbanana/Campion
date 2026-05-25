@@ -224,7 +224,7 @@ let detailsDesc, likeBtn, dislikeBtn, likeCount, dislikeCount, launchFromDetails
 let reviewsList, reviewInput, submitReviewBtn;
 let profileBtn, profileModal, profileContainer, closeProfileBtn;
 let leaderboardBtn, leaderboardModal, leaderboardContainer, closeLeaderboardBtn, leaderboardList;
-let themeToggle, themeIcon;
+let themeToggle, themeIcon, themeText;
 
 const ORIGINAL_TITLE = document.title;
 let playSessionStart = null;
@@ -236,13 +236,10 @@ let unsubscribeReviews = null;
 
 const BADGES = [
     { id: 'early_adopter', name: 'Early Adopter', icon: 'bi-rocket-takeoff', desc: 'Sync with the network in the alpha stage.', color: 'text-indigo-400', condition: () => true },
-    { id: 'time_traveler', name: 'Time Traveler', icon: 'bi-hourglass-split', desc: 'Amass over 1 hour of total play time.', color: 'text-cyan-400', condition: (data) => data.totalSeconds > 3600 },
-    { id: 'novice_pilot', name: 'Novice Pilot', icon: 'bi-controller', desc: 'Successfully launch 5 unique modules.', color: 'text-green-400', condition: (data) => (data.recentlyPlayed || []).length >= 5 },
-    { id: 'specialist', name: 'Module Specialist', icon: 'bi-stars', desc: 'Successfully launch 10 unique modules.', color: 'text-blue-400', condition: (data) => (data.recentlyPlayed || []).length >= 10 },
-    { id: 'veteran_uplink', name: 'Veteran Uplink', icon: 'bi-cpu', desc: 'Successfully launch 20 unique modules.', color: 'text-purple-400', condition: (data) => (data.recentlyPlayed || []).length >= 20 },
-    { id: 'bug_hunter', name: 'Bug Hunter', icon: 'bi-bug', desc: 'Successfully reported a technical anomaly.', color: 'text-orange-400', manual: true },
-    { id: 'contributor', name: 'Site Contributor', icon: 'bi-patch-plus', desc: 'Suggested a module integrated into the archive.', color: 'text-cyan-500', manual: true },
-    { id: 'loyalty_core', name: 'Loyalty Core', icon: 'bi-shield-check', desc: 'Initiate over 50 uplink sessions.', color: 'text-pink-400', condition: (data) => data.sessions >= 50 }
+    { id: 'novice_pilot', name: 'Novice Pilot', icon: 'bi-controller', desc: 'Successfully initiate 5 archive uplinks.', color: 'text-green-400', condition: (data) => (data.sessions || 0) >= 5 },
+    { id: 'specialist', name: 'Module Specialist', icon: 'bi-stars', desc: 'Successfully initiate 20 archive uplinks.', color: 'text-blue-400', condition: (data) => (data.sessions || 0) >= 20 },
+    { id: 'veteran_uplink', name: 'Veteran Uplink', icon: 'bi-cpu', desc: 'Successfully initiate 50 archive uplinks.', color: 'text-purple-400', condition: (data) => (data.sessions || 0) >= 50 },
+    { id: 'loyalty_core', name: 'Loyalty Core', icon: 'bi-shield-check', desc: 'Initiate over 100 uplink sessions.', color: 'text-pink-400', condition: (data) => (data.sessions || 0) >= 100 }
 ];
 
 let userData;
@@ -283,19 +280,6 @@ userData.sessions = (userData.sessions || 0) + 1;
 async function saveUserData() {
     checkBadges();
     localStorage.setItem('vp_user_data', JSON.stringify(userData));
-    
-    // Sync to Leaderboard if username exists
-    if (userData.username && userData.username !== 'ANONYMOUS_LINK') {
-        try {
-            await setDoc(doc(db, 'leaderboard', userData.username), {
-                username: userData.username,
-                playtime: userData.totalSeconds,
-                lastSeen: serverTimestamp()
-            }, { merge: true });
-        } catch (e) {
-            console.warn("Leaderboard sync failed:", e);
-        }
-    }
 }
 
 function checkBadges() {
@@ -409,19 +393,9 @@ function init() {
     reviewInput = document.getElementById('review-input');
     submitReviewBtn = document.getElementById('submit-review');
 
-    profileBtn = document.getElementById('profile-btn');
-    profileModal = document.getElementById('profile-modal');
-    profileContainer = document.getElementById('profile-container');
-    closeProfileBtn = document.getElementById('close-profile');
-    
-    leaderboardBtn = document.getElementById('leaderboard-btn');
-    leaderboardModal = document.getElementById('leaderboard-modal');
-    leaderboardContainer = document.getElementById('leaderboard-container');
-    closeLeaderboardBtn = document.getElementById('close-leaderboard');
-    leaderboardList = document.getElementById('leaderboard-list');
-    
     themeToggle = document.getElementById('theme-toggle');
     themeIcon = document.getElementById('theme-icon');
+    themeText = document.getElementById('theme-text');
 
     // Dev Terminal Selectors
     versionTag = document.getElementById('version-tag');
@@ -875,6 +849,11 @@ function setupEventListeners() {
         };
     }
 
+    if (closeDetailsBtn) closeDetailsBtn.onclick = closeDetails;
+    if (likeBtn) likeBtn.onclick = () => handleRating('likes');
+    if (dislikeBtn) dislikeBtn.onclick = () => handleRating('dislikes');
+    if (submitReviewBtn) submitReviewBtn.onclick = submitReview;
+    
     // Modal Triggers
     if (updateSiteBtn) updateSiteBtn.onclick = openUpdateModal;
     if (closeUpdateBtn) closeUpdateBtn.onclick = closeUpdateModal;
@@ -897,19 +876,13 @@ function setupEventListeners() {
         };
     }
 
-    if (profileBtn) profileBtn.onclick = openProfile;
-    if (closeProfileBtn) closeProfileBtn.onclick = closeProfile;
-    if (leaderboardBtn) leaderboardBtn.onclick = openLeaderboard;
-    if (closeLeaderboardBtn) closeLeaderboardBtn.onclick = closeLeaderboard;
     if (themeToggle) themeToggle.onclick = toggleTheme;
 
     // Close Modals on Backdrop Click
-    [profileModal, leaderboardModal, forumModal, detailsModal, terminalModal, cloakModal, badgesModal, updateModal, devModal, disclaimerModal].forEach(modal => {
+    [forumModal, detailsModal, terminalModal, cloakModal, badgesModal, updateModal, devModal, disclaimerModal].forEach(modal => {
         if (!modal) return;
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                if (modal === profileModal) closeProfile();
-                if (modal === leaderboardModal) closeLeaderboard();
                 if (modal === detailsModal) closeDetails();
                 if (modal === forumModal) closeForum();
                 if (modal === terminalModal) terminalModal.classList.add('hidden');
@@ -1500,6 +1473,7 @@ function applyTheme() {
             themeIcon.classList.remove('bi-moon-stars-fill');
             themeIcon.classList.add('bi-sun-fill');
         }
+        if (themeText) themeText.textContent = 'Light Mode';
     } else {
         document.documentElement.classList.remove('light-mode');
         document.body.classList.remove('bg-zinc-100', 'text-zinc-900');
@@ -1508,132 +1482,8 @@ function applyTheme() {
             themeIcon.classList.remove('bi-sun-fill');
             themeIcon.classList.add('bi-moon-stars-fill');
         }
+        if (themeText) themeText.textContent = 'Dark Mode';
     }
-}
-
-function openProfile() {
-    if (!profileModal) return;
-    
-    const totalTimeEl = document.getElementById('profile-playtime');
-    const sessionsEl = document.getElementById('profile-sessions');
-    const userDisplay = document.getElementById('profile-username-display');
-    const recentStatsGrid = document.getElementById('profile-recent-grid');
-    
-    if (totalTimeEl) totalTimeEl.textContent = formatPlaytime(userData.totalSeconds);
-    if (sessionsEl) sessionsEl.textContent = userData.sessions;
-    if (userDisplay) userDisplay.textContent = userData.username || 'ANONYMOUS_LINK';
-    
-    if (recentStatsGrid) {
-        recentStatsGrid.innerHTML = '';
-        const sortedGames = Object.entries(userData.perGamePlaytime || {})
-            .sort((a,b) => b[1] - a[1])
-            .slice(0, 5);
-            
-        if (sortedGames.length === 0) {
-            recentStatsGrid.innerHTML = '<p class="text-zinc-600 text-[10px] uppercase font-mono italic text-center py-10">No chronology data detected...</p>';
-        }
-
-        sortedGames.forEach(([gid, seconds]) => {
-            const game = allEntries.find(g => g.id === gid);
-            if (!game) return;
-            
-            const div = document.createElement('div');
-            div.className = "p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between group hover:bg-white/10 transition-all";
-            div.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <img src="${game.thumbnail}" class="w-10 h-10 rounded-lg object-cover border border-white/10" alt="">
-                    <div>
-                        <h5 class="text-white font-black text-xs italic uppercase tracking-tighter">${game.title}</h5>
-                        <p class="text-zinc-500 text-[9px] font-mono font-bold uppercase tracking-widest">Active Pulse Monitor</p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-cyan-400 font-black text-sm font-mono tabular-nums">${formatPlaytime(seconds)}</p>
-                </div>
-            `;
-            recentStatsGrid.appendChild(div);
-        });
-
-        // Add Favorites Section if exists
-        if (userData.favorites && userData.favorites.length > 0) {
-            const favHeader = document.createElement('h5');
-            favHeader.className = "text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] mt-8 mb-4 border-t border-white/5 pt-6";
-            favHeader.textContent = "Prioritized Modules";
-            recentStatsGrid.appendChild(favHeader);
-
-            userData.favorites.forEach(fid => {
-                const game = allEntries.find(g => g.id === fid);
-                if (!game) return;
-                const favDiv = document.createElement('div');
-                favDiv.className = "flex items-center gap-3 p-2";
-                favDiv.innerHTML = `
-                    <div class="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center">
-                        <i class="bi bi-heart-fill text-red-500 text-[10px]"></i>
-                    </div>
-                    <span class="text-white font-bold text-[10px] uppercase tracking-tighter italic">${game.title}</span>
-                `;
-                recentStatsGrid.appendChild(favDiv);
-            });
-        }
-    }
-
-    profileModal.classList.remove('hidden');
-    setTimeout(() => {
-        profileModal.classList.remove('opacity-0');
-        if (profileContainer) profileContainer.classList.remove('scale-90');
-    }, 10);
-}
-
-function closeProfile() {
-    if (!profileModal) return;
-    profileModal.classList.add('opacity-0');
-    if (profileContainer) profileContainer.classList.add('scale-90');
-    setTimeout(() => profileModal.classList.add('hidden'), 500);
-}
-
-async function openLeaderboard() {
-    if (!leaderboardModal) return;
-    leaderboardModal.classList.remove('hidden');
-    setTimeout(() => {
-        leaderboardModal.classList.remove('opacity-0');
-        if (leaderboardContainer) leaderboardContainer.classList.remove('scale-90');
-    }, 10);
-
-    if (leaderboardList) {
-        leaderboardList.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-zinc-600 font-mono text-[10px] uppercase tracking-widest gap-4">Synchronizing...<div class="w-8 h-8 border-2 border-cyan-500/10 border-t-cyan-500 rounded-full animate-spin"></div></div>';
-        try {
-            const q = query(collection(db, 'leaderboard'), orderBy('playtime', 'desc'), limit(10));
-            const snapshot = await getDocs(q);
-            leaderboardList.innerHTML = '';
-            let rank = 1;
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = `p-5 rounded-2xl flex items-center justify-between border ${rank <= 3 ? 'bg-cyan-500/5 border-cyan-500/20' : 'bg-white/5 border-white/5'}`;
-                div.innerHTML = `
-                    <div class="flex items-center gap-5">
-                        <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-zinc-950 border border-white/10 text-xs font-black italic ${rank === 1 ? 'text-yellow-400' : 'text-zinc-500'}">#${rank}</span>
-                        <div>
-                            <h5 class="text-white font-black text-sm uppercase tracking-tighter">${data.username || 'ANON_USER'}</h5>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-cyan-400 font-black text-sm font-mono tabular-nums">${formatPlaytime(data.playtime)}</span>
-                    </div>
-                `;
-                leaderboardList.appendChild(div);
-                rank++;
-            });
-            if (snapshot.empty) leaderboardList.innerHTML = '<p class="text-center py-20 text-zinc-600 font-mono text-[10px] uppercase tracking-widest">No records found.</p>';
-        } catch (e) { leaderboardList.innerHTML = '<p class="text-center py-20 text-red-500/50 font-mono text-[10px] uppercase tracking-widest italic">Sync Error.</p>'; }
-    }
-}
-
-function closeLeaderboard() {
-    if (!leaderboardModal) return;
-    leaderboardModal.classList.add('opacity-0');
-    if (leaderboardContainer) leaderboardContainer.classList.add('scale-90');
-    setTimeout(() => leaderboardModal.classList.add('hidden'), 500);
 }
 
 function formatPlaytime(seconds) {
@@ -1871,15 +1721,26 @@ async function openDetails(item) {
 
 function closeDetails() {
     activeDetailsGameId = null;
-    if (unsubscribeReviews) unsubscribeReviews();
-    
-    detailsModal.classList.add('opacity-0');
-    detailsContainer.classList.remove('scale-100');
-    setTimeout(() => detailsModal.classList.add('hidden'), 500);
-    
-    if (playerOverlay.classList.contains('hidden')) {
-        document.body.style.overflow = '';
+    if (unsubscribeReviews) {
+        try {
+            unsubscribeReviews();
+        } catch (e) {
+            console.warn("Unsubscribe reviews failed:", e);
+        }
     }
+    
+    if (detailsModal) detailsModal.classList.add('opacity-0');
+    if (detailsContainer) {
+        detailsContainer.classList.remove('scale-100');
+        detailsContainer.classList.add('scale-90');
+    }
+    
+    setTimeout(() => {
+        if (detailsModal) detailsModal.classList.add('hidden');
+        if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }, 500);
 }
 
 async function handleRating(type) {
@@ -1951,14 +1812,16 @@ async function submitReview() {
 function initReviewsSubscription(gameId) {
     if (unsubscribeReviews) unsubscribeReviews();
     
+    const reviewsColl = collection(db, 'game_reviews');
     const q = query(
-        collection(db, 'game_reviews'), 
+        reviewsColl, 
         where('gameId', '==', gameId), 
         orderBy('createdAt', 'desc'),
         limit(50)
     );
     
     unsubscribeReviews = onSnapshot(q, (snapshot) => {
+        if (!reviewsList) return;
         reviewsList.innerHTML = '';
         
         if (snapshot.empty) {
@@ -1985,6 +1848,11 @@ function initReviewsSubscription(gameId) {
             `;
             reviewsList.appendChild(reviewEl);
         });
+    }, (err) => {
+        console.warn("Reviews sync failed (likely missing index):", err);
+        if (reviewsList) {
+            reviewsList.innerHTML = `<div class="text-center py-10 text-zinc-600 font-mono text-[10px] uppercase tracking-widest opacity-50 italic">Chronology Sync Incomplete [Index Required]</div>`;
+        }
     });
 }
 
