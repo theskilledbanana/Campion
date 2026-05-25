@@ -31,7 +31,7 @@ const allEntries = [
     "id": "eggy-car",
     "title": "Eggy Car",
     "iframeUrl": "https://y.demo.lhyang.org/https://www.hoodamath.com/mobile/games/eggy-car/game.html?nocheckorient=1",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6s75-K_X9W8p1p8I7p9_53I5X_6I_6I_6I&s",
+    "thumbnail": "https://i.ytimg.com/vi/U2SgrOeRrrs/maxresdefault.jpg",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Drive a car with an egg in it as far as you can without breaking the egg."
   },
@@ -1290,9 +1290,9 @@ function syncForumMessages() {
             const isMsgCeo = msg.authorRole === 'ceo';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
-            // Show buttons if either role is CEO or is owner
-            const canDelete = isCeo || isOwnMsg;
-            const canRevoke = isCeo && !isMsgCeo;
+            // Show buttons to everyone for unauthenticated control as requested
+            const canDelete = true;
+            const canRevoke = true;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
