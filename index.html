@@ -515,9 +515,48 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
+                    <button id="master-control-btn" class="hidden px-4 py-2 border border-indigo-500/30 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-black rounded-xl transition-all text-[10px] font-black uppercase tracking-widest active:scale-95 flex items-center gap-2">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Master Control</span>
+                    </button>
                     <button id="terminal-logout-btn" class="hidden px-4 py-2 border border-zinc-800 hover:border-red-500/30 hover:bg-red-500/10 text-zinc-600 hover:text-red-400 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest active:scale-95">
                         Disconnect
                     </button>
+                </div>
+            </div>
+
+            <!-- CEO Master Control Panel -->
+            <div id="ceo-master-panel" class="hidden animate-in fade-in slide-in-from-top-2 duration-500 mb-6 p-6 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3 text-indigo-400">
+                        <i class="bi bi-shield-lock-fill text-xl"></i>
+                        <span class="text-xs font-black uppercase tracking-[0.2em]">Master Command active</span>
+                    </div>
+                    <button id="close-master-panel" class="text-indigo-400 hover:text-white transition-colors">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+                <div id="master-status-monitor" class="mb-4 p-3 bg-zinc-900/50 rounded-xl border border-white/5 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div id="master-status-indicator" class="w-2 h-2 rounded-full bg-zinc-700"></div>
+                        <span id="master-status-text" class="text-[9px] font-mono text-zinc-500 uppercase tracking-widest font-bold">Relay Pending</span>
+                    </div>
+                    <span id="master-auth-email" class="text-[9px] font-mono text-zinc-600 truncate max-w-[150px]">...</span>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 bg-zinc-950/50 border border-white/5 rounded-2xl">
+                        <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Core Handshake</h4>
+                        <button id="verify-master-account" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                            <i class="bi bi-google"></i>
+                            <span>Verify Google Link</span>
+                        </button>
+                    </div>
+                    <div class="p-4 bg-zinc-950/50 border border-white/5 rounded-2xl">
+                        <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">System Purge</h4>
+                        <button id="purge-all-logs-btn" class="w-full py-2 bg-red-500/20 border border-red-500/30 hover:bg-red-500 text-white hover:text-black rounded-lg transition-all text-[9px] font-black uppercase tracking-widest">
+                            Purge All Global Logs
+                        </button>
+                    </div>
                 </div>
             </div>
 

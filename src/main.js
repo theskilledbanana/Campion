@@ -950,11 +950,14 @@ function setupEventListeners() {
         const promptText = forumAuthPrompt?.querySelector('p');
         const devLoginBtn = document.getElementById('dev-login-btn');
         const logoutBtn = document.getElementById('terminal-logout-btn');
+        const masterControlBtn = document.getElementById('master-control-btn');
+        const masterPanel = document.getElementById('ceo-master-panel');
         
         if (!user && auth && auth.currentUser) user = auth.currentUser;
 
         let isAuthorized = isChatAuthorized();
         let isBanned = false;
+        const role = localStorage.getItem('vp_chat_role');
 
         if (user && isAuthorized) {
             try {
@@ -983,6 +986,30 @@ function setupEventListeners() {
                 devLoginBtn.disabled = true;
             }
             if (logoutBtn) logoutBtn.classList.remove('hidden');
+            
+            if (masterControlBtn && role === 'ceo') {
+                masterControlBtn.classList.remove('hidden');
+                
+                // Update Monitor
+                const statusIndicator = document.getElementById('master-status-indicator');
+                const statusText = document.getElementById('master-status-text');
+                const authEmail = document.getElementById('master-auth-email');
+                
+                if (user) {
+                    if (statusIndicator) statusIndicator.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]';
+                    if (statusText) statusText.textContent = 'IDENTITY VERIFIED';
+                    if (statusText) statusText.className = 'text-[9px] font-mono text-green-400 uppercase tracking-widest font-bold';
+                    if (authEmail) authEmail.textContent = user.email || 'Verified';
+                } else {
+                    if (statusIndicator) statusIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+                    if (statusText) statusText.textContent = 'HANDSHAKE REQUIRED';
+                    if (statusText) statusText.className = 'text-[9px] font-mono text-amber-400 uppercase tracking-widest font-bold';
+                    if (authEmail) authEmail.textContent = 'Awaiting Link';
+                }
+            } else if (masterControlBtn) {
+                masterControlBtn.classList.add('hidden');
+                masterPanel?.classList.add('hidden');
+            }
         } else {
             forumInputArea?.classList.add('hidden');
             forumAuthPrompt?.classList.remove('hidden');
@@ -991,6 +1018,8 @@ function setupEventListeners() {
                 devLoginBtn.disabled = isBanned;
             }
             if (logoutBtn) logoutBtn.classList.add('hidden');
+            if (masterControlBtn) masterControlBtn.classList.add('hidden');
+            if (masterPanel) masterPanel.classList.add('hidden');
             if (promptText) {
                 promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "Official Developer Access Required to Post";
             }
@@ -1002,6 +1031,86 @@ function setupEventListeners() {
             syncForumMessages();
         }
     };
+
+    // Master Control Logic
+    const masterControlBtn = document.getElementById('master-control-btn');
+    const masterPanel = document.getElementById('ceo-master-panel');
+    const closeMasterBtn = document.getElementById('close-master-panel');
+    const verifyBtn = document.getElementById('verify-master-account');
+    const purgeAllBtn = document.getElementById('purge-all-logs-btn');
+
+    if (masterControlBtn) {
+        masterControlBtn.onclick = () => {
+            if (masterPanel) {
+                const isHidden = masterPanel.classList.contains('hidden');
+                if (isHidden) {
+                    masterPanel.classList.remove('hidden');
+                    setTimeout(() => masterPanel.classList.add('opacity-100'), 10);
+                } else {
+                    masterPanel.classList.add('hidden');
+                }
+            }
+        };
+    }
+
+    if (closeMasterBtn) {
+        closeMasterBtn.onclick = () => {
+            masterPanel?.classList.add('hidden');
+        };
+    }
+
+    if (verifyBtn) {
+        verifyBtn.onclick = async () => {
+            try {
+                const provider = new GoogleAuthProvider();
+                const cred = await signInWithPopup(auth, provider);
+                const user = cred.user;
+                
+                await setDoc(doc(db, 'authorized_users', user.uid), {
+                    role: 'ceo',
+                    status: 'active',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                
+                alert("MASTER ACCOUNT VERIFIED. AUTHENTICATION SUCCESSFUL.");
+                updateForumAuthUI(user);
+            } catch (err) {
+                alert("VERIFICATION ERROR: " + err.message);
+            }
+        };
+    }
+
+    if (purgeAllBtn) {
+        purgeAllBtn.onclick = async () => {
+            if (!auth.currentUser) {
+                alert("AUTHORIZATION REQUIRED: Verify Master Account link first.");
+                return;
+            }
+
+            if (confirm("CRITICAL: THIS WILL PERMANENTLY ERASE ALL MESSAGES FROM THE GRID. PROCEED?")) {
+                try {
+                    purgeAllBtn.disabled = true;
+                    purgeAllBtn.textContent = 'EXECUTING PURGE...';
+                    const snap = await getDocs(collection(db, 'forum_messages'));
+                    let count = 0;
+                    for (const d of snap.docs) {
+                        try {
+                            await deleteDoc(doc(db, 'forum_messages', d.id));
+                            count++;
+                        } catch (e) {
+                            console.warn(`Failed to delete msg ${d.id}:`, e);
+                        }
+                    }
+                    alert(`SYSTEM PURGE COMPLETE. ${count} LOGS ERASED.`);
+                } catch (err) {
+                    alert("PURGE FAILED: " + err.message);
+                } finally {
+                    purgeAllBtn.disabled = false;
+                    purgeAllBtn.textContent = 'Purge All Global Logs';
+                }
+            }
+        };
+    }
 
     const logoutBtnElement = document.getElementById('terminal-logout-btn');
     if (logoutBtnElement) logoutBtnElement.onclick = logoutTerminal;
@@ -1317,11 +1426,14 @@ function syncForumMessages() {
                 const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
                 
                 if (isCeoLocal && !auth.currentUser) {
-                    alert("AUTHORIZATION REQUIRED: You must be signed in with a Master Account (Google) to execute remote deletions.");
+                    if (confirm("MASTER ACCOUNT VERIFICATION REQUIRED: You must verify your Google link to execute global deletions. Initialize handshake now?")) {
+                        const verifyBtn = document.getElementById('verify-master-account');
+                        if (verifyBtn) verifyBtn.click();
+                    }
                     return;
                 }
 
-                if (confirm("PROTOCOL: PERMANENTLY DELETE THIS LOG FROM THE GRID?")) {
+                if (confirm("PROTOCOL: PERMANENTLY PURGE THIS LOG FROM THE GRID?")) {
                     try {
                         await deleteDoc(doc(db, 'forum_messages', msgId));
                     } catch (err) {
@@ -1338,6 +1450,15 @@ function syncForumMessages() {
 
         document.querySelectorAll('.revoke-access-btn').forEach(btn => {
             btn.onclick = async (e) => {
+                const isCeoLocal = localStorage.getItem('vp_chat_role') === 'ceo';
+                if (isCeoLocal && !auth.currentUser) {
+                    if (confirm("MASTER ACCOUNT VERIFICATION REQUIRED: You must verify your Google link to execute global revocations. Initialize handshake now?")) {
+                        const verifyBtn = document.getElementById('verify-master-account');
+                        if (verifyBtn) verifyBtn.click();
+                    }
+                    return;
+                }
+
                 if (!auth.currentUser) {
                     alert("AUTHORIZATION REQUIRED: Master Account verify is required for Client Revoke.");
                     return;
