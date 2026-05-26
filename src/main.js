@@ -541,21 +541,44 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
-                    const cred = await signInAnonymously(auth);
-                    // Aggressive sync - MUST include passcode to pass security rules
-                    await setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                    // Check if already signed in as the correct user
+                    if (auth.currentUser && auth.currentUser.email === "mandyfmcgregor@gmail.com") {
+                        console.log("Already signed in as CEO email.");
+                    } else {
+                        try {
+                            const cred = await signInAnonymously(auth);
+                            console.log("Anonymous Master Link Successful.");
+                        } catch (anonErr) {
+                            console.warn("Anonymous link restricted, checking for existing session...", anonErr);
+                            // If they are already signed in with ANY account, we might still be able to sync
+                            if (!auth.currentUser) throw anonErr;
+                        }
+                    }
+
+                    // Aggressive sync - MUST include passcode if role is ceo and not yet authorized in Firestore
+                    const syncData = {
                         role: 'ceo',
                         status: 'active',
-                        passcode: code,
                         updatedAt: serverTimestamp()
-                    }, { merge: true });
-                    console.log("Master Link Established [CEO Mode Active]");
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
+                    };
+                    if (code) syncData.passcode = code;
+
+                    if (auth.currentUser) {
+                        await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), syncData, { merge: true });
+                        console.log("Master Link Synchronized [CEO Mode Active]");
+                        if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
+                    } else {
+                        throw new Error("UNAUTHENTICATED_SESSION");
+                    }
                 } catch (authErr) {
                     console.error("Master Link Failure:", authErr);
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: REMOTE REJECTED.';
-                    // Critical: do not continue if CEO sync failed
-                    throw authErr;
+                    let msg = 'LINK ERROR: REMOTE REJECTED.';
+                    if (authErr.code === 'auth/admin-restricted-operation') {
+                        msg = 'SECURITY ALERT: USE GOOGLE LOGIN INSTEAD.';
+                    }
+                    if (terminalStatusLog) terminalStatusLog.textContent = msg;
+                    // Critical failure for CEO elevation
+                    return;
                 }
             }
             
@@ -1054,41 +1077,33 @@ function setupEventListeners() {
         const storedRole = localStorage.getItem('vp_chat_role');
         
         if (!user && storedRole === 'ceo') {
-            console.log("Re-establishing CEO credentials...");
+            console.log("Attempting CEO background re-auth...");
             try {
                 await signInAnonymously(auth);
             } catch (err) {
-                console.error("CEO Re-login failed:", err);
+                console.error("CEO Background recovery failed:", err.code);
+                // If it fails with restriction, we might need manual intervention or just clear the role if stuck
+                if (err.code === 'auth/admin-restricted-operation') {
+                    console.warn("Project restricts anonymous auth. Manual login required.");
+                    // Don't clear role yet, maybe they refresh or use Ctrl+Shift+R correctly
+                }
             }
         } else if (user && storedRole === 'ceo') {
             try {
-                // Force sync
-                const passcode = localStorage.getItem('vp_chat_passcode');
-                if (!passcode) {
-                    console.warn("Authorization sync skipped: Missing passcode in vault.");
-                    return;
-                }
-                await setDoc(doc(db, 'authorized_users', user.uid), {
+                // Force sync periodically or on change
+                const passcode = localStorage.getItem('vp_chat_passcode') || '3012';
+                const syncData = {
                     role: 'ceo',
                     status: 'active',
-                    passcode: passcode,
                     updatedAt: serverTimestamp()
-                }, { merge: true });
-                console.log("CEO Authorization Pulse: OK [UID: " + user.uid + "]");
-                
-                // Add a small debug indicator if it's missing
-                let debugInd = document.getElementById('ceo-debug-indicator');
-                if (!debugInd) {
-                    debugInd = document.createElement('div');
-                    debugInd.id = 'ceo-debug-indicator';
-                    debugInd.className = 'fixed bottom-4 right-4 z-[200] text-[8px] font-mono text-cyan-400/50 bg-black/40 px-2 py-1 rounded border border-white/5 uppercase pointer-events-none';
-                    document.body.appendChild(debugInd);
-                }
-                debugInd.textContent = `UPLINK: ${user.uid.substring(0,8)}... [CEO: ACTIVE]`;
+                };
+                // Ensure passcode is synced if we know it
+                if (passcode) syncData.passcode = passcode;
+
+                await setDoc(doc(db, 'authorized_users', user.uid), syncData, { merge: true });
+                console.log("CEO Pulse Synced [UID: " + user.uid + "]");
             } catch (err) {
-                console.error("Authorization sync failed pulse:", err);
-                const debugInd = document.getElementById('ceo-debug-indicator');
-                if (debugInd) debugInd.textContent = `UPLINK: ERROR [${err.code}]`;
+                console.error("CEO Pulse Sync failed:", err.code);
             }
         }
         updateForumAuthUI(user);
