@@ -38,6 +38,14 @@ const allEntries = [
     "description": "Drive a car with an egg in it as far as you can without breaking the egg."
   },
   {
+    "id": "doom-2",
+    "title": "Doom 2",
+    "iframeUrl": "https://oshkii.github.io/doom2-webport/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHS4t4sbuYd5QRjB9GYCGT0DU7XoSZOLxnhg&s",
+    "categories": ["Action", "Retro", "Shooter"],
+    "description": "The classic sequel to the groundbreaking first-person shooter. Wage war against the forces of hell in this legendary action-packed experience."
+  },
+  {
     "id": "bitlife",
     "title": "BitLife",
     "iframeUrl": "https://only-game.github.io/projects/bitlife/index.html",
@@ -1037,7 +1045,15 @@ function setupEventListeners() {
     });
 
     // Keep UI in sync with Auth
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
+        if (!user && localStorage.getItem('vp_chat_role') === 'ceo') {
+            console.log("Re-establishing CEO credentials...");
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                console.error("CEO Re-login failed:", err);
+            }
+        }
         updateForumAuthUI(user);
     });
 }
@@ -1920,15 +1936,24 @@ function initReviewsSubscription(gameId) {
             `;
 
             if (canDelete) {
-                reviewEl.querySelector('.delete-review-btn').onclick = async () => {
-                    if (confirm("PROTOCOL: TERMINATE THIS CITIZEN REPORT?")) {
-                        try {
-                            await deleteDoc(doc(db, 'game_reviews', docSnap.id));
-                        } catch (err) {
-                            console.error("Report termination failed:", err);
+                const deleteBtn = reviewEl.querySelector('.delete-review-btn');
+                if (deleteBtn) {
+                    deleteBtn.onclick = async () => {
+                        if (confirm("PROTOCOL: TERMINATE THIS CITIZEN REPORT?")) {
+                            try {
+                                deleteBtn.disabled = true;
+                                deleteBtn.textContent = "TERMINATING...";
+                                await deleteDoc(doc(db, 'game_reviews', docSnap.id));
+                                // onSnapshot will carry out the removal visually
+                            } catch (err) {
+                                console.error("Report termination failed:", err);
+                                alert("TERMINATION FAILED: " + err.message);
+                                deleteBtn.disabled = false;
+                                deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Terminate Report';
+                            }
                         }
-                    }
-                };
+                    };
+                }
             }
 
             reviewsList.appendChild(reviewEl);
