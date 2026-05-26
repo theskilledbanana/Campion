@@ -421,6 +421,7 @@ function init() {
         // Individual safety wrappers for core rendering
         safeCall(initGameMetrics, "MetricsSub");
         safeCall(renderCategories, "Categories");
+        safeCall(renderGameOfTheWeek, "GOTW");
         safeCall(renderRecentlyPlayed, "Recent");
         safeCall(renderItems, "Items");
         
@@ -1165,6 +1166,67 @@ function toggleFavorite(e, gameId) {
     saveUserData();
     renderCategories();
     renderItems();
+}
+
+function renderGameOfTheWeek() {
+    const container = document.getElementById('gotw-container');
+    if (!container) return;
+
+    // Deterministic week-based selection
+    // Epoch: May 25, 2024 (roughly when this pattern was established)
+    const EPOCH = 1716595200000; 
+    const currentWeek = Math.floor((Date.now() - EPOCH) / (7 * 24 * 60 * 60 * 1000));
+    const featuredIndex = Math.max(0, currentWeek % allEntries.length);
+    const item = allEntries[featuredIndex];
+
+    if (!item) {
+        container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-zinc-600 font-mono text-[10px] uppercase">Archive Sync Incomplete</div>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="absolute inset-0">
+            <img src="${item.thumbnail}" class="w-full h-full object-cover opacity-40 group-hover:opacity-50 group-hover:scale-105 transition-all duration-1000" alt="">
+            <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-zinc-950/80 to-transparent"></div>
+        </div>
+        
+        <div class="relative h-full flex flex-col justify-end p-8 md:p-12">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="max-w-2xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="px-3 py-1 bg-yellow-500/20 border border-yellow-500/30 text-yellow-500 rounded-full text-[9px] font-black uppercase tracking-widest">Active Pulse Spotlight</span>
+                        <div class="flex items-center gap-1.5 px-3 py-1 bg-black/40 border border-white/5 rounded-full text-[9px] font-mono font-bold text-zinc-400">
+                            <span class="w-1 h-1 rounded-full bg-green-500 animate-pulse"></span>
+                            STABLE UPLINK
+                        </div>
+                    </div>
+                    <h3 class="text-4xl md:text-6xl font-black text-white italic uppercase tracking-tighter leading-none mb-4 group-hover:translate-x-2 transition-transform duration-500">${item.title}</h3>
+                    <p class="text-zinc-400 text-sm md:text-base font-medium leading-relaxed max-w-xl group-hover:text-zinc-200 transition-colors">${item.description}</p>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="gotw-details-trigger px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-xs font-black uppercase tracking-[0.2em] text-white transition-all active:scale-95">Analyze Info</button>
+                    <button class="gotw-launch-trigger px-10 py-4 bg-yellow-500 hover:bg-yellow-400 text-black rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-[0_0_50px_rgba(234,179,8,0.3)] active:scale-95 flex items-center gap-3">
+                        Launch Relay
+                        <i class="bi bi-play-fill text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.querySelector('.gotw-details-trigger').onclick = (e) => {
+        e.stopPropagation();
+        openDetails(item);
+    };
+
+    container.querySelector('.gotw-launch-trigger').onclick = (e) => {
+        e.stopPropagation();
+        openPlayer(item);
+    };
+
+    container.onclick = () => openPlayer(item);
 }
 
 function renderItems() {

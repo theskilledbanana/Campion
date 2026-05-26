@@ -320,6 +320,29 @@
     </div>
 
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 pb-32">
+        <!-- Game of the Week Spotlight -->
+        <section id="gotw-section" class="mb-20">
+            <div class="flex items-center gap-4 mb-8 px-2">
+                <div class="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.1)]">
+                    <i class="bi bi-stars text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">Featured <span class="text-yellow-400">of the Week</span></h2>
+                    <div class="flex items-center gap-2">
+                        <span class="w-1 h-1 rounded-full bg-yellow-500/40"></span>
+                        <p class="text-zinc-600 text-[10px] font-mono uppercase tracking-[0.2em] font-bold">Protocol Selection: Weekly Cycle Active</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="gotw-container" class="relative group cursor-pointer overflow-hidden rounded-[3rem] border border-white/10 bg-zinc-950 aspect-[21/9] md:aspect-[25/9] transition-all hover:border-yellow-500/30">
+                <!-- Content will be injected here -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-8 h-8 border-2 border-yellow-500/10 border-t-yellow-500 rounded-full animate-spin"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- Recently Played -->
         <section id="recent-section" class="mb-20">
             <div class="flex items-center justify-between mb-8 px-2">
