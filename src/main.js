@@ -541,55 +541,54 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
-                    // 1. Try existing email first (most reliable for CEO)
-                    if (auth.currentUser && auth.currentUser.email === "mandyfmcgregor@gmail.com") {
-                        console.log("Verified CEO Google Session active.");
-                    } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
-                        // Signed in as someone else?
-                        console.warn("Signed in as different user. Attempting elevation...");
+                    // 1. Try to sync current session first
+                    if (auth.currentUser) {
+                        const syncData = {
+                            role: 'ceo',
+                            status: 'active',
+                            passcode: code,
+                            updatedAt: serverTimestamp()
+                        };
+                        await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), syncData, { merge: true });
+                        console.log("Master Link Synchronized [EXISTING SESSION]");
+                        if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. UPLINK RESTORED.';
                     } else {
-                        // Not signed in or anonymous user. Try to get a session.
+                        // 2. No session? Try anonymous
                         try {
                             const cred = await signInAnonymously(auth);
-                            console.log("Anonymous Master Link Successful.");
+                            await setDoc(doc(db, 'authorized_users', cred.user.uid), {
+                                role: 'ceo',
+                                status: 'active',
+                                passcode: code,
+                                updatedAt: serverTimestamp()
+                            }, { merge: true });
+                            console.log("Master Link Synchronized [ANONYMOUS SESSION]");
+                            if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. UPLINK RESTORED.';
                         } catch (anonErr) {
+                            console.warn("Anonymous link restricted:", anonErr.code);
                             if (anonErr.code === 'auth/admin-restricted-operation') {
-                                console.warn("Anonymous auth restricted. Checking for existing Google session...");
-                                // If they aren't signed in, we MUST ask for Google Login
-                                if (!auth.currentUser) {
-                                    if (terminalStatusLog) terminalStatusLog.textContent = 'RESTRICTED: INITIATING GOOGLE UPLINK...';
-                                    const provider = new GoogleAuthProvider();
-                                    await signInWithPopup(auth, provider);
+                                if (terminalStatusLog) terminalStatusLog.textContent = 'RESTRICTED: PLEASE SIGN IN WITH GOOGLE.';
+                                // Auto-trigger Google if they are stuck
+                                const provider = new GoogleAuthProvider();
+                                await signInWithPopup(auth, provider);
+                                // Retry sync after popup
+                                if (auth.currentUser) {
+                                    await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), {
+                                        role: 'ceo',
+                                        status: 'active',
+                                        passcode: code,
+                                        updatedAt: serverTimestamp()
+                                    }, { merge: true });
+                                    if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. GOOGLE UPLINK VERIFIED.';
                                 }
                             } else {
                                 throw anonErr;
                             }
                         }
                     }
-
-                    // 2. Aggressive sync with Firestore
-                    const syncData = {
-                        role: 'ceo',
-                        status: 'active',
-                        passcode: code,
-                        updatedAt: serverTimestamp()
-                    };
-
-                    if (auth.currentUser) {
-                        await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), syncData, { merge: true });
-                        console.log("Master Link Synchronized [CEO Mode Active]");
-                        if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
-                    } else {
-                        throw new Error("No active session for sync.");
-                    }
                 } catch (authErr) {
-                    console.error("Master Link Failure:", authErr);
-                    let msg = 'LINK ERROR: REMOTE REJECTED.';
-                    if (authErr.code === 'auth/admin-restricted-operation') {
-                        msg = 'SECURITY ALERT: USE GOOGLE LOGIN.';
-                    }
-                    if (terminalStatusLog) terminalStatusLog.textContent = msg;
-                    return;
+                    console.error("Master Link Logic Warning:", authErr);
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'LOCAL OVERRIDE ACTIVE. (SYNC OFFLINE)';
                 }
             }
             
@@ -598,7 +597,6 @@ async function handleTerminalAuth() {
             setTimeout(() => {
                 closeDevTerminal();
                 updateForumAuthUI();
-                alert(isCeo ? "CEO MASTER CONTROL ACTIVE." : "DEVELOPER ACCESS GRANTED.");
             }, 800);
 
         } catch (err) {
@@ -742,11 +740,9 @@ async function logoutTerminal() {
         localStorage.removeItem('vp_chat_authorized');
         localStorage.removeItem('vp_chat_role');
         localStorage.removeItem('vp_chat_passcode');
-        if (auth && auth.currentUser) {
-            await signOut(auth);
-        }
+        // Do NOT signOut, just drop local elevation
         updateForumAuthUI();
-        alert("TERMINAL DISCONNECTED. PROTOCOL OFFLINE.");
+        alert("TERMINAL DISCONNECTED. LOCAL PROTOCOLS OFFLINE.");
     }
 }
 
@@ -1086,18 +1082,30 @@ function setupEventListeners() {
     // Keep UI in sync with Auth
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
+        const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
+        const isCeoEmail = user && user.email === "jackcampell608@gmail.com";
+        
+        // Auto-authorize if using the verified CEO email
+        if (isCeoEmail && !isAuthorizedLocal) {
+            console.log("Verified CEO Email detected. Auto-authorizing...");
+            localStorage.setItem('vp_chat_role', 'ceo');
+            localStorage.setItem('vp_chat_authorized', 'true');
+            localStorage.setItem('vp_chat_name', 'CEO');
+        }
+
         const isAuthorized = localStorage.getItem('vp_chat_authorized') === 'true';
         
         if (!user && isAuthorized && storedRole === 'ceo') {
             console.log("Attempting CEO background re-auth...");
             try {
+                // Background re-auth attempt
                 await signInAnonymously(auth);
             } catch (err) {
-                console.error("CEO Background recovery failed:", err.code);
+                console.warn("CEO recovery skipped or failed:", err.code);
             }
         } else if (user && isAuthorized && storedRole === 'ceo') {
             try {
-                // Force sync periodically or on change
+                // Force sync periodically
                 const passcode = localStorage.getItem('vp_chat_passcode') || '3012';
                 const syncData = {
                     role: 'ceo',
