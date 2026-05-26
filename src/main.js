@@ -30,6 +30,14 @@ const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 
 const allEntries = [
   {
+    "id": "eggy-car",
+    "title": "Eggy Car",
+    "iframeUrl": "https://y.demo.lhyang.org/https://eggycargame.cc/embed/eggy-car_en.embed",
+    "thumbnail": "https://i.ytimg.com/vi/U2SgrOeRrrs/maxresdefault.jpg",
+    "categories": ["Driving", "Skill", "Trending Games"],
+    "description": "Drive a car with an egg in it as far as you can without breaking the egg."
+  },
+  {
     "id": "bitlife",
     "title": "BitLife",
     "iframeUrl": "https://only-game.github.io/projects/bitlife/index.html",
