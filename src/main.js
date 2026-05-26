@@ -1046,12 +1046,26 @@ function setupEventListeners() {
 
     // Keep UI in sync with Auth
     onAuthStateChanged(auth, async (user) => {
-        if (!user && localStorage.getItem('vp_chat_role') === 'ceo') {
+        const storedRole = localStorage.getItem('vp_chat_role');
+        
+        if (!user && storedRole === 'ceo') {
             console.log("Re-establishing CEO credentials...");
             try {
                 await signInAnonymously(auth);
             } catch (err) {
                 console.error("CEO Re-login failed:", err);
+            }
+        } else if (user && storedRole === 'ceo') {
+            // Ensure the authorization document exists for the current UID
+            try {
+                await setDoc(doc(db, 'authorized_users', user.uid), {
+                    role: 'ceo',
+                    status: 'active',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+                console.log("CEO Authorization Synced [UID: " + user.uid + "]");
+            } catch (err) {
+                console.error("Authorization sync failed:", err);
             }
         }
         updateForumAuthUI(user);
