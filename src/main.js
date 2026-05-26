@@ -16,7 +16,8 @@ import {
     updateDoc,
     limit,
     where,
-    deleteDoc
+    deleteDoc,
+    writeBatch
 } from 'firebase/firestore';
 import { 
     onAuthStateChanged,
@@ -520,6 +521,31 @@ function closeDevTerminal() {
 async function handleTerminalAuth() {
     const code = terminalPassInput?.value;
     if (!code) return;
+
+    const currentRole = localStorage.getItem('vp_chat_role');
+    const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
+
+    // SPECIAL CEO COMMAND: PURGE CITIZEN REPORTS
+    if (code.toUpperCase() === 'PURGE' && currentRole === 'ceo' && isAuthorizedLocal) {
+        if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL: INITIATING GLOBAL PURGE...';
+        try {
+            const snapshot = await getDocs(collection(db, 'game_reviews'));
+            const batch = writeBatch(db);
+            let count = 0;
+            snapshot.forEach(d => {
+                batch.delete(d.ref);
+                count++;
+            });
+            await batch.commit();
+            if (terminalStatusLog) terminalStatusLog.textContent = `PURGE COMPLETE: ${count} REPORTS REMOVED.`;
+            setTimeout(closeDevTerminal, 2000);
+            return;
+        } catch (err) {
+            console.error("Purge failure:", err);
+            if (terminalStatusLog) terminalStatusLog.textContent = `PURGE FAILED: ${err.message}`;
+            return;
+        }
+    }
 
     const isCeo = code === '3012';
     const isDev = code === '5012';

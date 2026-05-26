@@ -69,8 +69,10 @@ service cloud.firestore {
     }
 
     function isCeo() {
+      let hasEmail = request.auth.token.keys().contains('email');
+      let isCeoEmail = hasEmail && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com");
       return isSignedIn() && (
-             (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com") ||
+             isCeoEmail ||
              (exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
               get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo')
       );
@@ -99,7 +101,7 @@ service cloud.firestore {
     match /game_reviews/{reviewId} {
       allow read: if true;
       allow create: if true;
-      allow delete: if isCeo() || (isSignedIn() && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com"));
+      allow delete: if isCeo();
     }
 
     match /banned_clients/{clientId} {
