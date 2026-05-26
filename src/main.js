@@ -541,43 +541,54 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
-                    // Check if already signed in as the correct user
+                    // 1. Try existing email first (most reliable for CEO)
                     if (auth.currentUser && auth.currentUser.email === "mandyfmcgregor@gmail.com") {
-                        console.log("Already signed in as CEO email.");
+                        console.log("Verified CEO Google Session active.");
+                    } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                        // Signed in as someone else?
+                        console.warn("Signed in as different user. Attempting elevation...");
                     } else {
+                        // Not signed in or anonymous user. Try to get a session.
                         try {
                             const cred = await signInAnonymously(auth);
                             console.log("Anonymous Master Link Successful.");
                         } catch (anonErr) {
-                            console.warn("Anonymous link restricted, checking for existing session...", anonErr);
-                            // If they are already signed in with ANY account, we might still be able to sync
-                            if (!auth.currentUser) throw anonErr;
+                            if (anonErr.code === 'auth/admin-restricted-operation') {
+                                console.warn("Anonymous auth restricted. Checking for existing Google session...");
+                                // If they aren't signed in, we MUST ask for Google Login
+                                if (!auth.currentUser) {
+                                    if (terminalStatusLog) terminalStatusLog.textContent = 'RESTRICTED: INITIATING GOOGLE UPLINK...';
+                                    const provider = new GoogleAuthProvider();
+                                    await signInWithPopup(auth, provider);
+                                }
+                            } else {
+                                throw anonErr;
+                            }
                         }
                     }
 
-                    // Aggressive sync - MUST include passcode if role is ceo and not yet authorized in Firestore
+                    // 2. Aggressive sync with Firestore
                     const syncData = {
                         role: 'ceo',
                         status: 'active',
+                        passcode: code,
                         updatedAt: serverTimestamp()
                     };
-                    if (code) syncData.passcode = code;
 
                     if (auth.currentUser) {
                         await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), syncData, { merge: true });
                         console.log("Master Link Synchronized [CEO Mode Active]");
                         if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
                     } else {
-                        throw new Error("UNAUTHENTICATED_SESSION");
+                        throw new Error("No active session for sync.");
                     }
                 } catch (authErr) {
                     console.error("Master Link Failure:", authErr);
                     let msg = 'LINK ERROR: REMOTE REJECTED.';
                     if (authErr.code === 'auth/admin-restricted-operation') {
-                        msg = 'SECURITY ALERT: USE GOOGLE LOGIN INSTEAD.';
+                        msg = 'SECURITY ALERT: USE GOOGLE LOGIN.';
                     }
                     if (terminalStatusLog) terminalStatusLog.textContent = msg;
-                    // Critical failure for CEO elevation
                     return;
                 }
             }
@@ -1075,30 +1086,25 @@ function setupEventListeners() {
     // Keep UI in sync with Auth
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
+        const isAuthorized = localStorage.getItem('vp_chat_authorized') === 'true';
         
-        if (!user && storedRole === 'ceo') {
+        if (!user && isAuthorized && storedRole === 'ceo') {
             console.log("Attempting CEO background re-auth...");
             try {
                 await signInAnonymously(auth);
             } catch (err) {
                 console.error("CEO Background recovery failed:", err.code);
-                // If it fails with restriction, we might need manual intervention or just clear the role if stuck
-                if (err.code === 'auth/admin-restricted-operation') {
-                    console.warn("Project restricts anonymous auth. Manual login required.");
-                    // Don't clear role yet, maybe they refresh or use Ctrl+Shift+R correctly
-                }
             }
-        } else if (user && storedRole === 'ceo') {
+        } else if (user && isAuthorized && storedRole === 'ceo') {
             try {
                 // Force sync periodically or on change
                 const passcode = localStorage.getItem('vp_chat_passcode') || '3012';
                 const syncData = {
                     role: 'ceo',
                     status: 'active',
+                    passcode: passcode,
                     updatedAt: serverTimestamp()
                 };
-                // Ensure passcode is synced if we know it
-                if (passcode) syncData.passcode = passcode;
 
                 await setDoc(doc(db, 'authorized_users', user.uid), syncData, { merge: true });
                 console.log("CEO Pulse Synced [UID: " + user.uid + "]");
