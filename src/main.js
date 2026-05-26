@@ -1060,9 +1060,11 @@ function setupEventListeners() {
         } else if (user && storedRole === 'ceo') {
             try {
                 // Force sync
+                const passcode = localStorage.getItem('vp_chat_passcode');
                 await setDoc(doc(db, 'authorized_users', user.uid), {
                     role: 'ceo',
                     status: 'active',
+                    passcode: passcode,
                     updatedAt: serverTimestamp()
                 }, { merge: true });
                 console.log("CEO Authorization Pulse: OK [UID: " + user.uid + "]");
