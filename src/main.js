@@ -522,6 +522,7 @@ async function handleTerminalAuth() {
             
             const role = isCeo ? 'ceo' : 'dev';
             localStorage.setItem('vp_chat_role', role);
+            localStorage.setItem('vp_chat_name', isCeo ? 'CEO' : 'Developer');
             localStorage.setItem('vp_chat_passcode', code);
             localStorage.setItem('vp_chat_authorized', 'true');
             
@@ -1890,23 +1891,46 @@ function initReviewsSubscription(gameId) {
             return;
         }
         
-        snapshot.forEach(doc => {
-            const data = doc.data();
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
             const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : 'Recent';
-            const isCeo = data.authorRole === 'ceo';
+            const isCeoReview = data.authorRole === 'ceo';
+            const currentUserRole = localStorage.getItem('vp_chat_role');
+            const canDelete = currentUserRole === 'ceo';
             
             const reviewEl = document.createElement('div');
-            reviewEl.className = "p-4 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-1 duration-300";
+            reviewEl.className = "p-4 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-1 duration-300 group/review";
             reviewEl.innerHTML = `
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black ${isCeo ? 'text-indigo-400' : 'text-cyan-400'} uppercase tracking-widest">${data.authorName}</span>
-                        ${isCeo ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
+                        <span class="text-[10px] font-black ${isCeoReview ? 'text-indigo-400' : 'text-cyan-400'} uppercase tracking-widest">${data.authorName}</span>
+                        ${isCeoReview ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
                     </div>
                     <span class="text-[9px] font-mono text-zinc-600 uppercase font-bold">${time}</span>
                 </div>
                 <p class="text-zinc-300 text-xs italic leading-relaxed">"${data.content}"</p>
+                ${canDelete ? `
+                    <div class="mt-3 pt-3 border-t border-white/5 opacity-0 group-hover/review:opacity-100 transition-opacity">
+                        <button class="delete-review-btn text-zinc-600 hover:text-red-400 transition-colors flex items-center gap-1.5 uppercase font-black text-[9px] tracking-widest" data-id="${docSnap.id}">
+                            <i class="bi bi-trash"></i>
+                            Terminate Report
+                        </button>
+                    </div>
+                ` : ''}
             `;
+
+            if (canDelete) {
+                reviewEl.querySelector('.delete-review-btn').onclick = async () => {
+                    if (confirm("PROTOCOL: TERMINATE THIS CITIZEN REPORT?")) {
+                        try {
+                            await deleteDoc(doc(db, 'game_reviews', docSnap.id));
+                        } catch (err) {
+                            console.error("Report termination failed:", err);
+                        }
+                    }
+                };
+            }
+
             reviewsList.appendChild(reviewEl);
         });
     }, (err) => {
