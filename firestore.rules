@@ -12,7 +12,7 @@ service cloud.firestore {
     }
     
     function isOwner(data) {
-      return isSignedIn() && data.firebaseUid == request.auth.uid;
+      return isSignedIn() && (data.authorId == request.auth.uid || data.firebaseUid == request.auth.uid);
     }
 
     function isValidId(id) {
@@ -70,23 +70,15 @@ service cloud.firestore {
 
     function isCeo() {
       return isSignedIn() && (
-             (request.auth.token.keys().contains('email') && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com")) ||
+             (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com") ||
              (exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
-              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo' &&
-              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.passcode == '3012')
+              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo')
       );
     }
 
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (
-        (request.auth.uid == userId && (
-          incoming().role != 'ceo' || 
-          incoming().passcode == '3012' || 
-          (request.auth.token.keys().contains('email') && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com"))
-        )) ||
-        isCeo()
-      );
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isCeo());
       allow delete: if isCeo();
     }
 
@@ -107,7 +99,7 @@ service cloud.firestore {
     match /game_reviews/{reviewId} {
       allow read: if true;
       allow create: if true;
-      allow delete: if isCeo();
+      allow delete: if isCeo() || (isSignedIn() && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com"));
     }
 
     match /banned_clients/{clientId} {
@@ -129,7 +121,7 @@ service cloud.firestore {
         || (incoming().diff(existing()).affectedKeys().hasOnly(['likes'])) // Allow others to like (simplified for now)
       );
       
-      allow delete: if isOwner(existing().authorId);
+      allow delete: if isOwner(existing()) || isCeo();
 
       // Comments subcollection
       match /comments/{commentId} {
@@ -141,10 +133,10 @@ service cloud.firestore {
             && incoming().keys().hasAll(['postId', 'content', 'authorId', 'authorName', 'createdAt'])
             && incoming().keys().size() <= 6;
             
-        allow update: if isOwner(existing().authorId) && isValidComment(incoming())
+        allow update: if isOwner(existing()) && isValidComment(incoming())
             && incoming().diff(existing()).affectedKeys().hasOnly(['content']);
             
-        allow delete: if isOwner(authorId);
+        allow delete: if isOwner(existing()) || isCeo();
       }
     }
   }
