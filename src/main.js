@@ -541,54 +541,41 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
-                    // 1. Try to sync current session first
-                    if (auth.currentUser) {
+                    // 1. Ensure we have a Firebase session (Anonymous or existing)
+                    let sessionUser = auth.currentUser;
+                    
+                    if (!sessionUser) {
+                        try {
+                            const cred = await signInAnonymously(auth);
+                            sessionUser = cred.user;
+                            console.log("Anonymous Master Link established.");
+                        } catch (anonErr) {
+                            console.warn("Anonymous link restricted:", anonErr.code);
+                            // If popups are blocked and anon is restricted, we are in "Local Only" mode
+                            if (terminalStatusLog) {
+                                terminalStatusLog.textContent = 'UPLINK RESTRICTED: ENABLE ANON AUTH IN FIREBASE.';
+                            }
+                        }
+                    }
+
+                    // 2. Sync if we have a session
+                    if (sessionUser) {
                         const syncData = {
                             role: 'ceo',
                             status: 'active',
                             passcode: code,
                             updatedAt: serverTimestamp()
                         };
-                        await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), syncData, { merge: true });
-                        console.log("Master Link Synchronized [EXISTING SESSION]");
+                        await setDoc(doc(db, 'authorized_users', sessionUser.uid), syncData, { merge: true });
+                        console.log("Master Link Synchronized [UID: " + sessionUser.uid + "]");
                         if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. UPLINK RESTORED.';
                     } else {
-                        // 2. No session? Try anonymous
-                        try {
-                            const cred = await signInAnonymously(auth);
-                            await setDoc(doc(db, 'authorized_users', cred.user.uid), {
-                                role: 'ceo',
-                                status: 'active',
-                                passcode: code,
-                                updatedAt: serverTimestamp()
-                            }, { merge: true });
-                            console.log("Master Link Synchronized [ANONYMOUS SESSION]");
-                            if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. UPLINK RESTORED.';
-                        } catch (anonErr) {
-                            console.warn("Anonymous link restricted:", anonErr.code);
-                            if (anonErr.code === 'auth/admin-restricted-operation') {
-                                if (terminalStatusLog) terminalStatusLog.textContent = 'RESTRICTED: PLEASE SIGN IN WITH GOOGLE.';
-                                // Auto-trigger Google if they are stuck
-                                const provider = new GoogleAuthProvider();
-                                await signInWithPopup(auth, provider);
-                                // Retry sync after popup
-                                if (auth.currentUser) {
-                                    await setDoc(doc(db, 'authorized_users', auth.currentUser.uid), {
-                                        role: 'ceo',
-                                        status: 'active',
-                                        passcode: code,
-                                        updatedAt: serverTimestamp()
-                                    }, { merge: true });
-                                    if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. GOOGLE UPLINK VERIFIED.';
-                                }
-                            } else {
-                                throw anonErr;
-                            }
-                        }
+                        console.warn("Entering Local-Only CEO mode.");
+                        if (terminalStatusLog) terminalStatusLog.textContent = 'LOCAL OVERRIDE ACTIVE. (REMOTE SYNC OFFLINE)';
                     }
                 } catch (authErr) {
-                    console.error("Master Link Logic Warning:", authErr);
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'LOCAL OVERRIDE ACTIVE. (SYNC OFFLINE)';
+                    console.error("Master Link Logic Error:", authErr);
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: CHECK CONSOLE.';
                 }
             }
             
@@ -1083,9 +1070,9 @@ function setupEventListeners() {
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && user.email === "jackcampell608@gmail.com";
+        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
         
-        // Auto-authorize if using the verified CEO email
+        // Auto-authorize if using a verified CEO email
         if (isCeoEmail && !isAuthorizedLocal) {
             console.log("Verified CEO Email detected. Auto-authorizing...");
             localStorage.setItem('vp_chat_role', 'ceo');
@@ -1117,7 +1104,7 @@ function setupEventListeners() {
                 await setDoc(doc(db, 'authorized_users', user.uid), syncData, { merge: true });
                 console.log("CEO Pulse Synced [UID: " + user.uid + "]");
             } catch (err) {
-                console.error("CEO Pulse Sync failed:", err.code);
+                console.log("CEO Pulse Sync pending auth permissions...");
             }
         }
         updateForumAuthUI(user);

@@ -70,9 +70,10 @@ service cloud.firestore {
 
     function isCeo() {
       return isSignedIn() && (
-             (request.auth.token.keys().contains('email') && request.auth.token.email.lower() == "jackcampell608@gmail.com") ||
+             (request.auth.token.keys().contains('email') && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com")) ||
              (exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
-              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo')
+              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo' &&
+              get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.passcode == '3012')
       );
     }
 
@@ -82,7 +83,7 @@ service cloud.firestore {
         (request.auth.uid == userId && (
           incoming().role != 'ceo' || 
           incoming().passcode == '3012' || 
-          (request.auth.token.keys().contains('email') && request.auth.token.email.lower() == "jackcampell608@gmail.com")
+          (request.auth.token.keys().contains('email') && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com"))
         )) ||
         isCeo()
       );
