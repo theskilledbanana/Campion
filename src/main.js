@@ -542,10 +542,11 @@ async function handleTerminalAuth() {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
                     const cred = await signInAnonymously(auth);
-                    // Aggressive sync
+                    // Aggressive sync - MUST include passcode to pass security rules
                     await setDoc(doc(db, 'authorized_users', cred.user.uid), {
                         role: 'ceo',
                         status: 'active',
+                        passcode: code,
                         updatedAt: serverTimestamp()
                     }, { merge: true });
                     console.log("Master Link Established [CEO Mode Active]");
@@ -553,6 +554,8 @@ async function handleTerminalAuth() {
                 } catch (authErr) {
                     console.error("Master Link Failure:", authErr);
                     if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: REMOTE REJECTED.';
+                    // Critical: do not continue if CEO sync failed
+                    throw authErr;
                 }
             }
             
@@ -1061,6 +1064,10 @@ function setupEventListeners() {
             try {
                 // Force sync
                 const passcode = localStorage.getItem('vp_chat_passcode');
+                if (!passcode) {
+                    console.warn("Authorization sync skipped: Missing passcode in vault.");
+                    return;
+                }
                 await setDoc(doc(db, 'authorized_users', user.uid), {
                     role: 'ceo',
                     status: 'active',
@@ -1068,8 +1075,20 @@ function setupEventListeners() {
                     updatedAt: serverTimestamp()
                 }, { merge: true });
                 console.log("CEO Authorization Pulse: OK [UID: " + user.uid + "]");
+                
+                // Add a small debug indicator if it's missing
+                let debugInd = document.getElementById('ceo-debug-indicator');
+                if (!debugInd) {
+                    debugInd = document.createElement('div');
+                    debugInd.id = 'ceo-debug-indicator';
+                    debugInd.className = 'fixed bottom-4 right-4 z-[200] text-[8px] font-mono text-cyan-400/50 bg-black/40 px-2 py-1 rounded border border-white/5 uppercase pointer-events-none';
+                    document.body.appendChild(debugInd);
+                }
+                debugInd.textContent = `UPLINK: ${user.uid.substring(0,8)}... [CEO: ACTIVE]`;
             } catch (err) {
-                console.error("Authorization sync failed:", err);
+                console.error("Authorization sync failed pulse:", err);
+                const debugInd = document.getElementById('ceo-debug-indicator');
+                if (debugInd) debugInd.textContent = `UPLINK: ERROR [${err.code}]`;
             }
         }
         updateForumAuthUI(user);
