@@ -542,11 +542,13 @@ async function handleTerminalAuth() {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
                     const cred = await signInAnonymously(auth);
+                    // Aggressive sync
                     await setDoc(doc(db, 'authorized_users', cred.user.uid), {
                         role: 'ceo',
                         status: 'active',
                         updatedAt: serverTimestamp()
                     }, { merge: true });
+                    console.log("Master Link Established [CEO Mode Active]");
                     if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE.';
                 } catch (authErr) {
                     console.error("Master Link Failure:", authErr);
@@ -1056,14 +1058,14 @@ function setupEventListeners() {
                 console.error("CEO Re-login failed:", err);
             }
         } else if (user && storedRole === 'ceo') {
-            // Ensure the authorization document exists for the current UID
             try {
+                // Force sync
                 await setDoc(doc(db, 'authorized_users', user.uid), {
                     role: 'ceo',
                     status: 'active',
                     updatedAt: serverTimestamp()
                 }, { merge: true });
-                console.log("CEO Authorization Synced [UID: " + user.uid + "]");
+                console.log("CEO Authorization Pulse: OK [UID: " + user.uid + "]");
             } catch (err) {
                 console.error("Authorization sync failed:", err);
             }
