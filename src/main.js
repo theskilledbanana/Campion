@@ -430,10 +430,13 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304') {
-                localStorage.setItem('vp_chat_role', 'ceo');
+            if (code === '0304' || code === '0007') {
+                const role = code === '0304' ? 'ceo' : 'exe_dev';
+                const name = code === '0304' ? 'CEO' : 'EXECUTIVE DEV';
+
+                localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_authorized', 'true');
-                localStorage.setItem('vp_chat_passcode', '0304');
+                localStorage.setItem('vp_chat_passcode', code);
                 
                 if (panel) panel.classList.remove('hidden');
                 
@@ -442,9 +445,9 @@ function init() {
                 if (user) {
                     try {
                         const syncData = {
-                            role: 'ceo',
+                            role: role,
                             status: 'active',
-                            passcode: '0304',
+                            passcode: code,
                             updatedAt: serverTimestamp()
                         };
                         await setDoc(doc(db, 'authorized_users', user.uid), syncData, { merge: true });
@@ -1097,7 +1100,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '5012' || code === '0304' || code === '9871') {
+        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
@@ -1877,7 +1880,7 @@ function syncForumMessages() {
         let latestTime = 0;
         forumMessagesView.innerHTML = '';
         const currentUserRole = localStorage.getItem('vp_chat_role');
-        const isCeo = currentUserRole === 'ceo';
+        const isCeo = currentUserRole === 'ceo' || currentUserRole === 'exe_dev';
 
         snapshot.forEach(docSnap => {
             const msg = docSnap.data();
@@ -1886,7 +1889,7 @@ function syncForumMessages() {
             const date = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
             
             const msgEl = document.createElement('div');
-            const isCeo = localStorage.getItem('vp_chat_role') === 'ceo';
+            const isCeo = localStorage.getItem('vp_chat_role') === 'ceo' || localStorage.getItem('vp_chat_role') === 'exe_dev';
             const isMsgCeo = msg.authorRole === 'ceo';
             const isMsgSupplier = msg.authorRole === 'supplier';
             const isMsgOgDev = msg.authorRole === 'og_dev';

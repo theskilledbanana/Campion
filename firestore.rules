@@ -72,16 +72,17 @@ service cloud.firestore {
       let userEmail = isSignedIn() && request.auth.token.keys().contains('email') ? request.auth.token.email.lower() : "";
       let isCeoEmail = userEmail == "jackcampell608@gmail.com";
       
-      let isAuthorizedCeo = isSignedIn() && 
+      let isAuthorizedAdmin = isSignedIn() && 
                             exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
-                            get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
+                            (get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo' ||
+                             get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'exe_dev');
       
-      return isCeoEmail || isAuthorizedCeo;
+      return isCeoEmail || isAuthorizedAdmin;
     }
 
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || isCeo() || incoming().passcode == '0304');
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isCeo() || incoming().passcode == '0304' || incoming().passcode == '0007');
       allow delete: if isCeo();
     }
 
