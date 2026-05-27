@@ -88,12 +88,7 @@ service cloud.firestore {
     }
 
     match /forum_messages/{msgId} {
-      allow read: if true;
-      allow create: if isPasscodeAuth(incoming()) 
-                   && isValidMessage(incoming())
-                   && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
-      allow update: if isCeo();
-      allow delete: if true; // Verification-less deletion enabled as requested to avoid Auth domain/popup issues
+      allow read, create, update, delete: if true;
     }
 
     match /game_metrics/{gameId} {

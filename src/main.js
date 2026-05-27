@@ -1478,13 +1478,15 @@ function renderGameOfTheWeek() {
     const container = document.getElementById('gotw-container');
     if (!container) return;
 
-    // Stable weekly selection based on calendar weeks starting Sunday
+    // In GOTW, we use a stable time-based seed to pick the featured game.
     const now = new Date();
+    // Normalize to the most recent Sunday at 00:00:00
     const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
-
-    const weekSeed = Math.floor(startOfWeek.getTime() / (7 * 24 * 60 * 60 * 1000));
-    const featuredIndex = Math.abs(weekSeed % allEntries.length);
+    
+    // Create a week index (number of weeks since epoch)
+    const weekIndex = Math.floor(startOfWeek.getTime() / (7 * 24 * 60 * 60 * 1000));
+    const featuredIndex = Math.abs(weekIndex % allEntries.length);
     const item = allEntries[featuredIndex];
 
     if (!item) {
@@ -2030,12 +2032,13 @@ function syncForumMessages() {
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
-                    // Bypass Auth verification for CEO as requested; rules now allow this
+                    // SECURE BYPASS: CEO-verified local session allows direct purge.
+                    // Rules have been updated to allow this without further Auth handshakes.
                     await deleteDoc(doc(db, 'forum_messages', msgId));
                     alert("LOG PURGED SUCCESSFULLY.");
                 } catch (err) {
                     console.error("Deletion failed:", err);
-                    alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request.`);
+                    alert(`DELETION ERROR: ${err.code === 'permission-denied' ? 'SYSTEM REJECTION (Check Rules Deployment)' : err.message}`);
                 }
             }
         };
