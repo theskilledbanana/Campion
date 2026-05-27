@@ -417,9 +417,16 @@ function init() {
     const clearReportsBtn = document.getElementById('clear-reports-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
     const closeMasterPanelBtn = document.getElementById('close-master-panel');
+    const masterControlBtn = document.getElementById('master-control-btn');
 
     if (clearReportsBtn) clearReportsBtn.onclick = () => purgeCollection('game_reviews', 'SECTOR REPORTS');
     if (clearLogsBtn) clearLogsBtn.onclick = () => purgeCollection('forum_messages', 'CHAT LOGS');
+    if (masterControlBtn) {
+        masterControlBtn.onclick = () => {
+            const panel = document.getElementById('ceo-master-panel');
+            if (panel) panel.classList.toggle('hidden');
+        };
+    }
     if (closeMasterPanelBtn) closeMasterPanelBtn.onclick = () => {
         const panel = document.getElementById('ceo-master-panel');
         if (panel) panel.classList.add('hidden');
@@ -509,6 +516,17 @@ function closeDevModal() {
 
 function openDevTerminal() {
     if (!devTerminalOverlay) return;
+    
+    // Toggle disconnect button based on session state
+    const disconnectBtn = document.getElementById('terminal-session-disconnect');
+    if (disconnectBtn) {
+        if (localStorage.getItem('vp_chat_authorized') === 'true') {
+            disconnectBtn.classList.remove('hidden');
+        } else {
+            disconnectBtn.classList.add('hidden');
+        }
+    }
+
     devTerminalOverlay.classList.remove('hidden');
     setTimeout(() => {
         devTerminalOverlay.classList.remove('opacity-0');
@@ -561,14 +579,24 @@ async function handleTerminalAuth() {
 
     const isCeo = code === '3012';
     const isDev = code === '5012';
+    const isSupplier = code === '9871';
 
-    if (isCeo || isDev) {
+    if (isCeo || isDev || isSupplier) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
-            const role = isCeo ? 'ceo' : 'dev';
+            let role = 'dev';
+            let name = 'Developer';
+            if (isCeo) {
+                role = 'ceo';
+                name = 'CEO';
+            } else if (isSupplier) {
+                role = 'supplier';
+                name = 'Fat Game Supplier';
+            }
+
             localStorage.setItem('vp_chat_role', role);
-            localStorage.setItem('vp_chat_name', isCeo ? 'CEO' : 'Developer');
+            localStorage.setItem('vp_chat_name', name);
             localStorage.setItem('vp_chat_passcode', code);
             localStorage.setItem('vp_chat_authorized', 'true');
             
@@ -588,11 +616,12 @@ async function handleTerminalAuth() {
                             sessionUser = cred.user;
                             console.log("Anonymous Master Link established.");
                         } catch (anonErr) {
-                            console.warn("Anonymous link restricted:", anonErr.code);
-                            // If popups are blocked and anon is restricted, we are in "Local Only" mode
-                            if (terminalStatusLog) {
-                                terminalStatusLog.textContent = 'UPLINK RESTRICTED: ENABLE ANON AUTH IN FIREBASE.';
+                            if (anonErr.code === 'auth/admin-restricted-operation') {
+                                console.warn("Anonymous sign-in restricted by console policy.");
+                            } else {
+                                console.error("Anonymous authentication failed:", anonErr);
                             }
+                            // Fallback to local mode will happen below
                         }
                     }
 
@@ -732,7 +761,10 @@ async function postForumMessage() {
         sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
         const role = localStorage.getItem('vp_chat_role') || 'dev';
-        const name = role === 'ceo' ? 'CEO' : 'Developer';
+        let name = 'Developer';
+        if (role === 'ceo') name = 'CEO';
+        else if (role === 'supplier') name = 'Fat Game Supplier';
+        
         const passcode = localStorage.getItem('vp_chat_passcode');
         const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
 
@@ -975,6 +1007,11 @@ function setupEventListeners() {
 
     // Terminal
     if (terminalAuthSubmit) terminalAuthSubmit.onclick = handleTerminalAuth;
+    const terminalSessionDisconnectBtn = document.getElementById('terminal-session-disconnect');
+    if (terminalSessionDisconnectBtn) terminalSessionDisconnectBtn.onclick = async () => {
+        await logoutTerminal();
+        closeDevTerminal();
+    };
     if (terminalPassInput) {
         terminalPassInput.onkeydown = (e) => {
             if (e.key === 'Enter') handleTerminalAuth();
@@ -1759,13 +1796,26 @@ function syncForumMessages() {
     
     // Background CEO sync to ensure Master Control is active if already in a session
     if (localStorage.getItem('vp_chat_role') === 'ceo') {
-        signInAnonymously(auth).then(cred => {
-            setDoc(doc(db, 'authorized_users', cred.user.uid), {
+        const syncCeo = (user) => {
+            if (!user) return;
+            setDoc(doc(db, 'authorized_users', user.uid), {
                 role: 'ceo',
                 status: 'active',
                 updatedAt: serverTimestamp()
-            }, { merge: true });
-        }).catch(err => console.error("Initial Master Link refresh failed:", err));
+            }, { merge: true }).catch(err => console.warn("Master Link Sync failed:", err));
+        };
+
+        if (auth.currentUser) {
+            syncCeo(auth.currentUser);
+        } else {
+            signInAnonymously(auth)
+                .then(cred => syncCeo(cred.user))
+                .catch(err => {
+                    if (err.code !== 'auth/admin-restricted-operation') {
+                        console.error("Initial Master Link refresh failed:", err);
+                    }
+                });
+        }
     }
 
     unsubscribeForum = onSnapshot(messagesQuery, (snapshot) => {
@@ -1796,6 +1846,7 @@ function syncForumMessages() {
             const msgEl = document.createElement('div');
             const isCeo = localStorage.getItem('vp_chat_role') === 'ceo';
             const isMsgCeo = msg.authorRole === 'ceo';
+            const isMsgSupplier = msg.authorRole === 'supplier';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
             // Strictly limit buttons to those in a CEO session
@@ -1807,7 +1858,8 @@ function syncForumMessages() {
                 <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'dev')}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : 'text-white'} uppercase italic leading-none">${msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : 'text-white')} uppercase italic leading-none">${msg.authorName}</span>
+                        ${isMsgSupplier ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">Supplier</span>' : ''}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
@@ -2020,6 +2072,7 @@ function initReviewsSubscription(gameId) {
 
             const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent';
             const isCeoReview = data.authorRole === 'ceo';
+            const isSupplierReview = data.authorRole === 'supplier';
             const currentUserRole = localStorage.getItem('vp_chat_role');
             const canDelete = currentUserRole === 'ceo';
             const isUp = data.type === 'up';
@@ -2033,8 +2086,9 @@ function initReviewsSubscription(gameId) {
                     </div>
                     <div>
                         <div class="flex items-center gap-2 mb-0.5">
-                            <span class="text-[10px] font-black ${isCeoReview ? 'text-indigo-400' : 'text-zinc-400'} uppercase tracking-widest">${data.authorName}</span>
+                            <span class="text-[10px] font-black ${isCeoReview ? 'text-indigo-400' : (isSupplierReview ? 'text-amber-400' : 'text-zinc-400')} uppercase tracking-widest">${data.authorName}</span>
                             ${isCeoReview ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
+                            ${isSupplierReview ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">Supplier</span>' : ''}
                         </div>
                         <p class="text-[9px] font-black uppercase tracking-widest ${isUp ? 'text-cyan-500/80' : 'text-red-500/80'}">${isUp ? 'Positive Alignment' : 'Negative Disruption'}</p>
                     </div>

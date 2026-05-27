@@ -774,10 +774,16 @@
                     <div id="terminal-status-log" class="text-[9px] font-mono text-zinc-700 uppercase tracking-widest text-center px-4">Awaiting encrypted handshake...</div>
                 </div>
 
-                <button id="terminal-auth-submit" class="w-full mt-10 bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase italic tracking-tighter py-5 rounded-2xl transition-all active:scale-95 shadow-[0_0_50px_rgba(34,211,238,0.2)] flex items-center justify-center gap-3">
-                    Initialize Link
-                    <i class="bi bi-broadcast"></i>
-                </button>
+                    <div class="space-y-4">
+                        <button id="terminal-auth-submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-black uppercase italic tracking-tighter py-5 rounded-2xl transition-all active:scale-95 shadow-[0_0_50px_rgba(34,211,238,0.2)] flex items-center justify-center gap-3">
+                            Initialize Link
+                            <i class="bi bi-broadcast"></i>
+                        </button>
+                        <button id="terminal-session-disconnect" class="hidden w-full bg-red-500/10 border border-red-500/20 hover:bg-red-500 hover:text-black text-red-500 font-black uppercase tracking-widest py-4 rounded-2xl transition-all active:scale-95 flex items-center justify-center gap-3 text-[10px]">
+                            Terminate Session
+                            <i class="bi bi-power"></i>
+                        </button>
+                    </div>
             </div>
         </div>
     </div>

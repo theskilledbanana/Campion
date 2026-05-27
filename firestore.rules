@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     function isPasscodeAuth(data) {
-      return data.passcode == '5012' || data.passcode == '3012';
+      return data.passcode == '5012' || data.passcode == '3012' || data.passcode == '9871';
     }
 
     function isAuthorized() {
