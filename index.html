@@ -820,11 +820,15 @@
                     </div>
 
                     <div class="pt-6 border-t border-white/5">
-                        <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Add your report</h4>
-                        <div class="flex gap-3">
-                            <input id="review-input" type="text" placeholder="Transmit feedback..." class="flex-1 bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-white text-xs focus:outline-none focus:border-cyan-500/40 transition-all font-medium">
-                            <button id="submit-review" class="w-12 h-12 bg-cyan-500/10 hover:bg-cyan-500 text-cyan-400 hover:text-black rounded-xl border border-cyan-500/20 flex items-center justify-center transition-all active:scale-95 group">
-                                <i class="bi bi-send-fill group-hover:rotate-12 transition-transform"></i>
+                        <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Authorize Sector Report</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button id="vote-up-btn" class="py-4 bg-zinc-900 border border-white/5 hover:border-cyan-500/40 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-cyan-500/10 group active:scale-95">
+                                <i class="bi bi-hand-thumbs-up text-xl text-zinc-500 group-hover:text-cyan-400"></i>
+                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 group-hover:text-cyan-400">Positive</span>
+                            </button>
+                            <button id="vote-down-btn" class="py-4 bg-zinc-900 border border-white/5 hover:border-red-500/20 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-red-500/10 group active:scale-95">
+                                <i class="bi bi-hand-thumbs-down text-xl text-zinc-500 group-hover:text-red-400"></i>
+                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 group-hover:text-red-400">Negative</span>
                             </button>
                         </div>
                     </div>

@@ -229,7 +229,7 @@ let versionTag, devTerminalOverlay, terminalPassInput, terminalStatusLog, termin
 let forumModal, forumContainer, closeForumBtn, sendForumMsgBtn;
 let detailsModal, detailsContainer, closeDetailsBtn, detailsImg, detailsTitle, detailsCategories;
 let detailsDesc, likeBtn, dislikeBtn, likeCount, dislikeCount, launchFromDetailsBtn;
-let reviewsList, reviewInput, submitReviewBtn;
+let reviewsList, voteUpBtn, voteDownBtn;
 let profileBtn, profileModal, profileContainer, closeProfileBtn;
 let leaderboardBtn, leaderboardModal, leaderboardContainer, closeLeaderboardBtn, leaderboardList;
 let themeToggle, themeIcon, themeText;
@@ -398,8 +398,8 @@ function init() {
     dislikeCount = document.getElementById('dislike-count');
     launchFromDetailsBtn = document.getElementById('launch-from-details');
     reviewsList = document.getElementById('reviews-list');
-    reviewInput = document.getElementById('review-input');
-    submitReviewBtn = document.getElementById('submit-review');
+    voteUpBtn = document.getElementById('vote-up-btn');
+    voteDownBtn = document.getElementById('vote-down-btn');
 
     themeToggle = document.getElementById('theme-toggle');
     themeIcon = document.getElementById('theme-icon');
@@ -909,7 +909,8 @@ function setupEventListeners() {
     if (closeDetailsBtn) closeDetailsBtn.onclick = closeDetails;
     if (likeBtn) likeBtn.onclick = () => handleRating('likes');
     if (dislikeBtn) dislikeBtn.onclick = () => handleRating('dislikes');
-    if (submitReviewBtn) submitReviewBtn.onclick = submitReview;
+    if (voteUpBtn) voteUpBtn.onclick = () => submitVoteReport('up');
+    if (voteDownBtn) voteDownBtn.onclick = () => submitVoteReport('down');
     
     // Modal Triggers
     if (updateSiteBtn) updateSiteBtn.onclick = openUpdateModal;
@@ -961,11 +962,7 @@ function setupEventListeners() {
         };
     }
 
-    if (reviewInput) {
-        reviewInput.onkeydown = (e) => {
-            if (e.key === 'Enter') submitReview();
-        };
-    }
+    // No review input anymore
 
     // Forum
     const forumBtn = document.getElementById('forum-btn');
@@ -1861,10 +1858,7 @@ async function openDetails(item) {
     likeCount.textContent = metrics.likes || 0;
     dislikeCount.textContent = metrics.dislikes || 0;
     
-    // Reset review input
-    reviewInput.value = '';
-    
-    // Show modal
+    // Reset modal state
     detailsModal.classList.remove('hidden');
     setTimeout(() => {
         detailsModal.classList.remove('opacity-0');
@@ -1931,18 +1925,8 @@ async function handleRating(type) {
     }
 }
 
-async function submitReview() {
+async function submitVoteReport(type) {
     if (!activeDetailsGameId) return;
-    const content = reviewInput.value.trim();
-    if (!content) return;
-    
-    if (content.length < 3) {
-        alert("PROTOCOL ERROR: Diagnostic report too concise.");
-        return;
-    }
-    
-    submitReviewBtn.disabled = true;
-    submitReviewBtn.innerHTML = '<i class="bi bi-hourglass-split animate-spin"></i>';
     
     try {
         const role = localStorage.getItem('vp_chat_role') || 'client';
@@ -1952,17 +1936,12 @@ async function submitReview() {
             gameId: activeDetailsGameId,
             authorName: authorName,
             authorRole: role,
-            content: content,
+            type: type, // 'up' or 'down'
             createdAt: serverTimestamp()
         });
         
-        reviewInput.value = '';
     } catch (err) {
-        console.error("Review submission failed:", err);
-        alert("UPLINK FAILURE: Unable to transmit diagnostic data.");
-    } finally {
-        submitReviewBtn.disabled = false;
-        submitReviewBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+        console.error("Vote submission failed:", err);
     }
 }
 
@@ -1988,30 +1967,39 @@ function initReviewsSubscription(gameId) {
         
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
-            const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString() : 'Recent';
+            
+            // Skip old text-only reports if they exist
+            if (!data.type) return;
+
+            const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent';
             const isCeoReview = data.authorRole === 'ceo';
             const currentUserRole = localStorage.getItem('vp_chat_role');
             const canDelete = currentUserRole === 'ceo';
+            const isUp = data.type === 'up';
             
             const reviewEl = document.createElement('div');
-            reviewEl.className = "p-4 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-1 duration-300 group/review";
+            reviewEl.className = "p-3 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-1 duration-300 group/review flex items-center justify-between";
             reviewEl.innerHTML = `
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] font-black ${isCeoReview ? 'text-indigo-400' : 'text-cyan-400'} uppercase tracking-widest">${data.authorName}</span>
-                        ${isCeoReview ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl ${isUp ? 'bg-cyan-500/10 text-cyan-400' : 'bg-red-500/10 text-red-500'} flex items-center justify-center border border-white/5">
+                        <i class="bi ${isUp ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-down-fill'} text-lg"></i>
                     </div>
-                    <span class="text-[9px] font-mono text-zinc-600 uppercase font-bold">${time}</span>
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <span class="text-[10px] font-black ${isCeoReview ? 'text-indigo-400' : 'text-zinc-400'} uppercase tracking-widest">${data.authorName}</span>
+                            ${isCeoReview ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
+                        </div>
+                        <p class="text-[9px] font-black uppercase tracking-widest ${isUp ? 'text-cyan-500/80' : 'text-red-500/80'}">${isUp ? 'Positive Alignment' : 'Negative Disruption'}</p>
+                    </div>
                 </div>
-                <p class="text-zinc-300 text-xs italic leading-relaxed">"${data.content}"</p>
-                ${canDelete ? `
-                    <div class="mt-3 pt-3 border-t border-white/5 opacity-0 group-hover/review:opacity-100 transition-opacity">
-                        <button class="delete-review-btn text-zinc-600 hover:text-red-400 transition-colors flex items-center gap-1.5 uppercase font-black text-[9px] tracking-widest" data-id="${docSnap.id}">
-                            <i class="bi bi-trash"></i>
-                            Terminate Report
+                <div class="flex flex-col items-end gap-2">
+                    <span class="text-[9px] font-mono text-zinc-600 uppercase font-bold">${time}</span>
+                    ${canDelete ? `
+                        <button class="delete-review-btn p-1.5 opacity-0 group-hover/review:opacity-100 transition-opacity hover:text-red-400 text-zinc-600" data-id="${docSnap.id}">
+                            <i class="bi bi-x-lg text-[10px]"></i>
                         </button>
-                    </div>
-                ` : ''}
+                    ` : ''}
+                </div>
             `;
 
             if (canDelete) {
