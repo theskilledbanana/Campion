@@ -1213,7 +1213,7 @@ function setupEventListeners() {
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
+        const isCeoEmail = user && user.email === "jackcampell608@gmail.com";
         
         // Auto-authorize if using a verified CEO email
         if (isCeoEmail && !isAuthorizedLocal) {
