@@ -39,6 +39,14 @@ const allEntries = [
     "description": "Drive a car with an egg in it as far as you can without breaking the egg."
   },
   {
+    "id": "gunspin",
+    "title": "GunSpin",
+    "iframeUrl": "https://ssl.minijuegos.com/helpers/game/xdmbridge.php?xdm_url=https://ssl.minijuegosgratis.com/lechuck/js/easyxdm/&xdm_e=https%3A%2F%2Fxg4321.github.io&xdm_c=default2372&xdm_p=1",
+    "thumbnail": "https://i.ytimg.com/vi/U2SgrOeRrrs/maxresdefault.jpg",
+    "categories": ["Action", "Skill", "Shooter"],
+    "description": "GunSpin is a high-octane skill game where you use the power of your shots to keep your momentum and reach new distances."
+  },
+  {
     "id": "doom-2",
     "title": "Doom 2",
     "iframeUrl": "https://oshkii.github.io/doom2-webport/",
@@ -866,6 +874,21 @@ async function purgeCollection(collectionName, label) {
 
     if (!confirm(`CRITICAL PROTOCOL: PURGE ALL ${label}? This operation is irreversible.`)) return;
     
+    let user = auth.currentUser;
+    if (!user) {
+        try {
+            await signInAnonymously(auth);
+            user = auth.currentUser;
+        } catch (e) {
+            console.error("Purge auth failed:", e);
+        }
+    }
+
+    if (!user) {
+        alert("SECURITY ERROR: UNABLE TO ESTABLISH IDENTITY FOR PURGE.");
+        return;
+    }
+
     const statusLog = document.getElementById('terminal-status-log');
     if (statusLog) statusLog.textContent = `INITIATING PURGE: ${label}...`;
     
@@ -1248,13 +1271,16 @@ function setupEventListeners() {
         const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
         
         // Auto-authorize if using a verified CEO email
-        if (isCeoEmail && !isAuthorizedLocal) {
-            console.log("Verified CEO Identity detected. Auto-authorizing...");
-            const name = user.email === "jackcampell608@gmail.com" ? "JACK CAMPELL" : "MANDY MCGREGOR";
-            localStorage.setItem('vp_chat_role', 'ceo');
-            localStorage.setItem('vp_chat_authorized', 'true');
-            localStorage.setItem('vp_chat_name', name);
-            localStorage.setItem('vp_chat_passcode', '0304');
+        if (isCeoEmail) {
+            const currentRole = localStorage.getItem('vp_chat_role');
+            if (currentRole !== 'ceo') {
+                console.log("Verified CEO Identity detected. Promoting to CEO status...");
+                const name = user.email === "jackcampell608@gmail.com" ? "JACK CAMPELL" : "MANDY MCGREGOR";
+                localStorage.setItem('vp_chat_role', 'ceo');
+                localStorage.setItem('vp_chat_authorized', 'true');
+                localStorage.setItem('vp_chat_name', name);
+                localStorage.setItem('vp_chat_passcode', '0304');
+            }
         }
 
         const isAuthorized = localStorage.getItem('vp_chat_authorized') === 'true';
@@ -1990,7 +2016,21 @@ function syncForumMessages() {
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
+                    let user = auth.currentUser;
+                    if (!user) {
+                        console.log("No active user found. Attempting background handshake...");
+                        await signInAnonymously(auth);
+                        user = auth.currentUser;
+                    }
+                    
+                    if (!user) {
+                        alert("SECURITY ERROR: UNABLE TO ESTABLISH IDENTITY. ACTION VOID.");
+                        return;
+                    }
+
+                    console.log("Initiating deletion as:", user.uid);
                     await deleteDoc(doc(db, 'forum_messages', msgId));
+                    console.log("Log successfully purged.");
                 } catch (err) {
                     console.error("Deletion failed:", err);
                     alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request for Message ID ${msgId}.`);
@@ -2011,6 +2051,11 @@ function syncForumMessages() {
 
             if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                 try {
+                    let user = auth.currentUser;
+                    if (!user) {
+                        await signInAnonymously(auth);
+                    }
+                    
                     await setDoc(doc(db, 'banned_clients', authorId), {
                         status: 'banned',
                         bannedAt: serverTimestamp(),
