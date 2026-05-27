@@ -398,8 +398,8 @@ function init() {
     dislikeCount = document.getElementById('dislike-count');
     launchFromDetailsBtn = document.getElementById('launch-from-details');
     reviewsList = document.getElementById('reviews-list');
-    voteUpBtn = document.getElementById('vote-up-btn');
-    voteDownBtn = document.getElementById('vote-down-btn');
+    voteUpBtn = null;
+    voteDownBtn = null;
 
     themeToggle = document.getElementById('theme-toggle');
     themeIcon = document.getElementById('theme-icon');
@@ -419,7 +419,7 @@ function init() {
     const closeMasterPanelBtn = document.getElementById('close-master-panel');
     const masterControlBtn = document.getElementById('master-control-btn');
 
-    if (clearReportsBtn) clearReportsBtn.onclick = () => purgeCollection('game_reviews', 'SECTOR REPORTS');
+    if (clearReportsBtn) clearReportsBtn.classList.add('hidden');
     if (clearLogsBtn) clearLogsBtn.onclick = () => purgeCollection('forum_messages', 'CHAT LOGS');
     if (masterControlBtn) {
         masterControlBtn.onclick = () => {
@@ -555,26 +555,13 @@ async function handleTerminalAuth() {
     const currentRole = localStorage.getItem('vp_chat_role');
     const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
 
-    // SPECIAL CEO COMMAND: PURGE CITIZEN REPORTS (Legacy command, kept for compatibility)
+    // SPECIAL CEO COMMAND: PURGE CITIZEN REPORTS (Legacy command - removed)
     if (code.toUpperCase() === 'PURGE' && currentRole === 'ceo' && isAuthorizedLocal) {
-        if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL: INITIATING GLOBAL PURGE...';
-        try {
-            const snapshot = await getDocs(collection(db, 'game_reviews'));
-            const batch = writeBatch(db);
-            let count = 0;
-            snapshot.forEach(d => {
-                batch.delete(d.ref);
-                count++;
-            });
-            await batch.commit();
-            if (terminalStatusLog) terminalStatusLog.textContent = `PURGE COMPLETE: ${count} REPORTS REMOVED.`;
-            setTimeout(closeDevTerminal, 2000);
-            return;
-        } catch (err) {
-            console.error("Purge failure:", err);
-            if (terminalStatusLog) terminalStatusLog.textContent = `PURGE FAILED: ${err.message}`;
-            return;
-        }
+        if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL: INITIATING DESTRUCTION...';
+        setTimeout(() => {
+            if (terminalStatusLog) terminalStatusLog.textContent = 'PURGE COMMAND DEPRECATED. USE MASTER CONTROL UI.';
+        }, 1000);
+        return;
     }
 
     const isCeo = code === '0304';
@@ -592,7 +579,7 @@ async function handleTerminalAuth() {
                 name = 'CEO';
             } else if (isSupplier) {
                 role = 'supplier';
-                name = 'Fat Game Supplier';
+                name = 'FAT GAME SUPPLIER';
             }
 
             localStorage.setItem('vp_chat_role', role);
@@ -763,7 +750,7 @@ async function postForumMessage() {
         const role = localStorage.getItem('vp_chat_role') || 'dev';
         let name = 'Developer';
         if (role === 'ceo') name = 'CEO';
-        else if (role === 'supplier') name = 'Fat Game Supplier';
+        else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
         
         const passcode = localStorage.getItem('vp_chat_passcode');
         const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
@@ -1185,7 +1172,7 @@ function setupEventListeners() {
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
+        const isCeoEmail = user && user.email === "jackcampell608@gmail.com";
         
         // Auto-authorize if using a verified CEO email
         if (isCeoEmail && !isAuthorizedLocal) {
@@ -1219,7 +1206,12 @@ function setupEventListeners() {
                 await setDoc(doc(db, 'authorized_users', user.uid), syncData, { merge: true });
                 console.log("CEO Pulse Synced [UID: " + user.uid + "]");
             } catch (err) {
-                console.log("CEO Pulse Sync pending auth permissions...");
+                console.warn("Pulse Link failed. ERROR: auth/admin-restricted-operation means you MUST enable Anonymous Auth in Firebase Console.");
+                if (err.code === 'auth/admin-restricted-operation') {
+                    alert("FIREBASE PERMISSION ERROR: Anonymous Authentication is DISABLED. The developer must enable it in the Firebase Console (Authentication > Sign-in method) for CEO Mode to function correctly.");
+                } else {
+                    console.log("CEO Pulse Sync pending auth permissions...");
+                }
             }
         }
         updateForumAuthUI(user);
@@ -1867,7 +1859,7 @@ function syncForumMessages() {
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : 'text-white')} uppercase italic leading-none">${msg.authorName}</span>
-                        ${isMsgSupplier ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">Supplier</span>' : ''}
+                        ${isMsgSupplier ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">FAT GAME SUPPLIER</span>' : ''}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
@@ -1972,20 +1964,10 @@ async function openDetails(item) {
         detailsContainer.classList.add('scale-100');
     }, 10);
     document.body.style.overflow = 'hidden';
-    
-    // Fetch and subscribe to reviews
-    initReviewsSubscription(item.id);
 }
 
 function closeDetails() {
     activeDetailsGameId = null;
-    if (unsubscribeReviews) {
-        try {
-            unsubscribeReviews();
-        } catch (e) {
-            console.warn("Unsubscribe reviews failed:", e);
-        }
-    }
     
     if (detailsModal) detailsModal.classList.add('opacity-0');
     if (detailsContainer) {
@@ -2030,116 +2012,6 @@ async function handleRating(type) {
     } catch (err) {
         console.error("Rating failed:", err);
     }
-}
-
-async function submitVoteReport(type) {
-    if (!activeDetailsGameId) return;
-    
-    try {
-        const role = localStorage.getItem('vp_chat_role') || 'client';
-        const authorName = localStorage.getItem('vp_chat_name') || 'Anonymous Client';
-        
-        await addDoc(collection(db, 'game_reviews'), {
-            gameId: activeDetailsGameId,
-            authorName: authorName,
-            authorRole: role,
-            type: type, // 'up' or 'down'
-            createdAt: serverTimestamp()
-        });
-        
-    } catch (err) {
-        console.error("Vote submission failed:", err);
-    }
-}
-
-function initReviewsSubscription(gameId) {
-    if (unsubscribeReviews) unsubscribeReviews();
-    
-    const reviewsColl = collection(db, 'game_reviews');
-    const q = query(
-        reviewsColl, 
-        where('gameId', '==', gameId), 
-        orderBy('createdAt', 'desc'),
-        limit(50)
-    );
-    
-    unsubscribeReviews = onSnapshot(q, (snapshot) => {
-        if (!reviewsList) return;
-        reviewsList.innerHTML = '';
-        
-        if (snapshot.empty) {
-            reviewsList.innerHTML = `<div class="text-center py-10 text-zinc-600 font-mono text-[10px] uppercase tracking-widest">Awaiting sector feedback...</div>`;
-            return;
-        }
-        
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            
-            // Skip old text-only reports if they exist
-            if (!data.type) return;
-
-            const time = data.createdAt?.toDate ? data.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent';
-            const isCeoReview = data.authorRole === 'ceo';
-            const isSupplierReview = data.authorRole === 'supplier';
-            const currentUserRole = localStorage.getItem('vp_chat_role');
-            const canDelete = currentUserRole === 'ceo';
-            const isUp = data.type === 'up';
-            
-            const reviewEl = document.createElement('div');
-            reviewEl.className = "p-3 bg-white/5 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-bottom-1 duration-300 group/review flex items-center justify-between";
-            reviewEl.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-xl ${isUp ? 'bg-cyan-500/10 text-cyan-400' : 'bg-red-500/10 text-red-500'} flex items-center justify-center border border-white/5">
-                        <i class="bi ${isUp ? 'bi-hand-thumbs-up-fill' : 'bi-hand-thumbs-down-fill'} text-lg"></i>
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <span class="text-[10px] font-black ${isCeoReview ? 'text-indigo-400' : (isSupplierReview ? 'text-amber-400' : 'text-zinc-400')} uppercase tracking-widest">${data.authorName}</span>
-                            ${isCeoReview ? '<span class="text-[8px] bg-indigo-500/10 text-indigo-400 px-1 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-widest">CEO</span>' : ''}
-                            ${isSupplierReview ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">Supplier</span>' : ''}
-                        </div>
-                        <p class="text-[9px] font-black uppercase tracking-widest ${isUp ? 'text-cyan-500/80' : 'text-red-500/80'}">${isUp ? 'Positive Alignment' : 'Negative Disruption'}</p>
-                    </div>
-                </div>
-                <div class="flex flex-col items-end gap-2">
-                    <span class="text-[9px] font-mono text-zinc-600 uppercase font-bold">${time}</span>
-                    ${canDelete ? `
-                        <button class="delete-review-btn p-1.5 opacity-0 group-hover/review:opacity-100 transition-opacity hover:text-red-400 text-zinc-600" data-id="${docSnap.id}">
-                            <i class="bi bi-x-lg text-[10px]"></i>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-
-            if (canDelete) {
-                const deleteBtn = reviewEl.querySelector('.delete-review-btn');
-                if (deleteBtn) {
-                    deleteBtn.onclick = async () => {
-                        if (confirm("PROTOCOL: TERMINATE THIS CITIZEN REPORT?")) {
-                            try {
-                                deleteBtn.disabled = true;
-                                deleteBtn.textContent = "TERMINATING...";
-                                await deleteDoc(doc(db, 'game_reviews', docSnap.id));
-                                // onSnapshot will carry out the removal visually
-                            } catch (err) {
-                                console.error("Report termination failed:", err);
-                                alert("TERMINATION FAILED: " + err.message);
-                                deleteBtn.disabled = false;
-                                deleteBtn.innerHTML = '<i class="bi bi-trash"></i> Terminate Report';
-                            }
-                        }
-                    };
-                }
-            }
-
-            reviewsList.appendChild(reviewEl);
-        });
-    }, (err) => {
-        console.warn("Reviews sync failed (likely missing index):", err);
-        if (reviewsList) {
-            reviewsList.innerHTML = `<div class="text-center py-10 text-zinc-600 font-mono text-[10px] uppercase tracking-widest opacity-50 italic">Chronology Sync Incomplete [Index Required]</div>`;
-        }
-    });
 }
 
 if (document.readyState === 'loading') {

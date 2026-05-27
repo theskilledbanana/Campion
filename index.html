@@ -651,19 +651,12 @@
                 <div class="p-4 bg-zinc-950/50 border border-white/5 rounded-2xl">
                     <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Control Interface</h4>
                     <div class="grid grid-cols-2 gap-3 mb-3">
-                        <button id="clear-reports-btn" class="p-4 bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:border-red-500/30 rounded-2xl transition-all group active:scale-95">
-                            <div class="flex items-center gap-2 mb-2">
-                                <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                                <span class="text-[9px] font-black text-red-500 uppercase tracking-widest">Reports</span>
+                        <button id="clear-logs-btn" class="w-full p-6 bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 hover:border-indigo-500/30 rounded-3xl transition-all group active:scale-95 flex flex-col items-center gap-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                                <span class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Master Broadcast Purge</span>
                             </div>
-                            <div class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Purge Sector</div>
-                        </button>
-                        <button id="clear-logs-btn" class="p-4 bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 hover:border-indigo-500/30 rounded-2xl transition-all group active:scale-95">
-                            <div class="flex items-center gap-2 mb-2">
-                                <div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
-                                <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Chat Logs</span>
-                            </div>
-                            <div class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Purge Uplink</div>
+                            <div class="text-[8px] font-mono text-zinc-500 uppercase tracking-widest">Wipe all forum history from core</div>
                         </button>
                     </div>
                     <div class="flex items-center gap-3 p-3 bg-zinc-900 border border-white/5 rounded-xl">
@@ -795,63 +788,34 @@
                 <i class="bi bi-x-lg"></i>
             </button>
 
-            <div class="flex flex-col md:flex-row gap-10 h-full overflow-hidden">
-                <!-- Left: Info -->
-                <div class="md:w-1/3 flex flex-col gap-6">
-                    <div class="aspect-video rounded-3xl overflow-hidden bg-zinc-900 border border-white/5">
+            <div class="h-full overflow-y-auto custom-scrollbar">
+                <!-- Center: Info -->
+                <div class="flex-1 flex flex-col gap-6 items-center text-center py-10">
+                    <div class="w-full max-w-sm aspect-video rounded-3xl overflow-hidden bg-zinc-900 border border-white/5 mx-auto">
                         <img id="details-img" class="w-full h-full object-contain p-4" src="" alt="">
                     </div>
-                    <div>
-                        <h2 id="details-title" class="text-3xl font-black text-white italic uppercase tracking-tighter mb-2 leading-none"></h2>
-                        <div id="details-categories" class="flex flex-wrap gap-2 mb-4"></div>
-                        <p id="details-desc" class="text-zinc-500 text-sm leading-relaxed font-medium mb-6"></p>
+                    <div class="max-w-2xl px-4">
+                        <h2 id="details-title" class="text-4xl md:text-5xl font-black text-white italic uppercase tracking-tighter mb-4 leading-none"></h2>
+                        <div id="details-categories" class="flex flex-wrap gap-2 mb-6 justify-center"></div>
+                        <p id="details-desc" class="text-zinc-500 text-base leading-relaxed font-medium mb-10 max-w-xl mx-auto"></p>
                         
-                        <!-- Ratings -->
-                        <div class="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <div class="flex-1 text-center">
-                                <button id="like-btn" class="w-12 h-12 rounded-full bg-zinc-900 hover:bg-cyan-500 hover:text-black transition-all flex items-center justify-center mb-2 mx-auto active:scale-90 border border-white/5">
-                                    <i class="bi bi-hand-thumbs-up-fill text-xl"></i>
-                                </button>
-                                <span id="like-count" class="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-widest">0</span>
-                            </div>
-                            <div class="flex-1 text-center">
-                                <button id="dislike-btn" class="w-12 h-12 rounded-full bg-zinc-900 hover:bg-red-500/80 hover:text-white transition-all flex items-center justify-center mb-2 mx-auto active:scale-90 border border-white/5">
-                                    <i class="bi bi-hand-thumbs-down-fill text-xl"></i>
-                                </button>
-                                <span id="dislike-count" class="text-[10px] font-mono text-red-400 font-bold uppercase tracking-widest">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button id="launch-from-details" class="mt-auto w-full py-5 bg-cyan-500 hover:bg-cyan-400 text-black rounded-2xl transition-all text-xs font-black uppercase tracking-[0.4em] shadow-xl shadow-cyan-500/20 active:scale-95 flex items-center justify-center gap-3">
-                        Launch System
-                        <i class="bi bi-play-fill text-xl"></i>
-                    </button>
-                </div>
-
-                <!-- Right: Reviews -->
-                <div class="flex-1 flex flex-col h-full overflow-hidden border-l border-white/5 md:pl-10">
-                    <div class="flex items-center gap-3 mb-6">
-                        <i class="bi bi-chat-heart text-cyan-400 text-xl"></i>
-                        <h3 class="text-xl font-black text-white italic uppercase tracking-tighter">Citizen Reports</h3>
-                    </div>
-
-                    <div id="reviews-list" class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2 mb-6">
-                        <!-- Reviews go here -->
-                         <div class="text-center py-10 text-zinc-600 font-mono text-[10px] uppercase tracking-widest">Awaiting sector feedback...</div>
-                    </div>
-
-                    <div class="pt-6 border-t border-white/5">
-                        <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Authorize Sector Report</h4>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button id="vote-up-btn" class="py-4 bg-zinc-900 border border-white/5 hover:border-cyan-500/40 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-cyan-500/10 group active:scale-95">
-                                <i class="bi bi-hand-thumbs-up text-xl text-zinc-500 group-hover:text-cyan-400"></i>
-                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 group-hover:text-cyan-400">Positive</span>
+                        <!-- Actions -->
+                        <div class="flex flex-col sm:flex-row items-center gap-4 justify-center">
+                            <button id="launch-from-details" class="w-full sm:w-80 py-6 bg-cyan-500 hover:bg-cyan-400 text-black rounded-3xl transition-all text-xs font-black uppercase tracking-[0.4em] shadow-2xl shadow-cyan-500/20 active:scale-95 flex items-center justify-center gap-4">
+                                Launch Protocol
+                                <i class="bi bi-play-fill text-2xl"></i>
                             </button>
-                            <button id="vote-down-btn" class="py-4 bg-zinc-900 border border-white/5 hover:border-red-500/20 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all hover:bg-red-500/10 group active:scale-95">
-                                <i class="bi bi-hand-thumbs-down text-xl text-zinc-500 group-hover:text-red-400"></i>
-                                <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 group-hover:text-red-400">Negative</span>
-                            </button>
+
+                            <div class="flex items-center gap-3 p-2 bg-white/5 rounded-3xl border border-white/10">
+                                <button id="like-btn" class="w-14 h-14 rounded-2xl bg-zinc-900 hover:bg-cyan-500 hover:text-black transition-all flex flex-col items-center justify-center active:scale-90 border border-white/5">
+                                    <i class="bi bi-hand-thumbs-up-fill text-xl mb-1"></i>
+                                    <span id="like-count" class="text-[10px] font-mono font-bold">0</span>
+                                </button>
+                                <button id="dislike-btn" class="w-14 h-14 rounded-2xl bg-zinc-900 hover:bg-red-500/80 hover:text-white transition-all flex flex-col items-center justify-center active:scale-90 border border-white/5">
+                                    <i class="bi bi-hand-thumbs-down-fill text-xl mb-1"></i>
+                                    <span id="dislike-count" class="text-[10px] font-mono font-bold">0</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -71,15 +71,18 @@ service cloud.firestore {
     function isCeo() {
       let hasEmail = isSignedIn() && request.auth.token.keys().contains('email');
       let userEmail = hasEmail ? request.auth.token.email.lower() : "";
-      let isCeoEmail = userEmail == "jackcampell608@gmail.com" || userEmail == "mandyfmcgregor@gmail.com";
-      let isAuthorizedCeo = exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
+      let isCeoEmail = userEmail == "jackcampell608@gmail.com";
+      
+      let isAuthorizedCeo = isSignedIn() && 
+                            exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
                             get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
-      return isSignedIn() && (isCeoEmail || isAuthorizedCeo);
+      
+      return isCeoEmail || isAuthorizedCeo;
     }
 
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || isCeo() || (incoming().passcode == '0304'));
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isCeo() || incoming().passcode == '0304');
       allow delete: if isCeo();
     }
 
@@ -88,19 +91,13 @@ service cloud.firestore {
       allow create: if isPasscodeAuth(incoming()) 
                    && isValidMessage(incoming())
                    && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
-      allow update: if false;
+      allow update: if isCeo();
       allow delete: if isCeo();
     }
 
     match /game_metrics/{gameId} {
       allow read: if true;
       allow create, update: if true;
-    }
-
-    match /game_reviews/{reviewId} {
-      allow read: if true;
-      allow create: if true;
-      allow delete: if isCeo();
     }
 
     match /banned_clients/{clientId} {
@@ -117,7 +114,7 @@ service cloud.firestore {
           && incoming().keys().size() <= 7;
           
       allow update: if isSignedIn() && (
-        (isOwner(existing().authorId) && isValidPost(incoming()) 
+        (isOwner(existing()) && isValidPost(incoming()) 
          && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'likes']))
         || (incoming().diff(existing()).affectedKeys().hasOnly(['likes'])) // Allow others to like (simplified for now)
       );
