@@ -41,7 +41,7 @@ const allEntries = [
   {
     "id": "gunspin",
     "title": "GunSpin",
-    "iframeUrl": "https://ssl.minijuegos.com/helpers/game/xdmbridge.php?xdm_url=https://ssl.minijuegosgratis.com/lechuck/js/easyxdm/&xdm_e=https%3A%2F%2Fxg4321.github.io&xdm_c=default2372&xdm_p=1",
+    "iframeUrl": "https://xg4321.github.io/gunspin-gnmathport/",
     "thumbnail": "https://media.indiedb.com/images/games/1/79/78131/ao_gunspin-cover.jpg",
     "categories": ["Action", "Skill", "Shooter"],
     "description": "GunSpin is a high-octane skill game where you use the power of your shots to keep your momentum and reach new distances."
@@ -224,6 +224,14 @@ const allEntries = [
     "thumbnail": "https://neal.fun/share-cards/infinite-craft.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "Combine basic elements—Fire, Water, Earth, and Air—to discover anything from dinosaurs to entire universes in this limitless crafting sandbox."
+  },
+  {
+    "id": "fake-stake",
+    "title": "Fake Stake",
+    "iframeUrl": "https://y.demo.lhyang.org/https://www.fakestakes.com/mines",
+    "thumbnail": "https://miro.medium.com/v2/resize:fit:1400/1*FsH3TsmM0Av7DpEu6NUM_w.png",
+    "categories": ["Skill", "Fun"],
+    "description": "Experience the thrill of strategic mining in this interactive game."
   }
 ];
 
@@ -680,17 +688,16 @@ async function handleTerminalAuth() {
                     
                     if (!sessionUser) {
                         try {
-                            // CEO Priority: Try Google Auth first for secure bridge if anon is restricted
-                            if (confirm("MASTER PROTOCOL: Google Authentication recommended for CEO operations. Sign in?")) {
+                            // CEO Priority: Try Anon first, then Popup if needed
+                            const cred = await signInAnonymously(auth);
+                            sessionUser = cred.user;
+                        } catch (authErr) {
+                            if (authErr.code === 'auth/admin-restricted-operation') {
+                                console.log("Anon restricted, attempting secure popup...");
                                 const provider = new GoogleAuthProvider();
                                 const result = await signInWithPopup(auth, provider);
                                 sessionUser = result.user;
-                            } else {
-                                const cred = await signInAnonymously(auth);
-                                sessionUser = cred.user;
                             }
-                        } catch (authErr) {
-                            console.error("Auth bridge failed:", authErr);
                         }
                     }
 
@@ -2032,32 +2039,34 @@ function syncForumMessages() {
                 try {
                     let user = auth.currentUser;
                     if (!user) {
-                        console.log("No active user found. Attempting background handshake...");
                         try {
                             await signInAnonymously(auth);
                         } catch (authErr) {
                             if (authErr.code === 'auth/admin-restricted-operation') {
-                                console.warn("Anonymous restricted. Prompting for Google Auth...");
-                                const provider = new GoogleAuthProvider();
-                                await signInWithPopup(auth, provider);
-                            } else {
-                                throw authErr;
+                                // Silent fallback to existing session or trigger popup if user role is CEO
+                                if (currentUserRole === 'ceo') {
+                                    const provider = new GoogleAuthProvider();
+                                    await signInWithPopup(auth, provider);
+                                }
                             }
                         }
                         user = auth.currentUser;
                     }
                     
-                    if (!user) {
+                    if (!user && currentUserRole !== 'ceo') {
                         alert("SECURITY ERROR: UNABLE TO ESTABLISH IDENTITY. ACTION VOID.");
                         return;
                     }
 
-                    console.log("Initiating deletion as:", user.uid);
                     await deleteDoc(doc(db, 'forum_messages', msgId));
-                    console.log("Log successfully purged.");
+                    alert("LOG PURGED SUCCESSFULLY.");
                 } catch (err) {
-                    console.error("Deletion failed:", err);
-                    alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request for Message ID ${msgId}.`);
+                    if (err.code === 'permission-denied') {
+                        alert("SECURE BRIDGE ERROR [permission-denied]: Database requires verified CEO identity. Please ensure you are logged in correctly.");
+                    } else {
+                        console.error("Deletion failed:", err);
+                        alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request for Message ID ${msgId}.`);
+                    }
                 }
             }
         };
