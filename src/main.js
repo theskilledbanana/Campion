@@ -817,14 +817,22 @@ async function purgeCollection(collectionName, label) {
             return;
         }
 
-        const batch = writeBatch(db);
+        const docs = snapshot.docs;
         let count = 0;
-        snapshot.forEach(d => {
-            batch.delete(d.ref);
-            count++;
-        });
+        
+        // Firestore batches are limited to 500 operations.
+        // We iterate in chunks of 500.
+        for (let i = 0; i < docs.length; i += 500) {
+            const batch = writeBatch(db);
+            const chunk = docs.slice(i, i + 500);
+            chunk.forEach(d => {
+                batch.delete(d.ref);
+                count++;
+            });
+            await batch.commit();
+            if (statusLog) statusLog.textContent = `PURGE IN PROGRESS: ${count}/${docs.length}...`;
+        }
 
-        await batch.commit();
         console.log(`${label} Purged: ${count} documents removed.`);
         if (statusLog) statusLog.textContent = `PURGE COMPLETE: ${count} ${label} REMOVED.`;
         
@@ -834,7 +842,7 @@ async function purgeCollection(collectionName, label) {
     } catch (err) {
         console.error(`${label} Purge failed:`, err);
         if (statusLog) statusLog.textContent = `ERROR: ${err.code}`;
-        alert(`PERMISSION DENIED: Unable to purge ${label}. Core rejected request.`);
+        alert(`PERMISSION DENIED: Unable to purge ${label}. Core rejected request. [${err.code}]`);
     }
 }
 
