@@ -232,6 +232,22 @@ const allEntries = [
     "thumbnail": "https://miro.medium.com/v2/resize:fit:1400/1*FsH3TsmM0Av7DpEu6NUM_w.png",
     "categories": ["Skill", "Fun"],
     "description": "Experience the thrill of strategic mining in this interactive game."
+  },
+  {
+    "id": "drift-hunters",
+    "title": "Drift Hunters",
+    "iframeUrl": "https://gibbat2.github.io/Games/games/drifthunters/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlqotnzSNoLX7RcBPtwTsbNuXR2_qc62oVzg&s",
+    "categories": ["Racing", "Skill"],
+    "description": "The ultimate browser-based drifting simulator. Customize your car, hit the tracks, and master the art of the drift in this high-fidelity racing experience."
+  },
+  {
+    "id": "ragdoll-archers",
+    "title": "Ragdoll Archers",
+    "iframeUrl": "https://y.demo.lhyang.org/https://ragdoll-archers.game-files.crazygames.com/ragdoll-archers/41/index.html?isNewUser=true&__nextLocale=en-US&isFirstSession=true",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyUGx-edv6G0AC7OA4uP-0WmPg-fefp0Z-tQ&s",
+    "categories": ["Action", "Skill"],
+    "description": "Engage in chaotic ragdoll archery battles. Master the physics-based aiming to defeat opponents and unlock new equipment."
   }
 ];
 
