@@ -431,14 +431,26 @@ function init() {
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
             if (code === '0304' || code === '0007') {
-                const role = code === '0304' ? 'ceo' : 'exe_dev';
-                const name = code === '0304' ? 'CEO' : 'EXECUTIVE DEV';
+                const isCeoCode = code === '0304';
+                const role = isCeoCode ? 'ceo' : 'exe_dev';
+                const name = isCeoCode ? 'JACK CAMPELL' : 'EXECUTIVE DEV';
 
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_authorized', 'true');
                 localStorage.setItem('vp_chat_passcode', code);
+                localStorage.setItem('vp_chat_name', name);
                 
                 if (panel) panel.classList.remove('hidden');
+
+                // Differentiate UI in the panel if needed
+                const clearLogsBtn = document.getElementById('clear-logs-btn');
+                if (clearLogsBtn) {
+                    if (isCeoCode) {
+                        clearLogsBtn.classList.remove('hidden');
+                    } else {
+                        clearLogsBtn.classList.add('hidden');
+                    }
+                }
                 
                 // Sync to Firestore immediately
                 const user = auth.currentUser;
@@ -446,6 +458,7 @@ function init() {
                     try {
                         const syncData = {
                             role: role,
+                            name: name,
                             status: 'active',
                             passcode: code,
                             updatedAt: serverTimestamp()
@@ -835,6 +848,12 @@ async function logoutTerminal() {
 }
 
 async function purgeCollection(collectionName, label) {
+    const currentUserRole = localStorage.getItem('vp_chat_role');
+    if (currentUserRole !== 'ceo') {
+        alert("CRITICAL ERROR: ACCESS VIOLATION. ONLY THE CEO MAY INITIATE A FULL PURGE.");
+        return;
+    }
+
     if (!confirm(`CRITICAL PROTOCOL: PURGE ALL ${label}? This operation is irreversible.`)) return;
     
     const statusLog = document.getElementById('terminal-status-log');
@@ -1880,7 +1899,7 @@ function syncForumMessages() {
         let latestTime = 0;
         forumMessagesView.innerHTML = '';
         const currentUserRole = localStorage.getItem('vp_chat_role');
-        const isCeo = currentUserRole === 'ceo' || currentUserRole === 'exe_dev';
+        const isCeo = currentUserRole === 'ceo';
 
         snapshot.forEach(docSnap => {
             const msg = docSnap.data();
@@ -1889,16 +1908,15 @@ function syncForumMessages() {
             const date = msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...';
             
             const msgEl = document.createElement('div');
-            const isCeo = localStorage.getItem('vp_chat_role') === 'ceo' || localStorage.getItem('vp_chat_role') === 'exe_dev';
             const isMsgCeo = msg.authorRole === 'ceo';
             const isMsgSupplier = msg.authorRole === 'supplier';
             const isMsgOgDev = msg.authorRole === 'og_dev';
             const isMsgExeDev = msg.authorRole === 'exe_dev';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
-            // Strictly limit buttons to those in a CEO session
-            const canDelete = isCeo;
-            const canRevoke = isCeo && !isMsgCeo;
+            // Only actual CEO can delete or revoke
+            const canDelete = currentUserRole === 'ceo';
+            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
@@ -1936,13 +1954,19 @@ function syncForumMessages() {
     document.querySelectorAll('.delete-msg-btn').forEach(btn => {
         btn.onclick = async (e) => {
             const msgId = btn.getAttribute('data-id');
+            const currentUserRole = localStorage.getItem('vp_chat_role');
+
+            if (currentUserRole !== 'ceo') {
+                alert("ACCESS DENIED: ONLY THE CEO MAY PURGE LOGS.");
+                return;
+            }
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
                     await deleteDoc(doc(db, 'forum_messages', msgId));
                 } catch (err) {
                     console.error("Deletion failed:", err);
-                    alert("DELETION ERROR: " + err.message);
+                    alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request for Message ID ${msgId}.`);
                 }
             }
         };
@@ -1951,6 +1975,12 @@ function syncForumMessages() {
     document.querySelectorAll('.revoke-access-btn').forEach(btn => {
         btn.onclick = async (e) => {
             const authorId = btn.getAttribute('data-authorid');
+            const currentUserRole = localStorage.getItem('vp_chat_role');
+
+            if (currentUserRole !== 'ceo') {
+                alert("ACCESS DENIED: ONLY THE CEO MAY REVOKE HANDSHAKES.");
+                return;
+            }
 
             if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                 try {
@@ -1962,7 +1992,7 @@ function syncForumMessages() {
                     alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
                 } catch (err) {
                     console.error("Revoke failed:", err);
-                    alert("REVOKE ERROR: " + err.message);
+                    alert(`REVOKE ERROR [${err.code}]: Secure Bridge rejected termination request.`);
                 }
             }
         };
