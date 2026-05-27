@@ -598,8 +598,10 @@ async function handleTerminalAuth() {
     const isCeo = code === '0304';
     const isDev = code === '5012';
     const isSupplier = code === '9871';
+    const isOgDev = code === '3421';
+    const isExeDev = code === '0007';
 
-    if (isCeo || isDev || isSupplier) {
+    if (isCeo || isDev || isSupplier || isOgDev || isExeDev) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
@@ -611,6 +613,12 @@ async function handleTerminalAuth() {
             } else if (isSupplier) {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
+            } else if (isOgDev) {
+                role = 'og_dev';
+                name = 'OG DEV';
+            } else if (isExeDev) {
+                role = 'exe_dev';
+                name = 'EXECUTIVE DEV';
             }
 
             localStorage.setItem('vp_chat_role', role);
@@ -782,6 +790,8 @@ async function postForumMessage() {
         let name = 'Developer';
         if (role === 'ceo') name = 'CEO';
         else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
+        else if (role === 'og_dev') name = 'OG DEV';
+        else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
         
         const passcode = localStorage.getItem('vp_chat_passcode');
         const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
@@ -1879,6 +1889,8 @@ function syncForumMessages() {
             const isCeo = localStorage.getItem('vp_chat_role') === 'ceo';
             const isMsgCeo = msg.authorRole === 'ceo';
             const isMsgSupplier = msg.authorRole === 'supplier';
+            const isMsgOgDev = msg.authorRole === 'og_dev';
+            const isMsgExeDev = msg.authorRole === 'exe_dev';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
             // Strictly limit buttons to those in a CEO session
@@ -1890,8 +1902,10 @@ function syncForumMessages() {
                 <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'dev')}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : 'text-white')} uppercase italic leading-none">${msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
                         ${isMsgSupplier ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">FAT GAME SUPPLIER</span>' : ''}
+                        ${isMsgOgDev ? '<span class="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-widest">OG DEV</span>' : ''}
+                        ${isMsgExeDev ? '<span class="text-[8px] bg-rose-500/10 text-rose-400 px-1 py-0.5 rounded border border-rose-500/20 font-bold uppercase tracking-widest">EXECUTIVE DEV</span>' : ''}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
