@@ -422,9 +422,40 @@ function init() {
     if (clearReportsBtn) clearReportsBtn.classList.add('hidden');
     if (clearLogsBtn) clearLogsBtn.onclick = () => purgeCollection('forum_messages', 'CHAT LOGS');
     if (masterControlBtn) {
-        masterControlBtn.onclick = () => {
+        masterControlBtn.onclick = async () => {
             const panel = document.getElementById('ceo-master-panel');
-            if (panel) panel.classList.toggle('hidden');
+            if (panel && !panel.classList.contains('hidden')) {
+                panel.classList.add('hidden');
+                return;
+            }
+
+            const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
+            if (code === '0304') {
+                localStorage.setItem('vp_chat_role', 'ceo');
+                localStorage.setItem('vp_chat_authorized', 'true');
+                localStorage.setItem('vp_chat_passcode', '0304');
+                
+                if (panel) panel.classList.remove('hidden');
+                
+                // Sync to Firestore immediately
+                const user = auth.currentUser;
+                if (user) {
+                    try {
+                        const syncData = {
+                            role: 'ceo',
+                            status: 'active',
+                            passcode: '0304',
+                            updatedAt: serverTimestamp()
+                        };
+                        await setDoc(doc(db, 'authorized_users', user.uid), syncData, { merge: true });
+                        console.log("Master Link Synchronized [UID: " + user.uid + "]");
+                    } catch (e) {
+                        console.error("Master Link Sync Failed:", e);
+                    }
+                }
+            } else if (code) {
+                alert("ACCESS DENIED: INVALID AUTHORIZATION PAYLOAD");
+            }
         };
     }
     if (closeMasterPanelBtn) closeMasterPanelBtn.onclick = () => {
@@ -1172,14 +1203,15 @@ function setupEventListeners() {
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && user.email === "jackcampell608@gmail.com";
+        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
         
         // Auto-authorize if using a verified CEO email
         if (isCeoEmail && !isAuthorizedLocal) {
-            console.log("Verified CEO Email detected. Auto-authorizing...");
+            console.log("Verified CEO Identity detected. Auto-authorizing...");
             localStorage.setItem('vp_chat_role', 'ceo');
             localStorage.setItem('vp_chat_authorized', 'true');
-            localStorage.setItem('vp_chat_name', 'CEO');
+            localStorage.setItem('vp_chat_name', 'JACK CAMPELL');
+            localStorage.setItem('vp_chat_passcode', '0304');
         }
 
         const isAuthorized = localStorage.getItem('vp_chat_authorized') === 'true';
