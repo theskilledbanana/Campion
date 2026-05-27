@@ -549,13 +549,13 @@ function closeDevTerminal() {
 }
 
 async function handleTerminalAuth() {
-    const code = terminalPassInput?.value;
+    const code = terminalPassInput?.value?.trim();
     if (!code) return;
 
     const currentRole = localStorage.getItem('vp_chat_role');
     const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
 
-    // SPECIAL CEO COMMAND: PURGE CITIZEN REPORTS
+    // SPECIAL CEO COMMAND: PURGE CITIZEN REPORTS (Legacy command, kept for compatibility)
     if (code.toUpperCase() === 'PURGE' && currentRole === 'ceo' && isAuthorizedLocal) {
         if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL: INITIATING GLOBAL PURGE...';
         try {
@@ -577,7 +577,7 @@ async function handleTerminalAuth() {
         }
     }
 
-    const isCeo = code === '3012';
+    const isCeo = code === '0304';
     const isDev = code === '5012';
     const isSupplier = code === '9871';
 
@@ -898,7 +898,7 @@ async function updateForumAuthUI(user) {
         if (masterControlBtn) masterControlBtn.classList.add('hidden');
         if (masterPanel) masterPanel.classList.add('hidden');
         if (promptText) {
-            promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "Official Developer Access Required to Post";
+            promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "OFFICIAL UPLINK ACCESS REQUIRED TO POST";
         }
     }
     
@@ -1060,11 +1060,11 @@ function setupEventListeners() {
 
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
-        const code = prompt("ENTER AUTHORIZATION PASSCODE:");
-        if (code === '5012' || code === '3012') {
-            terminalPassInput.value = code;
+        const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
+        if (code === '5012' || code === '0304' || code === '9871') {
+            if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
-        } else if (code !== null) {
+        } else if (code) {
             alert("PROTOCOL ERROR: INVALID PASSCODE.");
         }
     };
@@ -1200,7 +1200,7 @@ function setupEventListeners() {
         } else if (user && isAuthorized && storedRole === 'ceo') {
             try {
                 // Force sync periodically
-                const passcode = localStorage.getItem('vp_chat_passcode') || '3012';
+                const passcode = localStorage.getItem('vp_chat_passcode') || '0304';
                 const syncData = {
                     role: 'ceo',
                     status: 'active',
