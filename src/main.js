@@ -42,9 +42,17 @@ const allEntries = [
     "id": "gunspin",
     "title": "GunSpin",
     "iframeUrl": "https://ssl.minijuegos.com/helpers/game/xdmbridge.php?xdm_url=https://ssl.minijuegosgratis.com/lechuck/js/easyxdm/&xdm_e=https%3A%2F%2Fxg4321.github.io&xdm_c=default2372&xdm_p=1",
-    "thumbnail": "https://i.ytimg.com/vi/U2SgrOeRrrs/maxresdefault.jpg",
+    "thumbnail": "https://media.indiedb.com/images/games/1/79/78131/ao_gunspin-cover.jpg",
     "categories": ["Action", "Skill", "Shooter"],
     "description": "GunSpin is a high-octane skill game where you use the power of your shots to keep your momentum and reach new distances."
+  },
+  {
+    "id": "soundboard-buttons",
+    "title": "Soundboards",
+    "iframeUrl": "https://soundbuttonspro.com/",
+    "thumbnail": "https://www.nintendo.com/eu/media/images/10_share_images/games_15/nintendo_switch_download_software_1/2x1_NSwitchDS_SoundboardButtonsWithInstantSounds_image1600w.jpg",
+    "categories": ["Utility", "Fun"],
+    "description": "Access a variety of instant sounds and soundboard buttons for ultimate fun and reactions."
   },
   {
     "id": "doom-2",
@@ -667,21 +675,22 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
                 try {
-                    // 1. Ensure we have a Firebase session (Anonymous or existing)
+                    // 1. Ensure we have a Firebase session
                     let sessionUser = auth.currentUser;
                     
                     if (!sessionUser) {
                         try {
-                            const cred = await signInAnonymously(auth);
-                            sessionUser = cred.user;
-                            console.log("Anonymous Master Link established.");
-                        } catch (anonErr) {
-                            if (anonErr.code === 'auth/admin-restricted-operation') {
-                                console.warn("Anonymous sign-in restricted by console policy.");
+                            // CEO Priority: Try Google Auth first for secure bridge if anon is restricted
+                            if (confirm("MASTER PROTOCOL: Google Authentication recommended for CEO operations. Sign in?")) {
+                                const provider = new GoogleAuthProvider();
+                                const result = await signInWithPopup(auth, provider);
+                                sessionUser = result.user;
                             } else {
-                                console.error("Anonymous authentication failed:", anonErr);
+                                const cred = await signInAnonymously(auth);
+                                sessionUser = cred.user;
                             }
-                            // Fallback to local mode will happen below
+                        } catch (authErr) {
+                            console.error("Auth bridge failed:", authErr);
                         }
                     }
 
@@ -1466,11 +1475,16 @@ function renderGameOfTheWeek() {
     const container = document.getElementById('gotw-container');
     if (!container) return;
 
-    // Deterministic week-based selection
-    // Epoch: May 25, 2024 (roughly when this pattern was established)
-    const EPOCH = 1716595200000; 
-    const currentWeek = Math.floor((Date.now() - EPOCH) / (7 * 24 * 60 * 60 * 1000));
-    const featuredIndex = Math.max(0, currentWeek % allEntries.length);
+    // Stable weekly selection based on calendar weeks
+    const now = new Date();
+    // Normalize to last Sunday midnight
+    const day = now.getDay();
+    const diff = now.getDate() - day;
+    const startOfWeek = new Date(now.setDate(diff));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weekSeed = Math.floor(startOfWeek.getTime() / (7 * 24 * 60 * 60 * 1000));
+    const featuredIndex = Math.abs(weekSeed % allEntries.length);
     const item = allEntries[featuredIndex];
 
     if (!item) {
@@ -2019,7 +2033,17 @@ function syncForumMessages() {
                     let user = auth.currentUser;
                     if (!user) {
                         console.log("No active user found. Attempting background handshake...");
-                        await signInAnonymously(auth);
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (authErr) {
+                            if (authErr.code === 'auth/admin-restricted-operation') {
+                                console.warn("Anonymous restricted. Prompting for Google Auth...");
+                                const provider = new GoogleAuthProvider();
+                                await signInWithPopup(auth, provider);
+                            } else {
+                                throw authErr;
+                            }
+                        }
                         user = auth.currentUser;
                     }
                     
