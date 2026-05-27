@@ -650,9 +650,25 @@
                 </div>
                 <div class="p-4 bg-zinc-950/50 border border-white/5 rounded-2xl">
                     <h4 class="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Control Interface</h4>
-                    <div class="flex items-center gap-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
-                        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                        <span class="text-[10px] font-mono text-red-400 uppercase tracking-[0.2em] font-bold">Delete logs: active</span>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <button id="clear-reports-btn" class="p-4 bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 hover:border-red-500/30 rounded-2xl transition-all group active:scale-95">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                                <span class="text-[9px] font-black text-red-500 uppercase tracking-widest">Reports</span>
+                            </div>
+                            <div class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Purge Sector</div>
+                        </button>
+                        <button id="clear-logs-btn" class="p-4 bg-indigo-500/5 border border-indigo-500/10 hover:bg-indigo-500/10 hover:border-indigo-500/30 rounded-2xl transition-all group active:scale-95">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-1.5 h-1.5 rounded-full bg-indigo-400"></div>
+                                <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Chat Logs</span>
+                            </div>
+                            <div class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Purge Uplink</div>
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 bg-zinc-900 border border-white/5 rounded-xl">
+                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.2em] font-bold italic">CEO Session: Live</span>
                     </div>
                 </div>
             </div>

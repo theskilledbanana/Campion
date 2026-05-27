@@ -413,6 +413,18 @@ function init() {
     terminalAuthSubmit = document.getElementById('terminal-auth-submit');
     closeTerminalBtn = document.getElementById('close-terminal');
 
+    // CEO Panel Buttons
+    const clearReportsBtn = document.getElementById('clear-reports-btn');
+    const clearLogsBtn = document.getElementById('clear-logs-btn');
+    const closeMasterPanelBtn = document.getElementById('close-master-panel');
+
+    if (clearReportsBtn) clearReportsBtn.onclick = () => purgeCollection('game_reviews', 'SECTOR REPORTS');
+    if (clearLogsBtn) clearLogsBtn.onclick = () => purgeCollection('forum_messages', 'CHAT LOGS');
+    if (closeMasterPanelBtn) closeMasterPanelBtn.onclick = () => {
+        const panel = document.getElementById('ceo-master-panel');
+        if (panel) panel.classList.add('hidden');
+    };
+
     // Explicitly reset initial state
     currentCategory = 'All';
     currentSearch = '';
@@ -756,6 +768,41 @@ async function logoutTerminal() {
         // Do NOT signOut, just drop local elevation
         updateForumAuthUI();
         alert("TERMINAL DISCONNECTED. LOCAL PROTOCOLS OFFLINE.");
+    }
+}
+
+async function purgeCollection(collectionName, label) {
+    if (!confirm(`CRITICAL PROTOCOL: PURGE ALL ${label}? This operation is irreversible.`)) return;
+    
+    const statusLog = document.getElementById('terminal-status-log');
+    if (statusLog) statusLog.textContent = `INITIATING PURGE: ${label}...`;
+    
+    try {
+        const snapshot = await getDocs(collection(db, collectionName));
+        if (snapshot.empty) {
+            if (statusLog) statusLog.textContent = `PURGE ABORTED: ${label} VOID.`;
+            alert(`NOTICE: No ${label} found to delete.`);
+            return;
+        }
+
+        const batch = writeBatch(db);
+        let count = 0;
+        snapshot.forEach(d => {
+            batch.delete(d.ref);
+            count++;
+        });
+
+        await batch.commit();
+        console.log(`${label} Purged: ${count} documents removed.`);
+        if (statusLog) statusLog.textContent = `PURGE COMPLETE: ${count} ${label} REMOVED.`;
+        
+        // Final verification for user
+        alert(`SUCCESS: ${count} ${label} have been cleared from the terminal.`);
+        
+    } catch (err) {
+        console.error(`${label} Purge failed:`, err);
+        if (statusLog) statusLog.textContent = `ERROR: ${err.code}`;
+        alert(`PERMISSION DENIED: Unable to purge ${label}. Core rejected request.`);
     }
 }
 
