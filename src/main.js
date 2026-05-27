@@ -1250,13 +1250,30 @@ function setupEventListeners() {
         // Auto-authorize if using a verified CEO email
         if (isCeoEmail && !isAuthorizedLocal) {
             console.log("Verified CEO Identity detected. Auto-authorizing...");
+            const name = user.email === "jackcampell608@gmail.com" ? "JACK CAMPELL" : "MANDY MCGREGOR";
             localStorage.setItem('vp_chat_role', 'ceo');
             localStorage.setItem('vp_chat_authorized', 'true');
-            localStorage.setItem('vp_chat_name', 'JACK CAMPELL');
+            localStorage.setItem('vp_chat_name', name);
             localStorage.setItem('vp_chat_passcode', '0304');
         }
 
         const isAuthorized = localStorage.getItem('vp_chat_authorized') === 'true';
+        const currentRole = localStorage.getItem('vp_chat_role');
+        const currentName = localStorage.getItem('vp_chat_name') || 'STAFF';
+
+        // Ensure CEO/Executive status is synced if authenticated
+        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev')) {
+            try {
+                await setDoc(doc(db, 'authorized_users', user.uid), {
+                    role: currentRole,
+                    name: currentName,
+                    status: 'active',
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            } catch (syncErr) {
+                console.error("Auth State sync failed:", syncErr);
+            }
+        }
         
         if (!user && isAuthorized && storedRole === 'ceo') {
             console.log("Attempting CEO background re-auth...");

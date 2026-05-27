@@ -69,14 +69,13 @@ service cloud.firestore {
     }
 
     function isCeo() {
-      let userEmail = isSignedIn() && request.auth.token.keys().contains('email') ? request.auth.token.email.lower() : "";
-      let isCeoEmail = userEmail == "jackcampell608@gmail.com" || userEmail == "mandyfmcgregor@gmail.com";
-      
-      let isAuthorizedCeo = isSignedIn() && 
-                            exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) &&
-                            get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo';
-      
-      return isCeoEmail || isAuthorizedCeo;
+      return isSignedIn() && (
+        (request.auth.token.keys().contains('email') && 
+         (request.auth.token.email.lower() == "jackcampell608@gmail.com" || 
+          request.auth.token.email.lower() == "mandyfmcgregor@gmail.com")) ||
+        (exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo')
+      );
     }
 
     function isExeDev() {
