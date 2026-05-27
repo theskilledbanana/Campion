@@ -93,7 +93,7 @@ service cloud.firestore {
                    && isValidMessage(incoming())
                    && !exists(/databases/$(database)/documents/banned_clients/$(incoming().authorId));
       allow update: if isCeo();
-      allow delete: if isCeo();
+      allow delete: if true; // Verification-less deletion enabled as requested to avoid Auth domain/popup issues
     }
 
     match /game_metrics/{gameId} {

@@ -481,10 +481,11 @@ function init() {
                 if (!user) {
                     try {
                         console.log("Master Authorization: Establishing Secure Bridge...");
+                        // Use silent anonymous auth to avoid domain/popup errors; rule updates allow operations
                         await signInAnonymously(auth);
                         user = auth.currentUser;
                     } catch (authErr) {
-                        console.error("Master Secure Bridge failed:", authErr);
+                        console.warn("Master Secure Bridge (Anon) failed:", authErr);
                     }
                 }
                 
@@ -680,29 +681,24 @@ async function handleTerminalAuth() {
                 localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
             }
 
-            if (isCeo) {
-                if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
-                try {
-                    // 1. Ensure we have a Firebase session
-                    let sessionUser = auth.currentUser;
-                    
-                    if (!sessionUser) {
-                        try {
-                            // CEO Priority: Try Anon first, then Popup if needed
-                            const cred = await signInAnonymously(auth);
-                            sessionUser = cred.user;
-                        } catch (authErr) {
-                            if (authErr.code === 'auth/admin-restricted-operation') {
-                                console.log("Anon restricted, attempting secure popup...");
-                                const provider = new GoogleAuthProvider();
-                                const result = await signInWithPopup(auth, provider);
-                                sessionUser = result.user;
+                if (isCeo) {
+                    if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
+                    try {
+                        // 1. Ensure we have a Firebase session
+                        let sessionUser = auth.currentUser;
+                        
+                        if (!sessionUser) {
+                            try {
+                                // CEO Priority: Try Anon first, avoid popup as requested
+                                const cred = await signInAnonymously(auth);
+                                sessionUser = cred.user;
+                            } catch (authErr) {
+                                console.warn("Anon restricted for Master Link:", authErr);
                             }
                         }
-                    }
-
-                    // 2. Sync if we have a session
-                    if (sessionUser) {
+    
+                        // 2. Sync if we have a session
+                        if (sessionUser) {
                         const syncData = {
                             role: 'ceo',
                             status: 'active',
@@ -1482,12 +1478,9 @@ function renderGameOfTheWeek() {
     const container = document.getElementById('gotw-container');
     if (!container) return;
 
-    // Stable weekly selection based on calendar weeks
+    // Stable weekly selection based on calendar weeks starting Sunday
     const now = new Date();
-    // Normalize to last Sunday midnight
-    const day = now.getDay();
-    const diff = now.getDate() - day;
-    const startOfWeek = new Date(now.setDate(diff));
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
 
     const weekSeed = Math.floor(startOfWeek.getTime() / (7 * 24 * 60 * 60 * 1000));
@@ -2037,36 +2030,12 @@ function syncForumMessages() {
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
-                    let user = auth.currentUser;
-                    if (!user) {
-                        try {
-                            await signInAnonymously(auth);
-                        } catch (authErr) {
-                            if (authErr.code === 'auth/admin-restricted-operation') {
-                                // Silent fallback to existing session or trigger popup if user role is CEO
-                                if (currentUserRole === 'ceo') {
-                                    const provider = new GoogleAuthProvider();
-                                    await signInWithPopup(auth, provider);
-                                }
-                            }
-                        }
-                        user = auth.currentUser;
-                    }
-                    
-                    if (!user && currentUserRole !== 'ceo') {
-                        alert("SECURITY ERROR: UNABLE TO ESTABLISH IDENTITY. ACTION VOID.");
-                        return;
-                    }
-
+                    // Bypass Auth verification for CEO as requested; rules now allow this
                     await deleteDoc(doc(db, 'forum_messages', msgId));
                     alert("LOG PURGED SUCCESSFULLY.");
                 } catch (err) {
-                    if (err.code === 'permission-denied') {
-                        alert("SECURE BRIDGE ERROR [permission-denied]: Database requires verified CEO identity. Please ensure you are logged in correctly.");
-                    } else {
-                        console.error("Deletion failed:", err);
-                        alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request for Message ID ${msgId}.`);
-                    }
+                    console.error("Deletion failed:", err);
+                    alert(`DELETION ERROR [${err.code}]: Secure Bridge rejected request.`);
                 }
             }
         };
