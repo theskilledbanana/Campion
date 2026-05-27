@@ -470,10 +470,11 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007') {
+            if (code === '0304' || code === '0007' || code === '7771') {
+                const isByrnesey = code === '7771';
                 const isCeoCode = code === '0304';
-                const role = isCeoCode ? 'ceo' : 'exe_dev';
-                const name = isCeoCode ? 'JACK CAMPELL' : 'EXECUTIVE DEV';
+                const role = isCeoCode ? 'ceo' : (isByrnesey ? 'dev' : 'exe_dev');
+                const name = isCeoCode ? 'JACK CAMPELL' : (isByrnesey ? 'BYRNESEY' : 'EXECUTIVE DEV');
 
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_authorized', 'true');
@@ -663,7 +664,7 @@ async function handleTerminalAuth() {
     }
 
     const isCeo = code === '0304';
-    const isDev = code === '5012';
+    const isDev = code === '5012' || code === '7771';
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
@@ -677,6 +678,9 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 role = 'ceo';
                 name = 'CEO';
+            } else if (code === '7771') {
+                role = 'dev';
+                name = 'BYRNESEY';
             } else if (isSupplier) {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
@@ -849,11 +853,15 @@ async function postForumMessage() {
         sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
         const role = localStorage.getItem('vp_chat_role') || 'dev';
-        let name = 'Developer';
-        if (role === 'ceo') name = 'CEO';
-        else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
-        else if (role === 'og_dev') name = 'OG DEV';
-        else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
+        const storedName = localStorage.getItem('vp_chat_name');
+        let name = storedName || 'Developer';
+        
+        if (!storedName) {
+            if (role === 'ceo') name = 'CEO';
+            else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
+            else if (role === 'og_dev') name = 'OG DEV';
+            else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
+        }
         
         const passcode = localStorage.getItem('vp_chat_passcode');
         const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
@@ -1180,7 +1188,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007') {
+        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '7771') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
@@ -1936,9 +1944,10 @@ function syncForumMessages() {
             const isMsgExeDev = msg.authorRole === 'exe_dev';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
-            // Only actual CEO can delete or revoke
-            const canDelete = currentUserRole === 'ceo';
-            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
+            // CEO and Developers/Byrnesey can delete or revoke
+            const isPrivileged = currentUserRole === 'ceo' || currentUserRole === 'dev' || currentUserRole === 'exe_dev' || currentUserRole === 'og_dev';
+            const canDelete = isPrivileged;
+            const canRevoke = isPrivileged && !isMsgCeo;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
@@ -1977,9 +1986,10 @@ function syncForumMessages() {
         btn.onclick = async (e) => {
             const msgId = btn.getAttribute('data-id');
             const currentUserRole = localStorage.getItem('vp_chat_role');
+            const isPrivileged = currentUserRole === 'ceo' || currentUserRole === 'dev' || currentUserRole === 'exe_dev' || currentUserRole === 'og_dev';
 
-            if (currentUserRole !== 'ceo') {
-                alert("ACCESS DENIED: ONLY THE CEO MAY PURGE LOGS.");
+            if (!isPrivileged) {
+                alert("ACCESS DENIED: ONLY AUTHORIZED STAFF MAY PURGE LOGS.");
                 return;
             }
 
@@ -2001,9 +2011,10 @@ function syncForumMessages() {
         btn.onclick = async (e) => {
             const authorId = btn.getAttribute('data-authorid');
             const currentUserRole = localStorage.getItem('vp_chat_role');
+            const isPrivileged = currentUserRole === 'ceo' || currentUserRole === 'dev' || currentUserRole === 'exe_dev' || currentUserRole === 'og_dev';
 
-            if (currentUserRole !== 'ceo') {
-                alert("ACCESS DENIED: ONLY THE CEO MAY REVOKE HANDSHAKES.");
+            if (!isPrivileged) {
+                alert("ACCESS DENIED: ONLY AUTHORIZED STAFF MAY REVOKE HANDSHAKES.");
                 return;
             }
 
