@@ -453,7 +453,17 @@ function init() {
                 }
                 
                 // Sync to Firestore immediately
-                const user = auth.currentUser;
+                let user = auth.currentUser;
+                if (!user) {
+                    try {
+                        console.log("Master Authorization: Establishing Secure Bridge...");
+                        await signInAnonymously(auth);
+                        user = auth.currentUser;
+                    } catch (authErr) {
+                        console.error("Master Secure Bridge failed:", authErr);
+                    }
+                }
+                
                 if (user) {
                     try {
                         const syncData = {
@@ -1235,7 +1245,7 @@ function setupEventListeners() {
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && user.email === "jackcampell608@gmail.com";
+        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
         
         // Auto-authorize if using a verified CEO email
         if (isCeoEmail && !isAuthorizedLocal) {
