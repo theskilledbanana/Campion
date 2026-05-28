@@ -241,14 +241,7 @@ const allEntries = [
     "categories": ["Racing", "Skill"],
     "description": "The ultimate browser-based drifting simulator. Customize your car, hit the tracks, and master the art of the drift in this high-fidelity racing experience."
   },
-  {
-    "id": "ragdoll-archers",
-    "title": "Ragdoll Archers",
-    "iframeUrl": "https://y.demo.lhyang.org/https://ragdoll-archers.game-files.crazygames.com/ragdoll-archers/41/index.html?isNewUser=true&__nextLocale=en-US&isFirstSession=true",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyUGx-edv6G0AC7OA4uP-0WmPg-fefp0Z-tQ&s",
-    "categories": ["Action", "Skill"],
-    "description": "Engage in chaotic ragdoll archery battles. Master the physics-based aiming to defeat opponents and unlock new equipment."
-  },
+
   {
     "id": "chrome-dino",
     "title": "Dino Game",
