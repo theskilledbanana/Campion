@@ -248,6 +248,14 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyUGx-edv6G0AC7OA4uP-0WmPg-fefp0Z-tQ&s",
     "categories": ["Action", "Skill"],
     "description": "Engage in chaotic ragdoll archery battles. Master the physics-based aiming to defeat opponents and unlock new equipment."
+  },
+  {
+    "id": "chrome-dino",
+    "title": "Dino Game",
+    "iframeUrl": "https://only-game.github.io/projects/chrome-dino/index.html",
+    "thumbnail": "https://www.coolmathgames.com/sites/default/files/styles/mobile_game_image/public/DinoGame_OG-logo.jpg.webp?itok=fCn4IdZB",
+    "categories": ["Skill", "Fun"],
+    "description": "The legendary endless runner. Dodge cactus and pterodactyls in this high-speed survival challenge."
   }
 ];
 
@@ -470,13 +478,51 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '7771') {
+            if (code === '0304' || code === '0007' || code === '7771' || code === '9991' || code === '4242' || code === '9871' || code === '3421') {
                 const isByrnesey = code === '7771';
+                const isChambo = code === '9991';
+                const isUpTheBlues = code === '4242';
                 const isCeoCode = code === '0304';
-                const role = isCeoCode ? 'ceo' : (isByrnesey ? 'dev' : 'exe_dev');
-                const name = isCeoCode ? 'JACK CAMPELL' : (isByrnesey ? 'BYRNESEY' : 'EXECUTIVE DEV');
+                const isSupplier = code === '9871';
+                const isOgDev = code === '3421';
+                
+                let role = 'dev';
+                let name = 'DEVELOPER';
+                let rank = '2';
+
+                if (isCeoCode) {
+                    role = 'ceo';
+                    name = 'JACK CAMPELL';
+                    rank = 'OMNIPOTENT';
+                } else if (code === '0007') {
+                    role = 'exe_dev';
+                    name = 'EXECUTIVE DEV';
+                    rank = '1';
+                } else if (isSupplier) {
+                    role = 'supplier';
+                    name = 'FAT GAME SUPPLIER';
+                    rank = '1';
+                } else if (isOgDev) {
+                    role = 'og_dev';
+                    name = 'OG DEV';
+                    rank = '1';
+                } else if (isByrnesey) {
+                    role = 'dev';
+                    name = 'BYRNESEY';
+                    rank = '2';
+                } else if (isChambo) {
+                    role = 'dev';
+                    name = 'CHAMBO';
+                    rank = '2';
+                } else if (isUpTheBlues) {
+                    role = 'dev';
+                    name = 'UP THE BLUES';
+                    rank = '2';
+                }
 
                 localStorage.setItem('vp_chat_role', role);
+                localStorage.setItem('vp_chat_name', name);
+                localStorage.setItem('vp_chat_rank', rank);
                 localStorage.setItem('vp_chat_authorized', 'true');
                 localStorage.setItem('vp_chat_passcode', code);
                 localStorage.setItem('vp_chat_name', name);
@@ -664,7 +710,7 @@ async function handleTerminalAuth() {
     }
 
     const isCeo = code === '0304';
-    const isDev = code === '5012' || code === '7771';
+    const isDev = code === '5012' || code === '7771' || code === '9991' || code === '4242';
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
@@ -675,25 +721,45 @@ async function handleTerminalAuth() {
             
             let role = 'dev';
             let name = 'Developer';
+            let rank = '2';
+
             if (isCeo) {
                 role = 'ceo';
                 name = 'CEO';
+                rank = 'OMNIPOTENT';
             } else if (code === '7771') {
                 role = 'dev';
                 name = 'BYRNESEY';
+                rank = '2';
+            } else if (code === '9991') {
+                role = 'dev';
+                name = 'CHAMBO';
+                rank = '2';
+            } else if (code === '4242') {
+                role = 'dev';
+                name = 'UP THE BLUES';
+                rank = '2';
             } else if (isSupplier) {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
+                rank = '1';
             } else if (isOgDev) {
                 role = 'og_dev';
                 name = 'OG DEV';
+                rank = '1';
             } else if (isExeDev) {
                 role = 'exe_dev';
                 name = 'EXECUTIVE DEV';
+                rank = '1';
+            } else if (isDev) {
+                role = 'dev';
+                name = 'DEVELOPER';
+                rank = '2';
             }
 
             localStorage.setItem('vp_chat_role', role);
             localStorage.setItem('vp_chat_name', name);
+            localStorage.setItem('vp_chat_rank', rank);
             localStorage.setItem('vp_chat_passcode', code);
             localStorage.setItem('vp_chat_authorized', 'true');
             
@@ -854,6 +920,7 @@ async function postForumMessage() {
 
         const role = localStorage.getItem('vp_chat_role') || 'dev';
         const storedName = localStorage.getItem('vp_chat_name');
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OMNIPOTENT' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
         let name = storedName || 'Developer';
         
         if (!storedName) {
@@ -872,6 +939,7 @@ async function postForumMessage() {
             firebaseUid: auth.currentUser?.uid || null,
             authorName: name,
             authorRole: role,
+            authorRank: rank,
             authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
             passcode: passcode,
             createdAt: serverTimestamp()
@@ -1188,7 +1256,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '7771') {
+        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '7771' || code === '9991' || code === '4242') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
@@ -1955,9 +2023,7 @@ function syncForumMessages() {
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
-                        ${isMsgSupplier ? '<span class="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold uppercase tracking-widest">FAT GAME SUPPLIER</span>' : ''}
-                        ${isMsgOgDev ? '<span class="text-[8px] bg-emerald-500/10 text-emerald-400 px-1 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-widest">OG DEV</span>' : ''}
-                        ${isMsgExeDev ? '<span class="text-[8px] bg-rose-500/10 text-rose-400 px-1 py-0.5 rounded border border-rose-500/20 font-bold uppercase tracking-widest">EXECUTIVE DEV</span>' : ''}
+                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OMNIPOTENT</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
