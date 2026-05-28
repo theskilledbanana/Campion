@@ -493,7 +493,7 @@ function init() {
                 if (isCeoCode) {
                     role = 'ceo';
                     name = 'JACK CAMPELL';
-                    rank = 'OMNIPOTENT';
+                    rank = 'OWNER';
                 } else if (code === '0007') {
                     role = 'exe_dev';
                     name = 'EXECUTIVE DEV';
@@ -726,7 +726,7 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 role = 'ceo';
                 name = 'CEO';
-                rank = 'OMNIPOTENT';
+                rank = 'OWNER';
             } else if (code === '7771') {
                 role = 'dev';
                 name = 'BYRNESEY';
@@ -920,7 +920,7 @@ async function postForumMessage() {
 
         const role = localStorage.getItem('vp_chat_role') || 'dev';
         const storedName = localStorage.getItem('vp_chat_name');
-        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OMNIPOTENT' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
         let name = storedName || 'Developer';
         
         if (!storedName) {
@@ -2023,7 +2023,7 @@ function syncForumMessages() {
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
-                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OMNIPOTENT</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
+                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OWNER</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
