@@ -2012,10 +2012,9 @@ function syncForumMessages() {
             const isMsgExeDev = msg.authorRole === 'exe_dev';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
-            // CEO and Developers/Byrnesey can delete or revoke
-            const isPrivileged = currentUserRole === 'ceo' || currentUserRole === 'dev' || currentUserRole === 'exe_dev' || currentUserRole === 'og_dev';
-            const canDelete = isPrivileged;
-            const canRevoke = isPrivileged && !isMsgCeo;
+            // Only the CEO can delete or revoke
+            const canDelete = currentUserRole === 'ceo';
+            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
@@ -2052,10 +2051,10 @@ function syncForumMessages() {
         btn.onclick = async (e) => {
             const msgId = btn.getAttribute('data-id');
             const currentUserRole = localStorage.getItem('vp_chat_role');
-            const isPrivileged = currentUserRole === 'ceo' || currentUserRole === 'dev' || currentUserRole === 'exe_dev' || currentUserRole === 'og_dev';
+            const isCeo = currentUserRole === 'ceo';
 
-            if (!isPrivileged) {
-                alert("ACCESS DENIED: ONLY AUTHORIZED STAFF MAY PURGE LOGS.");
+            if (!isCeo) {
+                alert("ACCESS DENIED: ONLY THE CEO MAY PURGE LOGS.");
                 return;
             }
 
@@ -2077,10 +2076,10 @@ function syncForumMessages() {
         btn.onclick = async (e) => {
             const authorId = btn.getAttribute('data-authorid');
             const currentUserRole = localStorage.getItem('vp_chat_role');
-            const isPrivileged = currentUserRole === 'ceo' || currentUserRole === 'dev' || currentUserRole === 'exe_dev' || currentUserRole === 'og_dev';
+            const isCeo = currentUserRole === 'ceo';
 
-            if (!isPrivileged) {
-                alert("ACCESS DENIED: ONLY AUTHORIZED STAFF MAY REVOKE HANDSHAKES.");
+            if (!isCeo) {
+                alert("ACCESS DENIED: ONLY THE CEO MAY REVOKE HANDSHAKES.");
                 return;
             }
 
