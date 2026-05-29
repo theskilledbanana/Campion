@@ -98,7 +98,8 @@ service cloud.firestore {
 
     match /banned_clients/{clientId} {
       allow read: if true;
-      allow create, update, delete: if isCeo() || incoming().passcode == '0304';
+      allow create, update: if isCeo() || isPasscodeAuth(incoming());
+      allow delete: if isCeo();
     }
     
     // Forum Posts (Legacy)

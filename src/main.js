@@ -503,11 +503,12 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '9871' || code === '3421') {
+            if (code === '0304' || code === '0007' || code === '9871' || code === '3421' || code === '8765') {
                 const isCeoCode = code === '0304';
                 const isSupplier = code === '9871';
                 const isOgDev = code === '3421';
                 const isExeDev = code === '0007';
+                const isMarlon = code === '8765';
                 
                 let role = 'guest_staff';
                 let name = 'STAFF';
@@ -529,6 +530,10 @@ function init() {
                     role = 'og_dev';
                     name = 'OG DEV';
                     rank = '1';
+                } else if (isMarlon) {
+                    role = 'og_dev';
+                    name = 'MARLON';
+                    rank = '2';
                 }
 
                 localStorage.setItem('vp_chat_role', role);
@@ -724,8 +729,9 @@ async function handleTerminalAuth() {
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
+    const isMarlon = code === '8765';
 
-    if (isCeo || isSupplier || isOgDev || isExeDev) {
+    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
@@ -737,6 +743,10 @@ async function handleTerminalAuth() {
                 role = 'ceo';
                 name = 'CEO';
                 rank = 'OWNER';
+            } else if (isMarlon) {
+                role = 'og_dev';
+                name = 'MARLON';
+                rank = '2';
             } else if (isSupplier) {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
@@ -1250,7 +1260,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '0304' || code === '9871' || code === '3421' || code === '0007') {
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
@@ -1762,14 +1772,19 @@ function openPlayer(item) {
         const close = document.getElementById('close-notification');
         
         if (notify && msg) {
-            msg.innerHTML = `SYSTEM NOTICE: UPON ENTERING THE GAME, YOU WILL BE ASKED FOR A PASSWORD. IT IS <span class="bg-white text-black px-3 py-0.5 rounded ml-2 font-black">123</span>`;
-            close.textContent = "LAUNCH GAME";
+            notify.className = "fixed top-0 left-0 right-0 z-[100] bg-rose-600 border-b border-rose-400 p-6 flex flex-col items-center justify-center gap-4 transition-transform duration-700 shadow-[0_0_50px_rgba(225,29,72,0.5)] -translate-y-full";
+            msg.className = "text-white text-xl font-black text-center uppercase tracking-widest leading-tight";
+            msg.innerHTML = `SYSTEM NOTICE:<br>UPON ENTERING THE GAME, YOU WILL BE ASKED FOR A PASSWORD. <br>IT IS <span class="bg-white text-rose-600 px-4 py-1 rounded-lg ml-2 font-black text-2xl shadow-xl">123</span>`;
+            
+            close.className = "bg-white text-rose-600 px-8 py-3 rounded-xl font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl";
+            close.textContent = "I UNDERSTAND - LAUNCH GAME";
+            
             notify.classList.remove('-translate-y-full');
             notify.classList.add('translate-y-0');
             
             // Pulse the notification for visibility
             notify.classList.add('animate-pulse');
-            setTimeout(() => notify.classList.remove('animate-pulse'), 2000);
+            setTimeout(() => notify.classList.remove('animate-pulse'), 3000);
 
             close.onclick = () => {
                 notify.classList.remove('translate-y-0');
@@ -2009,10 +2024,11 @@ function syncForumMessages() {
             // Only the CEO can delete or revoke
             const canDelete = currentUserRole === 'ceo';
             const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
+             const isMsgMarlon = msg.authorName === 'MARLON';
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
-                <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest'))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
+                <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
@@ -2079,7 +2095,16 @@ function syncForumMessages() {
 
             if (confirm(`PROTOCOL: REVOKE ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                 try {
-                    const passcode = localStorage.getItem('vp_chat_passcode');
+                    let passcode = localStorage.getItem('vp_chat_passcode');
+                    if (!passcode) {
+                        passcode = prompt("SECURITY HANDSHAKE REQUIRED: RE-ENTER CEO PASSCODE TO AUTHORIZE REVOCATION:");
+                    }
+                    
+                    if (!passcode || (passcode !== '0304' && passcode !== '0007')) {
+                        alert("REVOCATION ABORTED: INVALID OR MISSING AUTHORIZATION.");
+                        return;
+                    }
+
                     let user = auth.currentUser;
                     if (!user) {
                         try {
