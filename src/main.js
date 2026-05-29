@@ -265,6 +265,22 @@ const allEntries = [
     "thumbnail": "https://upload.wikimedia.org/wikipedia/en/9/9c/PlantsvsZombiesCoverArt.jpg",
     "categories": ["Strategy", "Fun"],
     "description": "Defend your home from a zombie invasion! Plant a variety of powerful plants to stop the undead horde in this classic tower defense game."
+  },
+  {
+    "id": "subway-surfers",
+    "title": "Subway Surfers",
+    "iframeUrl": "https://only-game.github.io/subway-surfers.html",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThMq-kKWjsSFCKpLhdSOtQXSwe7NgG4e0AAQ&s",
+    "categories": ["Skill", "Fun"],
+    "description": "Dash through the subways, dodge trains, and outrun the inspector in this high-speed endless runner."
+  },
+  {
+    "id": "doodle-jump",
+    "title": "Doodle Jump",
+    "iframeUrl": "https://only-game.github.io/projects/doodle-jump/index.html",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Doodle_Jump.png",
+    "categories": ["Skill", "Fun"],
+    "description": "Jump from platform to platform, avoiding monsters and obstacles as you climb higher and higher in this addictive vertical jumper."
   }
 ];
 
