@@ -249,6 +249,14 @@ const allEntries = [
     "thumbnail": "https://www.coolmathgames.com/sites/default/files/styles/mobile_game_image/public/DinoGame_OG-logo.jpg.webp?itok=fCn4IdZB",
     "categories": ["Skill", "Fun"],
     "description": "The legendary endless runner. Dodge cactus and pterodactyls in this high-speed survival challenge."
+  },
+  {
+    "id": "blackjack",
+    "title": "Blackjack",
+    "iframeUrl": "https://gibbat2.github.io/Games/games/blackjack/",
+    "thumbnail": "https://arenacloud.cdn.arkadiumhosted.com/arenaxstorage-blob/arenax-games/BlackJack/0.62/build/resources/assets/thumbs/thumb2x.jpg",
+    "categories": ["Skill", "Fun"],
+    "description": "The classic casino card game. Test your strategy and luck to beat the dealer and reach 21."
   }
 ];
 
