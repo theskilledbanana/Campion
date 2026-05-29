@@ -203,7 +203,7 @@ const allEntries = [
     "id": "real-cars-epic-stunts",
     "title": "Real Cars Epic Stunts",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2161",
-    "thumbnail": "https://imgs.crazygames.com/real-cars-epic-stunts_16x9/20240913073039/real-cars-epic-stunts_16x9-cover?metadata=none&quality=60&height=3091",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSL2DtDh5Uw5i8j8HxFn4qUynCEMfTe-RUgkw&s",
     "categories": ["Driving", "Arcade", "Trending Games"],
     "description": "Perform impossible maneuvers in high-performance vehicles. Master the physics of speed and rotation to execute the ultimate stunt sequence.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
