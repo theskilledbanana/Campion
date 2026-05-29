@@ -257,6 +257,14 @@ const allEntries = [
     "thumbnail": "https://arenacloud.cdn.arkadiumhosted.com/arenaxstorage-blob/arenax-games/BlackJack/0.62/build/resources/assets/thumbs/thumb2x.jpg",
     "categories": ["Skill", "Fun"],
     "description": "The classic casino card game. Test your strategy and luck to beat the dealer and reach 21."
+  },
+  {
+    "id": "pvz",
+    "title": "Plants vs Zombies",
+    "iframeUrl": "https://y.demo.lhyang.org/https://pvz.ee/iframe.php",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/9/9c/PlantsvsZombiesCoverArt.jpg",
+    "categories": ["Strategy", "Fun"],
+    "description": "Defend your home from a zombie invasion! Plant a variety of powerful plants to stop the undead horde in this classic tower defense game."
   }
 ];
 
