@@ -512,7 +512,7 @@ function init() {
                 
                 let role = 'guest_staff';
                 let name = 'STAFF';
-                let rank = '3';
+                let rank = '2';
 
                 if (isCeoCode) {
                     role = 'ceo';
@@ -533,6 +533,10 @@ function init() {
                 } else if (isMarlon) {
                     role = 'og_dev';
                     name = 'MARLON';
+                    rank = '2';
+                } else {
+                    role = 'guest_staff';
+                    name = 'STAFF';
                     rank = '2';
                 }
 
@@ -737,7 +741,7 @@ async function handleTerminalAuth() {
             
             let role = 'guest_staff';
             let name = 'Staff';
-            let rank = '3';
+            let rank = '2';
 
             if (isCeo) {
                 role = 'ceo';
@@ -924,7 +928,7 @@ async function postForumMessage() {
 
         const role = localStorage.getItem('vp_chat_role') || 'guest';
         const storedName = localStorage.getItem('vp_chat_name');
-        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '3'));
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
         let name = storedName || 'Guest';
         
         if (!storedName) {
@@ -944,7 +948,7 @@ async function postForumMessage() {
             authorName: name,
             authorRole: role,
             authorRank: rank,
-            authorPhoto: role === 'ceo' ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
+            authorPhoto: role === 'ceo' ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (name === 'MARLON' ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`),
             passcode: passcode,
             createdAt: serverTimestamp()
         });
@@ -1577,7 +1581,7 @@ function renderItems() {
     if (!grid) return;
     grid.innerHTML = '';
     
-    const term = (currentSearch || '').toLowerCase();
+    const term = (currentSearch || '').toLowerCase().trim();
     const cat = currentCategory || 'All';
 
     const filtered = allEntries.filter(item => {
@@ -1594,7 +1598,8 @@ function renderItems() {
         
         const title = (item.title || '').toLowerCase();
         const desc = (item.description || '').toLowerCase();
-        const matchesSearch = title.includes(term) || desc.includes(term);
+        const cats = (item.categories || []).join(' ').toLowerCase();
+        const matchesSearch = title.includes(term) || desc.includes(term) || cats.includes(term);
         return matchesCategory && matchesSearch;
     });
 
@@ -1610,7 +1615,7 @@ function renderItems() {
                     </div>
                     <h3 class="text-2xl font-black text-white tracking-tight uppercase">Void Detected</h3>
                     <p class="text-zinc-500 mt-2 font-medium max-w-xs mx-auto">${emptyMsg}</p>
-                    <button onclick="document.getElementById('search-input').value=''; window.dispatchEvent(new Event('input'));" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
+                    <button onclick="document.getElementById('search-input').value=''; document.getElementById('search-input').dispatchEvent(new Event('input'));" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
                 </div>
             </div>`;
         return;
@@ -2032,7 +2037,7 @@ function syncForumMessages() {
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
-                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OWNER</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 3</span>')}
+                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OWNER</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
@@ -2100,7 +2105,7 @@ function syncForumMessages() {
                         passcode = prompt("SECURITY HANDSHAKE REQUIRED: RE-ENTER CEO PASSCODE TO AUTHORIZE REVOCATION:");
                     }
                     
-                    if (!passcode || (passcode !== '0304' && passcode !== '0007')) {
+                    if (!passcode || !['0304', '0007', '9871', '3421', '8765'].includes(passcode)) {
                         alert("REVOCATION ABORTED: INVALID OR MISSING AUTHORIZATION.");
                         return;
                     }
