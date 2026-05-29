@@ -81,7 +81,7 @@ const allEntries = [
   {
     "id": "retro-bowl-college",
     "title": "Retro Bowl College",
-    "iframeUrl": "/study.html",
+    "iframeUrl": "https://xylora.bumon.ar/",
     "thumbnail": "https://play-lh.googleusercontent.com/-BT8C-1UPYWouyjVvWYgaar_-xV4IQvX4Bvib3koGEGiy6UsHlt0RgYpUrdTDfC2y0ct",
     "categories": ["Sports", "Trending Games"],
     "description": "Manage your college football program to glory! Recruit, train, and lead your team to the national championship in this retro-styled sports simulation."
