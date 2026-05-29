@@ -926,6 +926,16 @@ async function postForumMessage() {
         sendForumMsgBtn.disabled = true;
         sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
+        const authorId = localStorage.getItem('vp_uplink_id');
+        if (authorId) {
+            const bannedDoc = await getDoc(doc(db, 'banned_clients', authorId));
+            if (bannedDoc.exists()) {
+                alert("ACCESS REVOKED: You have been blocked from the network.");
+                location.reload(); // Force reload to trigger UI block
+                return;
+            }
+        }
+
         const role = localStorage.getItem('vp_chat_role') || 'guest';
         const storedName = localStorage.getItem('vp_chat_name');
         const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
@@ -939,11 +949,11 @@ async function postForumMessage() {
         }
         
         const passcode = localStorage.getItem('vp_chat_passcode');
-        const authorId = localStorage.getItem('vp_uplink_id') || 'passcode-uplink-' + Math.random().toString(36).substring(7);
+        const finalAuthorId = authorId || 'passcode-uplink-' + Math.random().toString(36).substring(7);
 
         await addDoc(collection(db, 'forum_messages'), {
             content,
-            authorId: authorId,
+            authorId: finalAuthorId,
             firebaseUid: auth.currentUser?.uid || null,
             authorName: name,
             authorRole: role,
@@ -1994,7 +2004,33 @@ function syncForumMessages() {
         }
     }
 
-    unsubscribeForum = onSnapshot(messagesQuery, (snapshot) => {
+    unsubscribeForum = onSnapshot(messagesQuery, async (snapshot) => {
+        const authorId = localStorage.getItem('vp_uplink_id');
+        if (authorId) {
+            try {
+                const bannedDoc = await getDoc(doc(db, 'banned_clients', authorId));
+                if (bannedDoc.exists()) {
+                    forumMessagesView.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 text-center">
+                            <i class="bi bi-shield-slash text-red-500 text-4xl mb-4"></i>
+                            <h3 class="text-white font-bold uppercase italic tracking-tighter">ACCESS REVOKED</h3>
+                            <p class="text-zinc-500 text-xs mt-2 px-10">Your handshake with the secure relay has been terminated by the CEO.</p>
+                            <div class="mt-8 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <span class="text-[9px] font-mono text-red-400 uppercase tracking-widest">CLIENT_TERMINATED_BY_AUTHORITY</span>
+                            </div>
+                        </div>
+                    `;
+                    const input = document.getElementById('forum-msg-input');
+                    const btn = document.getElementById('send-forum-msg');
+                    if (input) input.disabled = true;
+                    if (btn) btn.disabled = true;
+                    return;
+                }
+            } catch (err) {
+                console.warn("Banned list check failed:", err);
+            }
+        }
+
         if (snapshot.empty) {
             forumMessagesView.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-24 text-center">
@@ -2036,8 +2072,8 @@ function syncForumMessages() {
                 <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
-                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OWNER</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
+                        ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK ${isMsgCeo ? 'OWNER' : msg.authorRank || '1'}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
