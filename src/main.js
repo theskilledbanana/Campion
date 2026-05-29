@@ -273,6 +273,14 @@ const allEntries = [
     "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Doodle_Jump.png",
     "categories": ["Skill", "Fun"],
     "description": "Jump from platform to platform, avoiding monsters and obstacles as you climb higher and higher in this addictive vertical jumper."
+  },
+  {
+    "id": "baseball-bros",
+    "title": "Baseball Bros",
+    "iframeUrl": "https://y.demo.lhyang.org/https://baseballbros.io/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
+    "categories": ["Sports", "Fun"],
+    "description": "Step up to the plate and hit home runs in this competitive baseball game!"
   }
 ];
 
