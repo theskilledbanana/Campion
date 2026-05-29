@@ -503,24 +503,21 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '7771' || code === '9991' || code === '4242' || code === '9871' || code === '3421' || code === '8765') {
-                const isByrnesey = code === '7771';
-                const isChambo = code === '9991';
-                const isUpTheBlues = code === '4242';
-                const isMarlon = code === '8765';
+            if (code === '0304' || code === '0007' || code === '9871' || code === '3421') {
                 const isCeoCode = code === '0304';
                 const isSupplier = code === '9871';
                 const isOgDev = code === '3421';
+                const isExeDev = code === '0007';
                 
-                let role = 'dev';
-                let name = 'DEVELOPER';
-                let rank = '2';
+                let role = 'guest_staff';
+                let name = 'STAFF';
+                let rank = '3';
 
                 if (isCeoCode) {
                     role = 'ceo';
                     name = 'JACK CAMPELL';
                     rank = 'OWNER';
-                } else if (code === '0007') {
+                } else if (isExeDev) {
                     role = 'exe_dev';
                     name = 'EXECUTIVE DEV';
                     rank = '1';
@@ -532,22 +529,6 @@ function init() {
                     role = 'og_dev';
                     name = 'OG DEV';
                     rank = '1';
-                } else if (isByrnesey) {
-                    role = 'dev';
-                    name = 'BYRNESEY';
-                    rank = '2';
-                } else if (isChambo) {
-                    role = 'dev';
-                    name = 'CHAMBO';
-                    rank = '2';
-                } else if (isUpTheBlues) {
-                    role = 'dev';
-                    name = 'UP THE BLUES';
-                    rank = '2';
-                } else if (isMarlon) {
-                    role = 'dev';
-                    name = 'MARLON';
-                    rank = '2';
                 }
 
                 localStorage.setItem('vp_chat_role', role);
@@ -740,39 +721,22 @@ async function handleTerminalAuth() {
     }
 
     const isCeo = code === '0304';
-    const isDev = code === '5012' || code === '7771' || code === '9991' || code === '4242' || code === '8765';
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
 
-    if (isCeo || isDev || isSupplier || isOgDev || isExeDev) {
+    if (isCeo || isSupplier || isOgDev || isExeDev) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
-            let role = 'dev';
-            let name = 'Developer';
-            let rank = '2';
+            let role = 'guest_staff';
+            let name = 'Staff';
+            let rank = '3';
 
             if (isCeo) {
                 role = 'ceo';
                 name = 'CEO';
                 rank = 'OWNER';
-            } else if (code === '7771') {
-                role = 'dev';
-                name = 'BYRNESEY';
-                rank = '2';
-            } else if (code === '9991') {
-                role = 'dev';
-                name = 'CHAMBO';
-                rank = '2';
-            } else if (code === '4242') {
-                role = 'dev';
-                name = 'UP THE BLUES';
-                rank = '2';
-            } else if (code === '8765') {
-                role = 'dev';
-                name = 'MARLON';
-                rank = '2';
             } else if (isSupplier) {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
@@ -785,10 +749,6 @@ async function handleTerminalAuth() {
                 role = 'exe_dev';
                 name = 'EXECUTIVE DEV';
                 rank = '1';
-            } else if (isDev) {
-                role = 'dev';
-                name = 'DEVELOPER';
-                rank = '2';
             }
 
             localStorage.setItem('vp_chat_role', role);
@@ -952,10 +912,10 @@ async function postForumMessage() {
         sendForumMsgBtn.disabled = true;
         sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
-        const role = localStorage.getItem('vp_chat_role') || 'dev';
+        const role = localStorage.getItem('vp_chat_role') || 'guest';
         const storedName = localStorage.getItem('vp_chat_name');
-        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
-        let name = storedName || 'Developer';
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '3'));
+        let name = storedName || 'Guest';
         
         if (!storedName) {
             if (role === 'ceo') name = 'CEO';
@@ -974,7 +934,7 @@ async function postForumMessage() {
             authorName: name,
             authorRole: role,
             authorRank: rank,
-            authorPhoto: role === 'ceo' ? `https://api.dicebear.com/7.x/pixel-art/svg?seed=ceo-vault-portal` : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
+            authorPhoto: role === 'ceo' ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : `https://api.dicebear.com/7.x/pixel-art/svg?seed=${name}`,
             passcode: passcode,
             createdAt: serverTimestamp()
         });
@@ -1290,7 +1250,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '7771' || code === '9991' || code === '4242' || code === '8765') {
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
@@ -2052,11 +2012,11 @@ function syncForumMessages() {
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
-                <img src="${msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'dev')}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
+                <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest'))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'text-amber-400' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
-                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OWNER</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
+                        ${isMsgCeo ? '<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK OWNER</span>' : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 3</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
@@ -2117,11 +2077,18 @@ function syncForumMessages() {
                 return;
             }
 
-            if (confirm(`PROTOCOL: REVOKE DEVELOPER ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
+            if (confirm(`PROTOCOL: REVOKE ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                 try {
                     let user = auth.currentUser;
                     if (!user) {
-                        await signInAnonymously(auth);
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (authErr) {
+                            if (authErr.code !== 'auth/admin-restricted-operation') {
+                                throw authErr;
+                            }
+                            console.warn("Secure Bridge (Anon) restricted, proceeding with local authorization only.");
+                        }
                     }
                     
                     await setDoc(doc(db, 'banned_clients', authorId), {
@@ -2132,7 +2099,7 @@ function syncForumMessages() {
                     alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
                 } catch (err) {
                     console.error("Revoke failed:", err);
-                    alert(`REVOKE ERROR [${err.code}]: Secure Bridge rejected termination request.`);
+                    alert(`REVOKE ERROR [${err.code}]: ${err.code === 'permission-denied' ? 'SYSTEM REJECTION (Banned list write denied)' : 'Secure Bridge rejected termination request.'}`);
                 }
             }
         };
