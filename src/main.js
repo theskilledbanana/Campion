@@ -479,10 +479,11 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '7771' || code === '9991' || code === '4242' || code === '9871' || code === '3421') {
+            if (code === '0304' || code === '0007' || code === '7771' || code === '9991' || code === '4242' || code === '9871' || code === '3421' || code === '8765') {
                 const isByrnesey = code === '7771';
                 const isChambo = code === '9991';
                 const isUpTheBlues = code === '4242';
+                const isMarlon = code === '8765';
                 const isCeoCode = code === '0304';
                 const isSupplier = code === '9871';
                 const isOgDev = code === '3421';
@@ -518,6 +519,10 @@ function init() {
                 } else if (isUpTheBlues) {
                     role = 'dev';
                     name = 'UP THE BLUES';
+                    rank = '2';
+                } else if (isMarlon) {
+                    role = 'dev';
+                    name = 'MARLON';
                     rank = '2';
                 }
 
@@ -711,7 +716,7 @@ async function handleTerminalAuth() {
     }
 
     const isCeo = code === '0304';
-    const isDev = code === '5012' || code === '7771' || code === '9991' || code === '4242';
+    const isDev = code === '5012' || code === '7771' || code === '9991' || code === '4242' || code === '8765';
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
@@ -739,6 +744,10 @@ async function handleTerminalAuth() {
             } else if (code === '4242') {
                 role = 'dev';
                 name = 'UP THE BLUES';
+                rank = '2';
+            } else if (code === '8765') {
+                role = 'dev';
+                name = 'MARLON';
                 rank = '2';
             } else if (isSupplier) {
                 role = 'supplier';
@@ -1257,7 +1266,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '7771' || code === '9991' || code === '4242') {
+        if (code === '5012' || code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '7771' || code === '9991' || code === '4242' || code === '8765') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
