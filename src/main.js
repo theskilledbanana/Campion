@@ -2079,6 +2079,7 @@ function syncForumMessages() {
 
             if (confirm(`PROTOCOL: REVOKE ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
                 try {
+                    const passcode = localStorage.getItem('vp_chat_passcode');
                     let user = auth.currentUser;
                     if (!user) {
                         try {
@@ -2094,7 +2095,8 @@ function syncForumMessages() {
                     await setDoc(doc(db, 'banned_clients', authorId), {
                         status: 'banned',
                         bannedAt: serverTimestamp(),
-                        bannedBy: 'CEO'
+                        bannedBy: 'CEO',
+                        passcode: passcode // Satisfy Firestore security rules
                     });
                     alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
                 } catch (err) {
