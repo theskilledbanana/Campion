@@ -55,14 +55,6 @@ const allEntries = [
     "description": "Access a variety of instant sounds and soundboard buttons for ultimate fun and reactions."
   },
   {
-    "id": "tiktok",
-    "title": "TikTok",
-    "iframeUrl": "/scramjet/https%3A%2F%2Ftiktok.com%2F",
-    "thumbnail": "https://variety.com/wp-content/uploads/2021/06/TikTok-Jump.png?w=970&h=545&crop=1",
-    "categories": ["Utility", "Fun", "Trending Games"],
-    "description": "Watch and create short videos that are exciting, spontaneous, and genuine. Access the global community of TikTok directly from your dashboard."
-  },
-  {
     "id": "doom-2",
     "title": "Doom 2",
     "iframeUrl": "https://oshkii.github.io/doom2-webport/",
