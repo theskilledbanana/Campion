@@ -747,14 +747,6 @@ async function handleTerminalAuth() {
                 role = 'ceo';
                 name = 'CEO';
                 rank = 'OWNER';
-            } else if (isMarlon) {
-                role = 'og_dev';
-                name = 'MARLON';
-                rank = '2';
-            } else if (isSupplier) {
-                role = 'supplier';
-                name = 'FAT GAME SUPPLIER';
-                rank = '1';
             } else if (isOgDev) {
                 role = 'og_dev';
                 name = 'OG DEV';
@@ -762,6 +754,14 @@ async function handleTerminalAuth() {
             } else if (isExeDev) {
                 role = 'exe_dev';
                 name = 'EXECUTIVE DEV';
+                rank = '1';
+            } else if (isMarlon) {
+                role = 'og_dev';
+                name = 'MARLON';
+                rank = '2';
+            } else if (isSupplier) {
+                role = 'supplier';
+                name = 'FAT GAME SUPPLIER';
                 rank = '1';
             }
 
@@ -926,14 +926,17 @@ async function postForumMessage() {
         sendForumMsgBtn.disabled = true;
         sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
 
-        const authorId = localStorage.getItem('vp_uplink_id');
-        if (authorId) {
-            const bannedDoc = await getDoc(doc(db, 'banned_clients', authorId));
-            if (bannedDoc.exists()) {
-                alert("ACCESS REVOKED: You have been blocked from the network.");
-                location.reload(); // Force reload to trigger UI block
-                return;
-            }
+        let authorId = localStorage.getItem('vp_uplink_id');
+        if (!authorId) {
+            authorId = 'client-' + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('vp_uplink_id', authorId);
+        }
+
+        const bannedDoc = await getDoc(doc(db, 'banned_clients', authorId));
+        if (bannedDoc.exists()) {
+            alert("ACCESS REVOKED: You have been blocked from the network.");
+            location.reload(); 
+            return;
         }
 
         const role = localStorage.getItem('vp_chat_role') || 'guest';
@@ -949,7 +952,7 @@ async function postForumMessage() {
         }
         
         const passcode = localStorage.getItem('vp_chat_passcode');
-        const finalAuthorId = authorId || 'passcode-uplink-' + Math.random().toString(36).substring(7);
+        const finalAuthorId = authorId;
 
         await addDoc(collection(db, 'forum_messages'), {
             content,
@@ -1447,7 +1450,7 @@ function setupEventListeners() {
             } catch (err) {
                 console.warn("Pulse Link failed. ERROR: auth/admin-restricted-operation means you MUST enable Anonymous Auth in Firebase Console.");
                 if (err.code === 'auth/admin-restricted-operation') {
-                    alert("FIREBASE PERMISSION ERROR: Anonymous Authentication is DISABLED. The developer must enable it in the Firebase Console (Authentication > Sign-in method) for CEO Mode to function correctly.");
+                    alert("FIREBASE PERMISSION ERROR: Anonymous Authentication is DISABLED. Handshake rejected. Admin must enable it for CEO Mode functions.");
                 } else {
                     console.log("CEO Pulse Sync pending auth permissions...");
                 }
@@ -2072,7 +2075,7 @@ function syncForumMessages() {
                 <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'text-indigo-400' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${msg.authorName}</span>
                         ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK ${isMsgCeo ? 'OWNER' : msg.authorRank || '1'}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
