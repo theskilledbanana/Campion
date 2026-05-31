@@ -740,6 +740,26 @@ async function handleTerminalAuth() {
         return;
     }
 
+    if (code.toUpperCase() === 'JOHNPORK') {
+        if (terminalStatusLog) terminalStatusLog.textContent = 'LOCATING SUBJECT...';
+        setTimeout(() => {
+            const scared = document.createElement('div');
+            scared.className = 'fixed inset-0 z-[9999] bg-black flex items-center justify-center animate-flicker overflow-hidden';
+            scared.innerHTML = `
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.1),transparent)] animate-pulse"></div>
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="w-[80%] h-[80%] object-contain grayscale brightness-200 contrast-200 animate-float" referrerpolicy="no-referrer">
+                <div class="absolute bottom-20 text-cyan-400 font-black text-6xl uppercase italic tracking-tighter animate-rainbow">John Pork is watching</div>
+            `;
+            document.body.appendChild(scared);
+            setTimeout(() => {
+                scared.classList.add('opacity-0', 'transition-opacity', 'duration-1000');
+                setTimeout(() => scared.remove(), 1000);
+            }, 3000);
+            closeDevTerminal();
+        }, 1000);
+        return;
+    }
+
     if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
@@ -1362,6 +1382,39 @@ function setupEventListeners() {
             if (clickCount >= 3) {
                 clickCount = 0;
                 openDevTerminal();
+            }
+        };
+    }
+
+    // Header Triple Click Easter Egg
+    const mainTitle = document.querySelector('h1');
+    if (mainTitle) {
+        let clickCount = 0;
+        let lastClick = 0;
+        mainTitle.onclick = () => {
+            const now = Date.now();
+            if (now - lastClick < 500) {
+                clickCount++;
+            } else {
+                clickCount = 1;
+            }
+            lastClick = now;
+
+            if (clickCount >= 3) {
+                clickCount = 0;
+                const overlay = document.createElement('div');
+                overlay.className = 'fixed inset-0 z-[9999] bg-cyan-900/20 backdrop-blur-3xl flex flex-col items-center justify-center p-10 animate-scale-up';
+                overlay.innerHTML = `
+                    <div class="bg-black border-4 border-cyan-500 rounded-[4rem] p-16 flex flex-col items-center gap-10 animate-rainbow shadow-[0_0_100px_rgba(34,211,238,0.5)]">
+                        <div class="relative w-64 h-64 rounded-full overflow-hidden border-8 border-cyan-500/50">
+                            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                        </div>
+                        <h2 class="text-7xl font-black text-white italic uppercase tracking-tighter text-center animate-rainbow-text">John Pork is Watching</h2>
+                        <button id="close-scare" class="px-12 py-6 bg-cyan-500 text-black font-black uppercase text-xl rounded-2xl hover:scale-110 transition-all">Understood</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                document.getElementById('close-scare').onclick = () => overlay.remove();
             }
         };
     }
