@@ -1554,6 +1554,24 @@ function startSystemTicker() {
 function showDisclaimer() {
     if (!disclaimerModal) return;
     
+    // Generate background noise logs
+    const logContainer = document.getElementById('disclaimer-logs');
+    if (logContainer) {
+        logContainer.innerHTML = '';
+        const commands = [
+            'LOAD_MODULE: VAULT_CORE', 'SYNC_AUTH: GATEWAY_01', 'HEX_DUMP: 0x77AF',
+            'ENCRYPT_SESSION: TRUE', 'ESTABLISH_BRIDGE: SUCCESS', 'LATENCY: 12ms',
+            'RECOVERY_POINT: SET', 'OVERRIDE_AUTH: BYPASSED', 'GHOST_PROTOCOL: ACTIVE',
+            'WIPE_TRACES: PENDING', 'KERNEL_HOOK: ATTACHED', 'DIST_SYNC: COMPLETED'
+        ];
+        for (let i = 0; i < 200; i++) {
+            const span = document.createElement('span');
+            span.className = 'mr-2';
+            span.textContent = commands[Math.floor(Math.random() * commands.length)];
+            logContainer.appendChild(span);
+        }
+    }
+
     disclaimerModal.classList.remove('hidden');
     setTimeout(() => {
         disclaimerModal.classList.remove('opacity-0');
@@ -1568,7 +1586,7 @@ function hideDisclaimer() {
     disclaimerContainer.classList.add('scale-90');
     setTimeout(() => {
         disclaimerModal.classList.add('hidden');
-    }, 700);
+    }, 1000);
 }
 
 function renderCategories() {
