@@ -882,6 +882,18 @@ async function handleTerminalAuth() {
                             updatedAt: serverTimestamp()
                         };
                         await setDoc(doc(db, 'authorized_users', sessionUser.uid), syncData, { merge: true });
+
+                        // AUTO-RESTORE DEVELOPER if they were somehow banned
+                        if (isDeveloper) {
+                            const uplinkId = localStorage.getItem('vp_uplink_id');
+                            if (uplinkId) {
+                                try {
+                                    await deleteDoc(doc(db, 'banned_clients', uplinkId));
+                                } catch (e) { console.warn("Dev auto-restore local failed", e); }
+                            }
+                            await deleteDoc(doc(db, 'banned_clients', sessionUser.uid));
+                        }
+
                         console.log(`${role.toUpperCase()} Link Synchronized [UID: ${sessionUser.uid}]`);
                         if (terminalStatusLog) terminalStatusLog.textContent = `${role.toUpperCase()} LINK ACTIVE. UPLINK RESTORED.`;
                     }
@@ -1012,9 +1024,15 @@ async function postForumMessage() {
 
         const bannedDoc = await getDoc(doc(db, 'banned_clients', authorId));
         if (bannedDoc.exists()) {
-            alert("ACCESS REVOKED: You have been blocked from the network.");
-            location.reload(); 
-            return;
+            const role = localStorage.getItem('vp_chat_role') || 'guest';
+            if (role === 'developer' || role === 'dev') {
+                console.log("Developer override: Auto-restoring access...");
+                await deleteDoc(doc(db, 'banned_clients', authorId));
+            } else {
+                alert("ACCESS REVOKED: You have been blocked from the network.");
+                location.reload(); 
+                return;
+            }
         }
 
         const role = localStorage.getItem('vp_chat_role') || 'guest';
@@ -2317,12 +2335,16 @@ function syncForumMessages() {
             
             // Only the CEO can delete or revoke
             const canDelete = currentUserRole === 'ceo';
-            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
+            const isTargetDev = msg.authorRole === 'developer' || msg.authorRole === 'dev';
+            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo && !isTargetDev;
             const isMsgMarlon = msg.authorName === 'MARLON';
             
+            // Check if this specific author is already revoked (this is expensive in a loop, but we do it for the UI)
+            const isAlreadyRevoked = false; // We will handle this via a separate state or just offer the toggle
+
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
-                <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
+                <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0" referrerpolicy="no-referrer">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
                         <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : (isMsgDev ? 'text-cyan-400' : 'text-white'))))} uppercase italic leading-none">${isMsgCeo ? 'CEO' : msg.authorName}</span>
@@ -2335,13 +2357,17 @@ function syncForumMessages() {
                             ${canDelete ? `
                                 <button class="delete-msg-btn text-zinc-500 hover:text-red-400 flex items-center gap-1.5 transition-colors" data-id="${docSnap.id}">
                                     <i class="bi bi-trash"></i>
-                                    <span class="text-[9px] font-black uppercase tracking-widest">Delete Log</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest">Purge Log</span>
                                 </button>
                             ` : ''}
                             ${canRevoke ? `
                                 <button class="revoke-access-btn text-zinc-500 hover:text-amber-400 flex items-center gap-1.5 transition-colors" data-authorid="${msg.authorId}">
                                     <i class="bi bi-person-x"></i>
-                                    <span class="text-[9px] font-black uppercase tracking-widest">Revoke Access</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest">Revoke</span>
+                                </button>
+                                <button class="unrevoke-access-btn text-zinc-500 hover:text-emerald-400 flex items-center gap-1.5 transition-colors" data-authorid="${msg.authorId}">
+                                    <i class="bi bi-person-check"></i>
+                                    <span class="text-[9px] font-black uppercase tracking-widest">Restore</span>
                                 </button>
                             ` : ''}
                         </div>
@@ -2435,6 +2461,39 @@ function syncForumMessages() {
             }
         };
     });
+
+    document.querySelectorAll('.unrevoke-access-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+            const authorId = btn.getAttribute('data-authorid');
+            const currentUserRole = localStorage.getItem('vp_chat_role');
+            const isCeo = currentUserRole === 'ceo';
+
+            if (!isCeo) {
+                alert("ACCESS DENIED: ONLY THE CEO MAY RESTORE HANDSHAKES.");
+                return;
+            }
+
+            if (confirm(`PROTOCOL: RESTORE ACCESS FOR CLIENT [${authorId.substring(0, 15)}]?`)) {
+                try {
+                    let passcode = localStorage.getItem('vp_chat_passcode');
+                    if (!passcode) {
+                        passcode = prompt("SECURITY HANDSHAKE REQUIRED: RE-ENTER CEO PASSCODE TO AUTHORIZE RESTORATION:");
+                    }
+                    
+                    if (!passcode || passcode !== '0304') {
+                        alert("RESTORATION ABORTED: INVALID OR MISSING AUTHORIZATION.");
+                        return;
+                    }
+
+                    await deleteDoc(doc(db, 'banned_clients', authorId));
+                    alert("CLIENT HANDSHAKE RESTORED. ACCESS GRANTED.");
+                } catch (err) {
+                    console.error("Restore failed:", err);
+                    alert(`RESTORE ERROR: ${err.message || 'SYSTEM REJECTION'}`);
+                }
+            }
+        };
+    });
     });
 }
 
@@ -2453,6 +2512,7 @@ async function openDetails(item) {
     activeDetailsGameId = item.id;
     
     // Fill basic info
+    detailsImg.referrerPolicy = "no-referrer";
     detailsImg.src = item.thumbnail || '';
     detailsTitle.textContent = item.title || 'Untitled';
     detailsDesc.textContent = item.description || '';
