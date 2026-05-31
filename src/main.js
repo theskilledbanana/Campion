@@ -551,11 +551,12 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '9871' || code === '3421' || code === '8765') {
+            if (code === '0304' || code === '0007' || code === '9871' || code === '3421' || code === '8765' || code === '0981') {
                 const isCeoCode = code === '0304';
                 const isSupplier = code === '9871';
                 const isOgDev = code === '3421';
                 const isExeDev = code === '0007';
+                const isDeveloper = code === '0981';
                 const isMarlon = code === '8765';
                 
                 let role = 'guest_staff';
@@ -578,6 +579,10 @@ function init() {
                     role = 'og_dev';
                     name = 'OG DEV';
                     rank = '1';
+                } else if (isDeveloper) {
+                    role = 'developer';
+                    name = 'DEVELOPER';
+                    rank = '3';
                 } else if (isMarlon) {
                     role = 'og_dev';
                     name = 'MARLON';
@@ -1388,7 +1393,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765') {
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
