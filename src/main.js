@@ -781,7 +781,7 @@ async function handleTerminalAuth() {
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
-    const isDeveloper = code === '5012';
+    const isDeveloper = code === '0981';
     const isMarlon = code === '8765';
 
     if (code.toUpperCase() === 'JOHNPORK') {
@@ -1589,7 +1589,7 @@ function setupEventListeners() {
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
 
         // Legacy check for decommissioned sessions (disabled as it's active again)
-        if (storedRole === 'developer' || storedPasscode === '5012' || storedRole === 'dev') {
+        if (storedRole === 'developer' || storedPasscode === '0981' || storedRole === 'dev') {
             console.log("Developer session active.");
         }
 
