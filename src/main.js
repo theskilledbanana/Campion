@@ -281,6 +281,14 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
     "categories": ["Sports", "Fun"],
     "description": "Step up to the plate and hit home runs in this competitive baseball game!"
+  },
+  {
+    "id": "cookie-clicker",
+    "title": "Cookie Clicker",
+    "iframeUrl": "/study.html",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQdcAARhuMaw3L45xQ9LbzGKB2_28UjmD9gMg&s",
+    "categories": ["Skill", "Arcade", "Trending Games"],
+    "description": "Bake cookies to rule the universe! Click the giant cookie to produce cookies, then use them to purchase upgrades and buildings to automate your cookie production."
   }
 ];
 
