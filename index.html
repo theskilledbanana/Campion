@@ -301,7 +301,7 @@
                     </div>
                     <div>
                         <h1 class="text-2xl font-black text-white tracking-tight uppercase">
-                            Vault<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Portal</span>
+                            Vault<span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Portal</span> <span class="text-[10px] text-zinc-700 font-mono tracking-widest hidden md:inline ml-2 opacity-50 uppercase italic">// John Pork is watching</span>
                         </h1>
                         <div class="flex items-center gap-3">
                             <div class="flex items-center gap-1.5">
@@ -638,7 +638,7 @@
         </div>
     </div>
 
-    <div id="disclaimer-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10 bg-black/98 backdrop-blur-3xl hidden opacity-0 transition-opacity duration-1000 overflow-y-auto">
+    <div id="disclaimer-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12 bg-black/98 backdrop-blur-3xl hidden opacity-0 transition-opacity duration-1000 overflow-y-auto">
         <!-- Digital Rain Background -->
         <div class="fixed inset-0 pointer-events-none opacity-[0.05] overflow-hidden" id="binary-rain-container">
             <div class="absolute inset-x-0 flex justify-around font-mono text-[10px] text-cyan-500 whitespace-nowrap animate-binary">
@@ -649,7 +649,7 @@
         <!-- CRT Monitor Effect Overlay -->
         <div class="fixed inset-0 pointer-events-none z-[201] opacity-[0.05]" style="background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 2px, 3px 100%;"></div>
         
-        <div class="bg-zinc-950 border-[6px] rounded-[3rem] md:rounded-[4rem] p-0 max-w-2xl w-full shadow-[0_0_250px_rgba(34,211,238,0.2)] relative scale-75 md:scale-90 transition-all duration-1000 overflow-visible my-auto" style="animation: var(--animate-rainbow), var(--animate-flicker)" id="disclaimer-container">
+        <div class="bg-zinc-950 border-[6px] rounded-[3rem] md:rounded-[4rem] p-0 max-w-2xl w-full shadow-[0_0_250px_rgba(34,211,238,0.2)] relative transition-all duration-1000 overflow-visible my-auto" style="animation: var(--animate-rainbow), var(--animate-flicker)" id="disclaimer-container">
             <!-- Scanning Line Effect -->
             <div class="scanning-active opacity-50"></div>
             
@@ -659,55 +659,57 @@
             <div class="absolute bottom-10 left-10 w-16 h-16 border-b-4 border-l-4 border-cyan-500/80 rounded-bl-2xl animate-pulse"></div>
             <div class="absolute bottom-10 right-10 w-16 h-16 border-b-4 border-r-4 border-cyan-500/80 rounded-br-2xl animate-pulse"></div>
             
-            <div class="relative z-10 p-10 md:p-14">
-                <div class="flex flex-col items-center text-center">
+            <div class="relative z-10 p-10 md:p-14 w-full flex flex-col items-center justify-center text-center">
+                <div class="w-full flex flex-col items-center">
                     <!-- Biometric Visual -->
-                    <div class="mb-10 relative">
-                        <div class="absolute -inset-10 bg-cyan-500/10 blur-3xl rounded-full animate-pulse"></div>
-                        <div class="relative">
-                            <div class="w-40 h-40 rounded-[2.5rem] border-4 border-cyan-500/40 p-2 bg-black/50 backdrop-blur-xl shadow-[0_0_60px_rgba(34,211,238,0.3)] group overflow-hidden">
+                    <div class="mb-12 relative flex flex-col items-center w-full">
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-[500px] h-[500px] bg-cyan-500/10 blur-[120px] rounded-full animate-pulse"></div>
+                        </div>
+                        <div class="relative mx-auto">
+                            <div class="w-64 h-64 md:w-80 md:h-80 rounded-[4rem] border-[6px] border-cyan-500/50 p-2 bg-black/50 backdrop-blur-3xl shadow-[0_0_120px_rgba(34,211,238,0.5)] group overflow-hidden">
                                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" 
-                                     class="w-full h-full object-cover rounded-[1.8rem] contrast-125 brightness-110 grayscale group-hover:grayscale-0 transition-all duration-1000"
+                                     class="w-full h-full object-cover rounded-[3.2rem] contrast-125 brightness-115 grayscale group-hover:grayscale-0 transition-all duration-1000"
                                      referrerpolicy="no-referrer">
                                 <!-- Animated HUD Overlay -->
-                                <div class="absolute inset-0 flex items-center justify-center opacity-40">
-                                    <div class="w-full h-[1px] bg-cyan-400 absolute top-0 animate-scan"></div>
-                                    <div class="border border-cyan-500/50 rounded-full w-24 h-24 absolute animate-ping"></div>
+                                <div class="absolute inset-0 flex items-center justify-center opacity-60">
+                                    <div class="w-full h-[2px] bg-cyan-400 absolute top-0 animate-scan"></div>
+                                    <div class="border-[3px] border-cyan-500/50 rounded-full w-40 h-40 md:w-48 md:h-48 absolute animate-ping"></div>
                                 </div>
                             </div>
-                            <div class="absolute -right-4 -bottom-4 bg-zinc-950 border border-cyan-500 p-2 rounded-xl shadow-2xl animate-flicker">
-                                <i class="bi bi-shield-check text-cyan-400 text-xl"></i>
+                            <div class="absolute -right-6 -bottom-6 bg-zinc-950 border-2 border-cyan-500 p-3 rounded-2xl shadow-[0_0_40px_rgba(34,211,238,0.4)] animate-flicker">
+                                <i class="bi bi-shield-check text-cyan-400 text-2xl"></i>
                             </div>
                         </div>
-                        <div class="mt-6">
-                            <h3 class="text-white font-black text-2xl uppercase italic tracking-tighter mb-1 animate-rainbow-text">John Pork</h3>
-                            <p class="text-cyan-500/60 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Observer Status: ACTIVE</p>
+                        <div class="mt-10 text-center">
+                            <h3 class="text-white font-black text-3xl md:text-4xl uppercase italic tracking-tighter mb-2 animate-rainbow-text">John Pork is watching</h3>
+                            <p class="text-cyan-400/70 font-mono text-[10px] md:text-xs uppercase tracking-[0.5em] font-black italic">Observer Status: ACTIVE // HE IS ALWAYS WATCHING</p>
                         </div>
                     </div>
 
-                    <div class="space-y-6 max-w-lg mb-12">
-                        <h2 class="text-5xl md:text-6xl font-black text-white tracking-widest uppercase italic leading-none animate-rainbow">SYSTEM<br><span class="text-cyan-400">AUTHORIZED</span></h2>
-                        <div class="h-1 w-24 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mx-auto"></div>
-                        <p class="text-zinc-400 text-sm md:text-base leading-relaxed font-medium italic">
+                    <div class="space-y-8 max-w-xl mb-14 mx-auto">
+                        <h2 class="text-6xl md:text-7xl font-black text-white tracking-widest uppercase italic leading-none animate-rainbow">SYSTEM<br><span class="text-cyan-400">AUTHORIZED</span></h2>
+                        <div class="h-1.5 w-32 bg-gradient-to-r from-transparent via-cyan-500 to-transparent mx-auto"></div>
+                        <p class="text-zinc-300 text-base md:text-lg leading-relaxed font-semibold italic">
                             Authentication successful. You are now authorized to merge with the <span class="text-white font-black">Portal Core</span>. 
                             Active monitoring by the Overseer has been integrated into your session.
                         </p>
                     </div>
 
-                    <div class="w-full relative group">
-                        <div class="absolute -inset-1 bg-cyan-400 rounded-[2.5rem] blur opacity-20 group-hover:opacity-60 transition duration-500"></div>
-                        <button id="accept-disclaimer" class="relative w-full py-8 bg-cyan-400 hover:bg-white text-black rounded-[2.5rem] transition-all text-sm font-black uppercase tracking-[0.6em] shadow-[0_0_80px_rgba(34,211,238,0.5)] active:scale-[0.98] flex flex-col items-center justify-center gap-2">
+                    <div class="w-full max-w-md relative group mx-auto">
+                        <div class="absolute -inset-1 bg-cyan-400 rounded-[3rem] blur opacity-30 group-hover:opacity-70 transition duration-500"></div>
+                        <button id="accept-disclaimer" class="relative w-full py-10 bg-cyan-400 hover:bg-white text-black rounded-[3rem] transition-all text-base font-black uppercase tracking-[0.6em] shadow-[0_0_100px_rgba(34,211,238,0.6)] active:scale-[0.98] flex flex-col items-center justify-center gap-2">
                             <span>Establish Connection</span>
-                            <div class="flex items-center gap-4 opacity-40">
-                                <i class="bi bi-fingerprint text-xl"></i>
-                                <div class="w-12 h-[1px] bg-black"></div>
-                                <span class="text-[8px] font-mono">ID_VERIFIED</span>
+                            <div class="flex items-center gap-5 opacity-50">
+                                <i class="bi bi-fingerprint text-2xl"></i>
+                                <div class="w-16 h-[2px] bg-black"></div>
+                                <span class="text-[10px] font-mono">ID_VERIFIED</span>
                             </div>
                         </button>
                     </div>
 
-                    <p class="mt-10 text-[9px] text-zinc-700 font-mono uppercase tracking-[0.5em] font-black italic">
-                        Securing uplink via protocol_77_alpha
+                    <p class="mt-12 text-[10px] md:text-xs text-zinc-600 font-mono uppercase tracking-[0.6em] font-black italic">
+                        Securing uplink via protocol_77_alpha // JOHN PORK IS WATCHING
                     </p>
                 </div>
             </div>
