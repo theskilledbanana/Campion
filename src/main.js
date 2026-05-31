@@ -417,9 +417,9 @@ function triggerJohnPorkScare(method, customMsg = null, subCaption = null) {
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.15),transparent)] animate-pulse pointer-events-none"></div>
         
         <div class="flex flex-col items-center justify-center max-w-2xl w-full">
-            <div class="relative group pointer-events-none mb-8 md:mb-12">
+            <div class="relative group pointer-events-none mb-8 md:mb-12 flex items-center justify-center">
                 <div class="absolute -inset-10 md:-inset-20 bg-cyan-500/20 blur-3xl opacity-50 transition-opacity"></div>
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="w-64 h-64 md:w-96 md:h-96 object-cover rounded-full border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="max-w-full max-h-[60vh] object-contain rounded-3xl border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
             </div>
 
             <div class="text-center pointer-events-none mb-12 md:mb-16">
@@ -807,7 +807,7 @@ async function handleTerminalAuth() {
 
             if (isCeo) {
                 role = 'ceo';
-                name = 'CEO JOHN PORK IS WATCHING';
+                name = 'CEO';
                 rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
             } else if (isOgDev) {
                 role = 'og_dev';
@@ -1016,7 +1016,7 @@ async function postForumMessage() {
         let name = storedName || 'Guest';
         
         if (!storedName) {
-            if (role === 'ceo') name = 'CEO JOHN PORK IS WATCHING';
+            if (role === 'ceo') name = 'CEO';
             else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
             else if (role === 'og_dev') name = 'OG DEV';
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
@@ -2319,7 +2319,7 @@ function syncForumMessages() {
                 <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${isMsgCeo ? 'CEO JOHN PORK IS WATCHING' : msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${isMsgCeo ? 'CEO' : msg.authorName}</span>
                         ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">${isMsgCeo ? 'RANK OWNER (JOHN PORK IS WATCHING)' : 'RANK ' + (msg.authorRank || '1')}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
