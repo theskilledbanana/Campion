@@ -558,52 +558,12 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '9871' || code === '3421' || code === '8765' || code === '0981' || code === '7771') {
-                const isCeoCode = code === '0304';
-                const isSupplier = code === '9871';
-                const isOgDev = code === '3421';
-                const isExeDev = code === '0007';
-                const isDeveloper = code === '0981';
-                const isMarlon = code === '8765';
-                const isByrnesey = code === '7771';
+            if (code === '0304') {
+                const isCeoCode = true;
                 
-                let role = 'guest_staff';
-                let name = 'STAFF';
-                let rank = '2';
-
-                if (isCeoCode) {
-                    role = 'ceo';
-                    name = 'CEO';
-                    rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
-                } else if (isExeDev) {
-                    role = 'exe_dev';
-                    name = 'EXECUTIVE DEV';
-                    rank = '1';
-                } else if (isSupplier) {
-                    role = 'supplier';
-                    name = 'FAT GAME SUPPLIER';
-                    rank = '1';
-                } else if (isOgDev) {
-                    role = 'og_dev';
-                    name = 'OG DEV';
-                    rank = '1';
-                } else if (isDeveloper) {
-                    role = 'developer';
-                    name = 'DEVELOPER';
-                    rank = '3';
-                } else if (isMarlon) {
-                    role = 'og_dev';
-                    name = 'MARLON';
-                    rank = '2';
-                } else if (isByrnesey) {
-                    role = 'mod';
-                    name = 'BYRNESEY';
-                    rank = '2';
-                } else {
-                    role = 'guest_staff';
-                    name = 'STAFF';
-                    rank = '2';
-                }
+                let role = 'ceo';
+                let name = 'CEO';
+                let rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
 
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_name', name);
@@ -1048,6 +1008,7 @@ async function postForumMessage() {
             else if (role === 'og_dev') name = 'OG DEV';
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
             else if (role === 'developer' || role === 'dev') name = 'DEVELOPER';
+            else if (role === 'mod') name = 'BYRNESEY';
         }
         
         const passcode = localStorage.getItem('vp_chat_passcode');
@@ -1630,8 +1591,8 @@ function setupEventListeners() {
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
         const isCeoEmail = user && (user.email === "jackcampell608@gmail.com");
         
-        // Auto-authorize if using a verified CEO email
-        if (isCeoEmail && storedPasscode !== '0981') {
+        // Auto-authorize if using a verified CEO email AND current passcode is correct
+        if (isCeoEmail && storedPasscode === '0304') {
             const currentRole = localStorage.getItem('vp_chat_role');
             if (currentRole !== 'ceo') {
                 console.log("Verified CEO Identity detected. Promoting to CEO status...");
@@ -2331,6 +2292,7 @@ function syncForumMessages() {
             const isMsgOgDev = msg.authorRole === 'og_dev';
             const isMsgExeDev = msg.authorRole === 'exe_dev';
             const isMsgDev = msg.authorRole === 'developer' || msg.authorRole === 'dev';
+            const isMsgMod = msg.authorRole === 'mod';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
             // Only the CEO can delete or revoke
@@ -2347,7 +2309,7 @@ function syncForumMessages() {
                 <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0" referrerpolicy="no-referrer">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : (isMsgDev ? 'text-cyan-400' : 'text-white'))))} uppercase italic leading-none">${isMsgCeo ? 'CEO' : msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : (isMsgDev ? 'text-cyan-400' : (isMsgMod ? 'text-amber-400' : 'text-white')))))} uppercase italic leading-none">${isMsgCeo ? 'CEO' : msg.authorName}</span>
                         ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">${isMsgCeo ? 'RANK OWNER (JOHN PORK IS WATCHING)' : 'RANK ' + (msg.authorRank || '1')}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
