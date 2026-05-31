@@ -1485,17 +1485,15 @@ function setupEventListeners() {
         googleAdminBtn.onclick = async () => {
             const provider = new GoogleAuthProvider();
             try {
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                const isCeoEmail = user.email === "jackcampell608@gmail.com";
-                
-                if (isCeoEmail) {
-                    alert("IDENTITY VERIFIED: Welcome, Admin.");
-                } else {
-                    alert("VERIFICATION FAILED: Unrecognized identity.");
-                }
+                // Attempt identity sync
+                await signInWithPopup(auth, provider);
             } catch (err) {
-                alert(`SYNC ERROR: ${err.message}`);
+                if (err.code === 'auth/unauthorized-domain') {
+                    const currentDomain = window.location.hostname;
+                    alert(`VERIFICATION ERROR: Domain Not Authorized.\n\nTo enable this button:\n1. Open Firebase Console\n2. Authentication > Settings > Authorized Domains\n3. Add this domain: ${currentDomain}\n\nUntil then, use the local terminal code 0304 for standard admin tools.`);
+                } else {
+                    alert(`SYNC ERROR: ${err.message}`);
+                }
             }
         };
     }
@@ -2155,17 +2153,23 @@ function syncForumMessages() {
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
-                    // Check for valid Admin Auth
-                    if (!auth.currentUser || (auth.currentUser.isAnonymous && storedRole !== 'ceo')) {
-                        alert("ADMIN AUTH REQUIRED: You must verify your Google Identity in the Master Panel to perform purge operations.");
-                        return;
+                    // Pre-verification: Check if User Identity is established
+                    if (!auth.currentUser) {
+                        try {
+                            await signInAnonymously(auth);
+                        } catch (err) {
+                            if (err.code === 'auth/admin-restricted-operation') {
+                                throw new Error("Anonymous Auth is DISABLED. Go to Firebase Console > Authentication > Sign-in method and ENABLE 'Anonymous' to use admin purging.");
+                            }
+                            throw err;
+                        }
                     }
                     
                     await deleteDoc(doc(db, 'forum_messages', msgId));
                     alert("LOG PURGED SUCCESSFULLY.");
                 } catch (err) {
                     console.error("Deletion failed:", err);
-                    alert(`DELETION ERROR: ${err.code === 'permission-denied' ? 'SYSTEM REJECTION (Check Rules Deployment)' : err.message}`);
+                    alert(`DELETION ERROR: ${err.message || 'SYSTEM REJECTION'}`);
                 }
             }
         };
