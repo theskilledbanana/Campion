@@ -797,8 +797,8 @@ async function handleTerminalAuth() {
 
             if (isCeo) {
                 role = 'ceo';
-                name = 'CEO // JOHN PORK IS WATCHING';
-                rank = 'OWNER (JOHN PORK IS WATCHING)';
+                name = 'CEO JOHN PORK IS WATCHING';
+                rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
             } else if (isOgDev) {
                 role = 'og_dev';
                 name = 'OG DEV';
@@ -1002,11 +1002,11 @@ async function postForumMessage() {
         }
 
         const storedName = localStorage.getItem('vp_chat_name');
-        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
         let name = storedName || 'Guest';
         
         if (!storedName) {
-            if (role === 'ceo') name = 'CEO';
+            if (role === 'ceo') name = 'CEO JOHN PORK IS WATCHING';
             else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
             else if (role === 'og_dev') name = 'OG DEV';
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
@@ -2309,8 +2309,8 @@ function syncForumMessages() {
                 <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${isMsgCeo ? msg.authorName + ' // JOHN PORK IS WATCHING' : msg.authorName}</span>
-                        ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">RANK ${isMsgCeo ? 'OWNER (JOHN PORK IS WATCHING)' : msg.authorRank || '1'}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${isMsgCeo ? 'CEO JOHN PORK IS WATCHING' : msg.authorName}</span>
+                        ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">${isMsgCeo ? 'RANK OWNER (JOHN PORK IS WATCHING)' : 'RANK ' + (msg.authorRank || '1')}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
                     <div class="bg-indigo-500/10 text-zinc-200 rounded-2xl p-4 text-sm leading-relaxed border border-indigo-500/20 relative group/msg-content">
