@@ -849,40 +849,34 @@ async function handleTerminalAuth() {
                 localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
             }
 
-                if (isCeo) {
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'ESTABLISHING MASTER LINK...';
-                    try {
-                        // 1. Ensure we have a Firebase session
-                        let sessionUser = auth.currentUser;
-                        
-                        if (!sessionUser) {
-                            try {
-                                // CEO Priority: Try Anon first, avoid popup as requested
-                                const cred = await signInAnonymously(auth);
-                                sessionUser = cred.user;
-                            } catch (authErr) {
-                                console.warn("Anon restricted for Master Link:", authErr);
-                            }
+            // Sync certain roles to Firestore to prevent session drift
+            if (isCeo || isDeveloper || isExeDev) {
+                if (terminalStatusLog) terminalStatusLog.textContent = `ESTABLISHING ${role.toUpperCase()} LINK...`;
+                try {
+                    let sessionUser = auth.currentUser;
+                    if (!sessionUser) {
+                        try {
+                            const cred = await signInAnonymously(auth);
+                            sessionUser = cred.user;
+                        } catch (authErr) {
+                            console.warn("Auth sync restricted:", authErr);
                         }
+                    }
     
-                        // 2. Sync if we have a session
-                        if (sessionUser) {
+                    if (sessionUser) {
                         const syncData = {
-                            role: 'ceo',
+                            role: role,
+                            name: name,
                             status: 'active',
                             passcode: code,
                             updatedAt: serverTimestamp()
                         };
                         await setDoc(doc(db, 'authorized_users', sessionUser.uid), syncData, { merge: true });
-                        console.log("Master Link Synchronized [UID: " + sessionUser.uid + "]");
-                        if (terminalStatusLog) terminalStatusLog.textContent = 'MASTER CONTROL ACTIVE. UPLINK RESTORED.';
-                    } else {
-                        console.warn("Entering Local-Only CEO mode.");
-                        if (terminalStatusLog) terminalStatusLog.textContent = 'LOCAL OVERRIDE ACTIVE. (REMOTE SYNC OFFLINE)';
+                        console.log(`${role.toUpperCase()} Link Synchronized [UID: ${sessionUser.uid}]`);
+                        if (terminalStatusLog) terminalStatusLog.textContent = `${role.toUpperCase()} LINK ACTIVE. UPLINK RESTORED.`;
                     }
-                } catch (authErr) {
-                    console.error("Master Link Logic Error:", authErr);
-                    if (terminalStatusLog) terminalStatusLog.textContent = 'LINK ERROR: CHECK CONSOLE.';
+                } catch (dbErr) {
+                    console.error(`${role.toUpperCase()} Sync failed:`, dbErr);
                 }
             }
             
@@ -1609,7 +1603,7 @@ function setupEventListeners() {
         const isCeoEmail = user && (user.email === "jackcampell608@gmail.com");
         
         // Auto-authorize if using a verified CEO email
-        if (isCeoEmail) {
+        if (isCeoEmail && storedPasscode !== '0981') {
             const currentRole = localStorage.getItem('vp_chat_role');
             if (currentRole !== 'ceo') {
                 console.log("Verified CEO Identity detected. Promoting to CEO status...");
@@ -1625,13 +1619,14 @@ function setupEventListeners() {
         const currentRole = localStorage.getItem('vp_chat_role');
         const currentName = localStorage.getItem('vp_chat_name') || 'STAFF';
 
-        // Ensure CEO/Executive status is synced if authenticated
-        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev')) {
+        // Ensure staff status is synced if authenticated
+        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev' || currentRole === 'developer')) {
             try {
                 await setDoc(doc(db, 'authorized_users', user.uid), {
                     role: currentRole,
                     name: currentName,
                     status: 'active',
+                    passcode: storedPasscode || (currentRole === 'ceo' ? '0304' : (currentRole === 'developer' ? '0981' : '0007')),
                     updatedAt: serverTimestamp()
                 }, { merge: true });
             } catch (syncErr) {
@@ -2307,19 +2302,20 @@ function syncForumMessages() {
             const isMsgSupplier = msg.authorRole === 'supplier';
             const isMsgOgDev = msg.authorRole === 'og_dev';
             const isMsgExeDev = msg.authorRole === 'exe_dev';
+            const isMsgDev = msg.authorRole === 'developer' || msg.authorRole === 'dev';
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
             // Only the CEO can delete or revoke
             const canDelete = currentUserRole === 'ceo';
             const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
-             const isMsgMarlon = msg.authorName === 'MARLON';
+            const isMsgMarlon = msg.authorName === 'MARLON';
             
             msgEl.className = `flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500 group/msg`;
             msgEl.innerHTML = `
                 <img src="${isMsgCeo ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s' : (isMsgMarlon ? 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJdZ9F-vwMdSWpO6JtQkTW0hRMpJXJ225HGA&s' : (msg.authorPhoto || 'https://api.dicebear.com/7.x/pixel-art/svg?seed=' + (msg.authorRole || 'guest')))}" class="w-10 h-10 rounded-xl border border-white/5 flex-shrink-0">
                 <div class="flex flex-col items-start max-w-[80%] relative">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : 'text-white')))} uppercase italic leading-none">${isMsgCeo ? 'CEO' : msg.authorName}</span>
+                        <span class="text-[10px] font-black ${isMsgCeo ? 'animate-rainbow' : (isMsgSupplier ? 'animate-rainbow' : (isMsgOgDev ? 'text-emerald-400' : (isMsgExeDev ? 'text-rose-400' : (isMsgDev ? 'text-cyan-400' : 'text-white'))))} uppercase italic leading-none">${isMsgCeo ? 'CEO' : msg.authorName}</span>
                         ${(isMsgCeo || isMsgSupplier) ? `<span class="text-[8px] animate-rainbow font-black uppercase tracking-widest">${isMsgCeo ? 'RANK OWNER (JOHN PORK IS WATCHING)' : 'RANK ' + (msg.authorRank || '1')}</span>` : (msg.authorRank ? `<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK ${msg.authorRank}</span>` : '<span class="text-[8px] text-zinc-500 font-bold uppercase tracking-widest">RANK 2</span>')}
                         <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">${date}</span>
                     </div>
