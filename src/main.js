@@ -781,12 +781,8 @@ async function handleTerminalAuth() {
     const isSupplier = code === '9871';
     const isOgDev = code === '3421';
     const isExeDev = code === '0007';
+    const isDeveloper = code === '5012';
     const isMarlon = code === '8765';
-
-    if (code === '5012') {
-        if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL REJECTION: CODE 5012 IS DECOMMISSIONED.';
-        return;
-    }
 
     if (code.toUpperCase() === 'JOHNPORK') {
         if (terminalStatusLog) terminalStatusLog.textContent = 'LOCATING SUBJECT... JOHN PORK IS WATCHING';
@@ -797,7 +793,7 @@ async function handleTerminalAuth() {
         return;
     }
 
-    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon) {
+    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
@@ -825,6 +821,10 @@ async function handleTerminalAuth() {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
                 rank = '1';
+            } else if (isDeveloper) {
+                role = 'developer';
+                name = 'DEVELOPER';
+                rank = '3';
             }
 
             localStorage.setItem('vp_chat_role', role);
@@ -1004,15 +1004,8 @@ async function postForumMessage() {
         const role = localStorage.getItem('vp_chat_role') || 'guest';
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
 
-        if (role === 'developer' || storedPasscode === '5012' || role === 'dev') {
-            alert("ACCESS REVOKED: This role has been decommissioned.");
-            localStorage.clear();
-            location.reload();
-            return;
-        }
-
         const storedName = localStorage.getItem('vp_chat_name');
-        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['developer', 'dev'].includes(role) ? '3' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2')));
         let name = storedName || 'Guest';
         
         if (!storedName) {
@@ -1020,6 +1013,7 @@ async function postForumMessage() {
             else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
             else if (role === 'og_dev') name = 'OG DEV';
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
+            else if (role === 'developer' || role === 'dev') name = 'DEVELOPER';
         }
         
         const passcode = localStorage.getItem('vp_chat_passcode');
@@ -1594,15 +1588,9 @@ function setupEventListeners() {
         const storedRole = localStorage.getItem('vp_chat_role');
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
 
-        // FORCE PURGE DECOMMISSIONED DEVELOPER ROLE (CODE 5012)
+        // Legacy check for decommissioned sessions (disabled as it's active again)
         if (storedRole === 'developer' || storedPasscode === '5012' || storedRole === 'dev') {
-            console.warn("DECOMMISSIONED SESSION DETECTED. PURGING ROLE 5012...");
-            localStorage.removeItem('vp_chat_role');
-            localStorage.removeItem('vp_chat_passcode');
-            localStorage.removeItem('vp_chat_authorized');
-            localStorage.removeItem('vp_chat_name');
-            location.reload();
-            return;
+            console.log("Developer session active.");
         }
 
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
