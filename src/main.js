@@ -404,6 +404,42 @@ function safeCall(fn, name) {
     }
 }
 
+// Helper to trigger the scare
+function triggerJohnPorkScare(method) {
+    if (document.querySelector('.john-pork-active-scare')) return;
+
+    const scared = document.createElement('div');
+    scared.className = 'john-pork-active-scare fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden p-6 md:p-10 cursor-default select-none';
+    scared.innerHTML = `
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.15),transparent)] animate-pulse pointer-events-none"></div>
+        
+        <div class="flex flex-col items-center justify-center max-w-2xl w-full">
+            <div class="relative group pointer-events-none mb-8 md:mb-12">
+                <div class="absolute -inset-10 md:-inset-20 bg-cyan-500/20 blur-3xl opacity-50 transition-opacity"></div>
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="w-64 h-64 md:w-96 md:h-96 object-cover rounded-full border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
+            </div>
+
+            <div class="text-center pointer-events-none mb-12 md:mb-16">
+                <h2 class="text-cyan-400 font-black text-4xl md:text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4">John Pork is watching</h2>
+                <div class="flex items-center justify-center gap-4">
+                    <p class="text-zinc-600 font-mono text-[10px] md:text-xs uppercase tracking-[0.5em]">PROTOCOL_${method}</p>
+                    <div class="h-1 w-1 rounded-full bg-cyan-500 animate-ping"></div>
+                </div>
+            </div>
+
+            <button id="close-pork" class="px-8 py-4 md:px-10 md:py-5 bg-white text-black font-black uppercase text-xs md:text-sm rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-[0_0_50px_rgba(255,255,255,0.3)] relative z-10 shrink-0">I accept the monitoring</button>
+        </div>
+    `;
+    document.body.appendChild(scared);
+    
+    const closeBtn = scared.querySelector('#close-pork');
+    closeBtn.onclick = (e) => {
+        e.stopPropagation();
+        scared.classList.add('opacity-0', 'pointer-events-none', 'transition-all', 'duration-700');
+        setTimeout(() => scared.remove(), 700);
+    };
+}
+
 function init() {
     console.log("VaultPortal [UPLINK ACTIVE] Initializing System Core...");
     applyTheme();
@@ -1503,37 +1539,6 @@ function setupEventListeners() {
             konamiIndex = 0;
         }
     });
-
-    // Helper to trigger the scare
-    function triggerJohnPorkScare(method) {
-        if (document.querySelector('.john-pork-active-scare')) return;
-
-        const scared = document.createElement('div');
-        scared.className = 'john-pork-active-scare fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-hidden p-10 cursor-default select-none';
-        scared.innerHTML = `
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.15),transparent)] animate-pulse pointer-events-none"></div>
-            <div class="relative group pointer-events-none">
-                <div class="absolute -inset-20 bg-cyan-500/20 blur-3xl opacity-50 transition-opacity"></div>
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="w-96 h-96 object-cover rounded-full border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
-            </div>
-            <div class="mt-12 text-center pointer-events-none">
-                <h2 class="text-cyan-400 font-black text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4">John Pork is watching</h2>
-                <div class="flex items-center justify-center gap-4">
-                    <p class="text-zinc-600 font-mono text-xs uppercase tracking-[0.5em]">PROTOCOL_${method}</p>
-                    <div class="h-1 w-1 rounded-full bg-cyan-500 animate-ping"></div>
-                </div>
-            </div>
-            <button id="close-pork" class="mt-20 px-10 py-5 bg-white text-black font-black uppercase text-sm rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-2xl relative z-10">I accept the monitoring</button>
-        `;
-        document.body.appendChild(scared);
-        
-        const closeBtn = scared.querySelector('#close-pork');
-        closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            scared.classList.add('opacity-0', 'pointer-events-none', 'transition-all', 'duration-700');
-            setTimeout(() => scared.remove(), 700);
-        };
-    }
 
     // System Indicator logic
     const systemIndicator = document.getElementById('system-indicator');
