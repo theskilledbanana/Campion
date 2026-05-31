@@ -1009,6 +1009,13 @@ async function postForumMessage() {
         const role = localStorage.getItem('vp_chat_role') || 'guest';
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
 
+        if (role === 'developer' || storedPasscode === '0981') {
+            alert("Cloud Sync Failure: Missing or insufficient permissions.");
+            sendForumMsgBtn.disabled = false;
+            sendForumMsgBtn.innerHTML = '<i class="bi bi-send-fill text-xl group-hover:rotate-12 transition-transform"></i>';
+            return;
+        }
+
         const storedName = localStorage.getItem('vp_chat_name');
         const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['developer', 'dev'].includes(role) ? '3' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2')));
         let name = storedName || 'Guest';
@@ -2391,7 +2398,7 @@ function syncForumMessages() {
                         passcode = prompt("SECURITY HANDSHAKE REQUIRED: RE-ENTER CEO PASSCODE TO AUTHORIZE REVOCATION:");
                     }
                     
-                    if (!passcode || !['0304', '0007', '9871', '3421', '8765'].includes(passcode)) {
+                    if (!passcode || passcode !== '0304') {
                         alert("REVOCATION ABORTED: INVALID OR MISSING AUTHORIZATION.");
                         return;
                     }
