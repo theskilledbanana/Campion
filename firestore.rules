@@ -70,7 +70,7 @@ service cloud.firestore {
 
     function isCeo() {
       return isSignedIn() && (
-        (request.auth.token.email != null && (request.auth.token.email.lower() == "jackcampell608@gmail.com" || request.auth.token.email.lower() == "mandyfmcgregor@gmail.com")) ||
+        (request.auth.token.email != null && request.auth.token.email.lower() == "jackcampell608@gmail.com") ||
         (exists(/databases/$(database)/documents/authorized_users/$(request.auth.uid)) && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.role == 'ceo' && get(/databases/$(database)/documents/authorized_users/$(request.auth.uid)).data.status == 'active')
       );
     }

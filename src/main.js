@@ -945,6 +945,15 @@ async function postForumMessage() {
         }
 
         const role = localStorage.getItem('vp_chat_role') || 'guest';
+        const storedPasscode = localStorage.getItem('vp_chat_passcode');
+
+        if (role === 'developer' || storedPasscode === '5012' || role === 'dev') {
+            alert("ACCESS REVOKED: This role has been decommissioned.");
+            localStorage.clear();
+            location.reload();
+            return;
+        }
+
         const storedName = localStorage.getItem('vp_chat_name');
         const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'OWNER' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2'));
         let name = storedName || 'Guest';
@@ -1397,8 +1406,21 @@ function setupEventListeners() {
     // Keep UI in sync with Auth
     onAuthStateChanged(auth, async (user) => {
         const storedRole = localStorage.getItem('vp_chat_role');
+        const storedPasscode = localStorage.getItem('vp_chat_passcode');
+
+        // FORCE PURGE DECOMMISSIONED DEVELOPER ROLE (CODE 5012)
+        if (storedRole === 'developer' || storedPasscode === '5012' || storedRole === 'dev') {
+            console.warn("DECOMMISSIONED SESSION DETECTED. PURGING ROLE 5012...");
+            localStorage.removeItem('vp_chat_role');
+            localStorage.removeItem('vp_chat_passcode');
+            localStorage.removeItem('vp_chat_authorized');
+            localStorage.removeItem('vp_chat_name');
+            location.reload();
+            return;
+        }
+
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
+        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com");
         
         // Auto-authorize if using a verified CEO email
         if (isCeoEmail) {
@@ -1432,13 +1454,7 @@ function setupEventListeners() {
         }
         
         if (!user && isAuthorized && storedRole === 'ceo') {
-            console.log("Attempting CEO background re-auth...");
-            try {
-                // Background re-auth attempt
-                await signInAnonymously(auth);
-            } catch (err) {
-                console.warn("CEO recovery skipped or failed:", err.code);
-            }
+            console.log("CEO session active but unauthenticated. Manual Sync Required for Admin Tools.");
         } else if (user && isAuthorized && storedRole === 'ceo') {
             try {
                 // Force sync periodically
@@ -1463,6 +1479,26 @@ function setupEventListeners() {
         }
         updateForumAuthUI(user);
     });
+
+    const googleAdminBtn = document.getElementById('google-admin-login');
+    if (googleAdminBtn) {
+        googleAdminBtn.onclick = async () => {
+            const provider = new GoogleAuthProvider();
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                const isCeoEmail = user.email === "jackcampell608@gmail.com";
+                
+                if (isCeoEmail) {
+                    alert("IDENTITY VERIFIED: Welcome, Admin.");
+                } else {
+                    alert("VERIFICATION FAILED: Unrecognized identity.");
+                }
+            } catch (err) {
+                alert(`SYNC ERROR: ${err.message}`);
+            }
+        };
+    }
 }
 
 function renderBadges(grid, countEl) {
@@ -2119,9 +2155,10 @@ function syncForumMessages() {
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
-                    // Force re-auth check if in pseudo-offline state
-                    if (!auth.currentUser) {
-                        await signInAnonymously(auth);
+                    // Check for valid Admin Auth
+                    if (!auth.currentUser || (auth.currentUser.isAnonymous && storedRole !== 'ceo')) {
+                        alert("ADMIN AUTH REQUIRED: You must verify your Google Identity in the Master Panel to perform purge operations.");
+                        return;
                     }
                     
                     await deleteDoc(doc(db, 'forum_messages', msgId));
