@@ -412,18 +412,18 @@ function triggerJohnPorkScare(method, customMsg = null, subCaption = null) {
     const secondaryText = subCaption || "HE IS ALWAYS WATCHING // YOU CANNOT ESCAPE";
 
     const scared = document.createElement('div');
-    scared.className = 'john-pork-active-scare fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden p-6 md:p-10 cursor-default select-none';
+    scared.className = 'john-pork-active-scare fixed inset-0 z-[99999] bg-black overflow-y-auto overflow-x-hidden p-6 md:p-10 cursor-default select-none';
     scared.innerHTML = `
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.15),transparent)] animate-pulse pointer-events-none"></div>
         
-        <div class="flex flex-col items-center justify-center max-w-2xl w-full">
-            <div class="relative group pointer-events-none mb-8 md:mb-12 flex items-center justify-center">
+        <div class="flex flex-col items-center justify-center min-h-full max-w-2xl w-full mx-auto relative z-10">
+            <div class="relative group pointer-events-none mb-8 md:mb-12 flex items-center justify-center w-full">
                 <div class="absolute -inset-10 md:-inset-20 bg-cyan-500/20 blur-3xl opacity-50 transition-opacity"></div>
-                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="max-w-full max-h-[60vh] object-contain rounded-3xl border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="max-w-full max-h-[50vh] object-contain rounded-3xl border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
             </div>
 
-            <div class="text-center pointer-events-none mb-12 md:mb-16">
-                <h2 class="text-cyan-400 font-black text-4xl md:text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4">${mainText}</h2>
+            <div class="text-center pointer-events-none mb-12 md:mb-16 w-full">
+                <h2 class="text-cyan-400 font-black text-4xl md:text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4 leading-tight">${mainText}</h2>
                 <p class="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.5em] mb-8 animate-pulse italic">${secondaryText}</p>
                 <div class="flex items-center justify-center gap-4">
                     <p class="text-zinc-600 font-mono text-[10px] md:text-xs uppercase tracking-[0.5em]">PROTOCOL_${method}</p>
