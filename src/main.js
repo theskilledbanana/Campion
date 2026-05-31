@@ -1173,7 +1173,7 @@ async function updateForumAuthUI(user) {
         if (masterControlBtn) masterControlBtn.classList.add('hidden');
         if (masterPanel) masterPanel.classList.add('hidden');
         if (promptText) {
-            promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO" : "OFFICIAL UPLINK ACCESS REQUIRED TO POST";
+            promptText.textContent = isBanned ? "SESSION TERMINATED // ACCESS REVOKED BY CEO // JOHN PORK IS WATCHING" : "OFFICIAL UPLINK ACCESS REQUIRED TO POST";
         }
     }
     
