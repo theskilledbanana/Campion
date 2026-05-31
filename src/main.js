@@ -1562,11 +1562,12 @@ function showDisclaimer() {
             'LOAD_MODULE: VAULT_CORE', 'SYNC_AUTH: GATEWAY_01', 'HEX_DUMP: 0x77AF',
             'ENCRYPT_SESSION: TRUE', 'ESTABLISH_BRIDGE: SUCCESS', 'LATENCY: 12ms',
             'RECOVERY_POINT: SET', 'OVERRIDE_AUTH: BYPASSED', 'GHOST_PROTOCOL: ACTIVE',
-            'WIPE_TRACES: PENDING', 'KERNEL_HOOK: ATTACHED', 'DIST_SYNC: COMPLETED'
+            'WIPE_TRACES: PENDING', 'KERNEL_HOOK: ATTACHED', 'DIST_SYNC: COMPLETED',
+            'BYTE_MAP: 010110', 'TRACERT_SEQ: 9811', 'IP_REVERSE: PROXIED'
         ];
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 400; i++) {
             const span = document.createElement('span');
-            span.className = 'mr-2';
+            span.className = 'opacity-50';
             span.textContent = commands[Math.floor(Math.random() * commands.length)];
             logContainer.appendChild(span);
         }
