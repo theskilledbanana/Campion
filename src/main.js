@@ -735,6 +735,11 @@ async function handleTerminalAuth() {
     const isExeDev = code === '0007';
     const isMarlon = code === '8765';
 
+    if (code === '5012') {
+        if (terminalStatusLog) terminalStatusLog.textContent = 'PROTOCOL REJECTION: CODE 5012 IS DECOMMISSIONED.';
+        return;
+    }
+
     if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
@@ -2114,8 +2119,11 @@ function syncForumMessages() {
 
             if (confirm("PROTOCOL: DELETE THIS LOG FROM THE GRID?")) {
                 try {
-                    // SECURE BYPASS: CEO-verified local session allows direct purge.
-                    // Rules have been updated to allow this without further Auth handshakes.
+                    // Force re-auth check if in pseudo-offline state
+                    if (!auth.currentUser) {
+                        await signInAnonymously(auth);
+                    }
+                    
                     await deleteDoc(doc(db, 'forum_messages', msgId));
                     alert("LOG PURGED SUCCESSFULLY.");
                 } catch (err) {
