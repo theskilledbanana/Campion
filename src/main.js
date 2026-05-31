@@ -441,6 +441,7 @@ function triggerJohnPorkScare(method) {
 }
 
 function init() {
+    // [SYSTEM HEARTBEAT] Uplink synchronized for GitHub export.
     console.log("VaultPortal [UPLINK ACTIVE] Initializing System Core...");
     applyTheme();
     saveUserData();
