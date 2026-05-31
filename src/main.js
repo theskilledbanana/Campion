@@ -1200,10 +1200,56 @@ function setupEventListeners() {
     // Search Functionality
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            currentSearch = e.target.value.toLowerCase();
+            const val = e.target.value.toLowerCase();
+            
+            // Standard Search
+            currentSearch = val;
             renderRecentlyPlayed();
             renderItems();
+
+            // John Pork Search Trigger (Number 4)
+            if (val === 'johnpork' || val === 'john pork' || val === 'where is he') {
+                triggerJohnPorkScare("SEARCH_RECOVERY");
+                e.target.value = '';
+                currentSearch = '';
+                renderItems();
+            }
+
+            // System Hint Trigger
+            if (val === 'hint' || val === 'easter egg' || val === 'egg') {
+                showSystemHints();
+                e.target.value = '';
+                currentSearch = '';
+                renderItems();
+            }
         });
+    }
+
+    function showSystemHints() {
+        const toast = document.createElement('div');
+        toast.className = "fixed bottom-8 right-8 z-[200] bg-zinc-950 border border-cyan-500/30 rounded-2xl p-6 shadow-2xl max-w-xs animate-in slide-in-from-right duration-500 backdrop-blur-xl";
+        toast.innerHTML = `
+            <div class="flex items-center gap-4 mb-3">
+                <i class="bi bi-lightbulb-fill text-cyan-400"></i>
+                <h4 class="text-[10px] font-black text-cyan-400 uppercase tracking-widest leading-none">System Handshake</h4>
+            </div>
+            <ul class="text-[10px] text-zinc-400 font-mono space-y-2 uppercase tracking-wider">
+                <li>• Alt + P: The Hidden Console</li>
+                <li>• Terminal Code: 'JOHNPORK'</li>
+                <li>• Triple click the Portal title</li>
+                <li>• He watches from the top right</li>
+                <li>• Search for 'John Pork'</li>
+                <li>• Konami: ↑↑↓↓←→←→BA</li>
+                <li>• 7 rapid clicks on 'Surprise'</li>
+                <li>• Double click the Baud Ticker</li>
+                <li>• Just type 'pork' on keyboard</li>
+            </ul>
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('animate-out', 'fade-out', 'slide-out-to-right');
+            setTimeout(() => toast.remove(), 500);
+        }, 10000);
     }
 
     // Player Controls
@@ -1375,12 +1421,26 @@ function setupEventListeners() {
         };
     }
 
-    // Header Triple Click Easter Egg
+    // Special Triggers
+    const systemTicker = document.getElementById('system-ticker');
+    if (systemTicker) {
+        systemTicker.style.cursor = 'help';
+        systemTicker.ondblclick = () => triggerJohnPorkScare("BAUD_OVERFLOW");
+    }
+
+    const topEgg = document.getElementById('pork-easter-egg-1');
+    if (topEgg) {
+        topEgg.onclick = (e) => {
+            e.preventDefault();
+            triggerJohnPorkScare("CORNER_UPLINK");
+        };
+    }
+
     const mainTitle = document.querySelector('h1');
     if (mainTitle) {
         let clickCount = 0;
         let lastClick = 0;
-        mainTitle.style.cursor = 'help'; // Visual hint
+        mainTitle.style.cursor = 'help';
         mainTitle.onclick = () => {
             const now = Date.now();
             if (now - lastClick < 600) {
@@ -1389,7 +1449,6 @@ function setupEventListeners() {
                 clickCount = 1;
             }
             lastClick = now;
-
             if (clickCount >= 3) {
                 clickCount = 0;
                 triggerJohnPorkScare("TRIPLE_OVERRIDE");
@@ -1397,22 +1456,6 @@ function setupEventListeners() {
         };
     }
 
-    // Secret Search Code
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            if (e.target.value.toLowerCase() === 'johnpork' || e.target.value.toLowerCase() === 'where is he') {
-                triggerJohnPorkScare("SEARCH_RECOVERY");
-                e.target.value = '';
-            }
-        });
-    }
-
-    // Baud Ticker Double Click
-    const systemTicker = document.getElementById('system-ticker');
-    if (systemTicker) {
-        systemTicker.style.cursor = 'help';
-        systemTicker.ondblclick = () => triggerJohnPorkScare("BAUD_OVERFLOW");
-    }
     if (surpriseBtn) {
         let scCount = 0;
         surpriseBtn.addEventListener('click', (e) => {
@@ -1421,21 +1464,8 @@ function setupEventListeners() {
                 scCount = 0;
                 triggerJohnPorkScare("SURPRISE_PROTOCOL");
             }
-            // Reset after 3 seconds of no clicks
             setTimeout(() => { scCount = 0; }, 3000);
         });
-    }
-
-    // Top right hover egg update
-    const topEgg = document.getElementById('pork-easter-egg-1');
-    if (topEgg) {
-        topEgg.onclick = () => triggerJohnPorkScare("CORNER_UPLINK");
-    }
-
-    // Version Tag - Click to terminal hint
-    if (versionTag) {
-        versionTag.title = "Click to enter restricted terminal (Alt+P)";
-        versionTag.onclick = () => openDevTerminal();
     }
 
     // Typing 'pork' anywhere
@@ -1474,61 +1504,33 @@ function setupEventListeners() {
         }
     });
 
-    // Hint in search
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            if (val === 'hint' || val === 'easter egg' || val === 'egg') {
-                const toast = document.createElement('div');
-                toast.className = "fixed bottom-8 right-8 z-[200] bg-zinc-950 border border-cyan-500/30 rounded-2xl p-6 shadow-2xl max-w-xs animate-in slide-in-from-right duration-500 backdrop-blur-xl";
-                toast.innerHTML = `
-                    <div class="flex items-center gap-4 mb-3">
-                        <i class="bi bi-lightbulb-fill text-cyan-400"></i>
-                        <h4 class="text-[10px] font-black text-cyan-400 uppercase tracking-widest leading-none">System Hint</h4>
-                    </div>
-                    <ul class="text-[10px] text-zinc-400 font-mono space-y-2 uppercase tracking-wider">
-                        <li>• Alt + P for the terminal</li>
-                        <li>• Triple click the Portal</li>
-                        <li>• He hides in the top right</li>
-                        <li>• search for his full name</li>
-                        <li>• standard konami sequence</li>
-                        <li>• rapid click the gift</li>
-                        <li>• double click the baud</li>
-                        <li>• just type his name ('pork')</li>
-                    </ul>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                    toast.classList.add('animate-out', 'fade-out', 'slide-out-to-right');
-                    setTimeout(() => toast.remove(), 500);
-                }, 8000);
-                e.target.value = '';
-            }
-        });
-    }
-
     // Helper to trigger the scare
     function triggerJohnPorkScare(method) {
+        if (document.querySelector('.john-pork-active-scare')) return;
+
         const scared = document.createElement('div');
-        scared.className = 'fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center animate-flicker overflow-hidden p-10';
+        scared.className = 'john-pork-active-scare fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-hidden p-10 cursor-default select-none';
         scared.innerHTML = `
-            <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.15),transparent)] animate-pulse"></div>
-            <div class="relative group">
-                <div class="absolute -inset-20 bg-cyan-500/20 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,255,0.15),transparent)] animate-pulse pointer-events-none"></div>
+            <div class="relative group pointer-events-none">
+                <div class="absolute -inset-20 bg-cyan-500/20 blur-3xl opacity-50 transition-opacity"></div>
                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHiqgp9hbtVyjykpf-PJf6yy2n6WdglOha1Q&s" class="w-96 h-96 object-cover rounded-full border-8 border-cyan-500 grayscale brightness-150 contrast-125 animate-float shadow-[0_0_100px_rgba(0,255,255,0.4)]" referrerpolicy="no-referrer">
             </div>
-            <div class="mt-12 text-center">
+            <div class="mt-12 text-center pointer-events-none">
                 <h2 class="text-cyan-400 font-black text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4">John Pork is watching</h2>
                 <div class="flex items-center justify-center gap-4">
                     <p class="text-zinc-600 font-mono text-xs uppercase tracking-[0.5em]">PROTOCOL_${method}</p>
                     <div class="h-1 w-1 rounded-full bg-cyan-500 animate-ping"></div>
                 </div>
             </div>
-            <button id="close-pork" class="mt-20 px-10 py-5 bg-white text-black font-black uppercase text-sm rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-2xl">I accept the monitoring</button>
+            <button id="close-pork" class="mt-20 px-10 py-5 bg-white text-black font-black uppercase text-sm rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-2xl relative z-10">I accept the monitoring</button>
         `;
         document.body.appendChild(scared);
-        document.getElementById('close-pork').onclick = () => {
-            scared.classList.add('opacity-0', 'scale-110', 'transition-all', 'duration-700');
+        
+        const closeBtn = scared.querySelector('#close-pork');
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            scared.classList.add('opacity-0', 'pointer-events-none', 'transition-all', 'duration-700');
             setTimeout(() => scared.remove(), 700);
         };
     }
