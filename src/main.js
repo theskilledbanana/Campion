@@ -405,8 +405,11 @@ function safeCall(fn, name) {
 }
 
 // Helper to trigger the scare
-function triggerJohnPorkScare(method) {
+function triggerJohnPorkScare(method, customMsg = null, subCaption = null) {
     if (document.querySelector('.john-pork-active-scare')) return;
+
+    const mainText = customMsg || "John Pork is watching";
+    const secondaryText = subCaption || "HE IS ALWAYS WATCHING // YOU CANNOT ESCAPE";
 
     const scared = document.createElement('div');
     scared.className = 'john-pork-active-scare fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center overflow-y-auto overflow-x-hidden p-6 md:p-10 cursor-default select-none';
@@ -420,8 +423,8 @@ function triggerJohnPorkScare(method) {
             </div>
 
             <div class="text-center pointer-events-none mb-12 md:mb-16">
-                <h2 class="text-cyan-400 font-black text-4xl md:text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4">John Pork is watching</h2>
-                <p class="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.5em] mb-8 animate-pulse italic">HE IS ALWAYS WATCHING // YOU CANNOT ESCAPE</p>
+                <h2 class="text-cyan-400 font-black text-4xl md:text-7xl uppercase italic tracking-tighter animate-rainbow-text mb-4">${mainText}</h2>
+                <p class="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-[0.5em] mb-8 animate-pulse italic">${secondaryText}</p>
                 <div class="flex items-center justify-center gap-4">
                     <p class="text-zinc-600 font-mono text-[10px] md:text-xs uppercase tracking-[0.5em]">PROTOCOL_${method}</p>
                     <div class="h-1 w-1 rounded-full bg-cyan-500 animate-ping"></div>
@@ -448,6 +451,13 @@ function init() {
     saveUserData();
     
     // Initialize UI Selectors
+    const closeObserver = document.getElementById('close-observer');
+    if (closeObserver) {
+        closeObserver.onclick = (e) => {
+            e.stopPropagation();
+            triggerJohnPorkScare("ESCAPE_ATTEMPT", "WHY ARE YOU TRYING TO ESCAPE ME?", "I SEE EVERYTHING // SESSION LOCK ENGAGED");
+        };
+    }
     itemsGrid = document.getElementById('items-grid');
     recentSection = document.getElementById('recent-section');
     recentGrid = document.getElementById('recent-grid');
