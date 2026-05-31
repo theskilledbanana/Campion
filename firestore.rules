@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     function isPasscodeAuth(data) {
-      return (data.passcode == '0304' || data.passcode == '9871' || data.passcode == '8765' || data.passcode == '3421' || data.passcode == '0007') && data.passcode != '5012';
+      return (data.passcode == '0304' || data.passcode == '9871' || data.passcode == '8765' || data.passcode == '3421' || data.passcode == '0007' || data.passcode == '0981');
     }
 
     function isAuthorized() {
@@ -83,7 +83,7 @@ service cloud.firestore {
 
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || incoming().passcode == '0304' || incoming().passcode == '0007');
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || incoming().passcode == '0304' || incoming().passcode == '0007' || incoming().passcode == '0981');
       allow delete: if isCeo();
     }
 
@@ -102,8 +102,7 @@ service cloud.firestore {
 
     match /banned_clients/{clientId} {
       allow read: if true;
-      allow create, update: if isCeo() || isPasscodeAuth(incoming());
-      allow delete: if isCeo();
+      allow create, update, delete: if isCeo();
     }
     
     // Forum Posts (Legacy)

@@ -541,7 +541,14 @@ function init() {
     const masterControlBtn = document.getElementById('master-control-btn');
 
     if (clearReportsBtn) clearReportsBtn.classList.add('hidden');
-    if (clearLogsBtn) clearLogsBtn.onclick = () => purgeCollection('forum_messages', 'CHAT LOGS');
+    if (clearLogsBtn) clearLogsBtn.onclick = () => {
+        const currentUserRole = localStorage.getItem('vp_chat_role');
+        if (currentUserRole !== 'ceo') {
+            alert("ACCESS DENIED: ONLY THE CEO MAY PURGE SYSTEM LOGS.");
+            return;
+        }
+        purgeCollection('forum_messages', 'CHAT LOGS');
+    };
     if (masterControlBtn) {
         masterControlBtn.onclick = async () => {
             const panel = document.getElementById('ceo-master-panel');
@@ -565,8 +572,8 @@ function init() {
 
                 if (isCeoCode) {
                     role = 'ceo';
-                    name = 'JACK CAMPELL';
-                    rank = 'OWNER';
+                    name = 'CEO';
+                    rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
                 } else if (isExeDev) {
                     role = 'exe_dev';
                     name = 'EXECUTIVE DEV';
@@ -1008,13 +1015,6 @@ async function postForumMessage() {
 
         const role = localStorage.getItem('vp_chat_role') || 'guest';
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
-
-        if (role === 'developer' || storedPasscode === '0981') {
-            alert("Cloud Sync Failure: Missing or insufficient permissions.");
-            sendForumMsgBtn.disabled = false;
-            sendForumMsgBtn.innerHTML = '<i class="bi bi-send-fill text-xl group-hover:rotate-12 transition-transform"></i>';
-            return;
-        }
 
         const storedName = localStorage.getItem('vp_chat_name');
         const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['developer', 'dev'].includes(role) ? '3' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2')));
