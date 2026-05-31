@@ -558,13 +558,14 @@ function init() {
             }
 
             const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304' || code === '0007' || code === '9871' || code === '3421' || code === '8765' || code === '0981') {
+            if (code === '0304' || code === '0007' || code === '9871' || code === '3421' || code === '8765' || code === '0981' || code === '7771') {
                 const isCeoCode = code === '0304';
                 const isSupplier = code === '9871';
                 const isOgDev = code === '3421';
                 const isExeDev = code === '0007';
                 const isDeveloper = code === '0981';
                 const isMarlon = code === '8765';
+                const isByrnesey = code === '7771';
                 
                 let role = 'guest_staff';
                 let name = 'STAFF';
@@ -593,6 +594,10 @@ function init() {
                 } else if (isMarlon) {
                     role = 'og_dev';
                     name = 'MARLON';
+                    rank = '2';
+                } else if (isByrnesey) {
+                    role = 'mod';
+                    name = 'BYRNESEY';
                     rank = '2';
                 } else {
                     role = 'guest_staff';
@@ -795,6 +800,7 @@ async function handleTerminalAuth() {
     const isExeDev = code === '0007';
     const isDeveloper = code === '0981';
     const isMarlon = code === '8765';
+    const isByrnesey = code === '7771';
 
     if (code.toUpperCase() === 'JOHNPORK') {
         if (terminalStatusLog) terminalStatusLog.textContent = 'LOCATING SUBJECT... JOHN PORK IS WATCHING';
@@ -805,7 +811,7 @@ async function handleTerminalAuth() {
         return;
     }
 
-    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper) {
+    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
@@ -837,6 +843,10 @@ async function handleTerminalAuth() {
                 role = 'developer';
                 name = 'DEVELOPER';
                 rank = '3';
+            } else if (isByrnesey) {
+                role = 'mod';
+                name = 'BYRNESEY';
+                rank = '2';
             }
 
             localStorage.setItem('vp_chat_role', role);
@@ -1394,7 +1404,7 @@ function setupEventListeners() {
     const devLoginBtnElement = document.getElementById('dev-login-btn');
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981') {
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
@@ -1595,8 +1605,8 @@ function setupEventListeners() {
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
 
         // Legacy check for decommissioned sessions (disabled as it's active again)
-        if (storedRole === 'developer' || storedPasscode === '0981' || storedRole === 'dev') {
-            console.log("Developer session active.");
+        if (storedRole === 'developer' || storedPasscode === '0981' || storedPasscode === '7771' || storedRole === 'dev') {
+            console.log("Special staff session active.");
         }
 
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
@@ -1620,13 +1630,13 @@ function setupEventListeners() {
         const currentName = localStorage.getItem('vp_chat_name') || 'STAFF';
 
         // Ensure staff status is synced if authenticated
-        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev' || currentRole === 'developer')) {
+        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev' || currentRole === 'developer' || currentRole === 'mod')) {
             try {
                 await setDoc(doc(db, 'authorized_users', user.uid), {
                     role: currentRole,
                     name: currentName,
                     status: 'active',
-                    passcode: storedPasscode || (currentRole === 'ceo' ? '0304' : (currentRole === 'developer' ? '0981' : '0007')),
+                    passcode: storedPasscode || (currentRole === 'ceo' ? '0304' : (currentRole === 'developer' ? '0981' : (currentRole === 'mod' ? '7771' : '0007'))),
                     updatedAt: serverTimestamp()
                 }, { merge: true });
             } catch (syncErr) {
