@@ -31,6 +31,14 @@ const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 
 const FALLBACK_IMAGE = '/src/assets/images/game_placeholder_vault_1780278911383.png';
 
+const MENU_MUSIC = [
+    { id: '4MQ904y8jLUC1ZYgPPJ8KP', title: 'Space Song', artist: 'Beach House' },
+    { id: '0Z24rpGOYfgpcs48Ix0WwP', title: "YEBBA's Heartbreak", artist: 'Drake' },
+    { id: '4lXsvpjLhG7YqEehJFqpKV', title: 'Passionfruit', artist: 'Drake' }
+];
+let currentMusicIndex = 0;
+let spotifyIframe;
+
 const allEntries = [
   {
     "id": "eggy-car",
@@ -68,7 +76,7 @@ const allEntries = [
     "id": "bitlife",
     "title": "BitLife",
     "iframeUrl": "https://only-game.github.io/projects/bitlife/index.html",
-    "thumbnail": "https://i.ibb.co/WN05w1Mr/bitlife.png",
+    "thumbnail": "/src/assets/images/bitlife_thumb_1780279258036.png",
     "categories": ["Simulation", "Trending Games"],
     "description": "Live your virtual life and make choices that determine your destiny."
   },
@@ -84,7 +92,7 @@ const allEntries = [
     "id": "geometry-dash",
     "title": "Geometry Dash",
     "iframeUrl": "https://web-dashers.github.io/",
-    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/3/35/Geometry_Dash_Logo.PNG",
+    "thumbnail": "/src/assets/images/geometry_dash_thumb_1780279184298.png",
     "categories": ["Skill", "Trending Games"],
     "description": "Jump, fly, and flip your way through dangerous passages and spiky obstacles in this high-intensity rhythm-based action platformer."
   },
@@ -92,7 +100,7 @@ const allEntries = [
     "id": "slope",
     "title": "Slope",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-26",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRUM15tsz1rOyZ_8gi3Vvjxu_6Un3bgbwuteg&s",
+    "thumbnail": "/src/assets/images/slope_thumb_1780279221714.png",
     "categories": ["Skill", "Trending Games"],
     "description": "Test your reflexes in this high-speed obstacle course. Navigate through a shifting neon world where one wrong move ends the run."
   },
@@ -100,7 +108,7 @@ const allEntries = [
     "id": "indian-truck-driving-simulator",
     "title": "Indian Truck Driving Simulator",
     "iframeUrl": "https://oshkii.github.io/indiantruckdrivingsimulator-webport/",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGJvjj2YumCANX_Xd8bcJmXeJnqigOh5y0gg&s",
+    "thumbnail": "/src/assets/images/generic_driving_thumb_1780279303494.png",
     "categories": ["Simulation", "Driving"],
     "description": "Experience the thrill of navigating massive rigs through challenging Indian landscapes. Master the art of heavy transport in this high-octane driving simulator."
   },
@@ -116,7 +124,7 @@ const allEntries = [
     "id": "escape-road-2",
     "title": "Escape Road 2",
     "iframeUrl": "https://staticquasar931.github.io/Escape-Road-2/",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRoJmBnLLcGoLogI3-_x2Tl6kXvMyIFZRc0_A&s",
+    "thumbnail": "/src/assets/images/generic_driving_thumb_1780279303494.png",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Escape the law in this high-octane driving game. Navigate through dense traffic, avoid police roadblocks, and prove your skills behind the wheel in a race for freedom."
   },
@@ -124,7 +132,7 @@ const allEntries = [
     "id": "basketball-stars",
     "title": "Basketball Stars",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-3",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0hMBsvy_AxpR3o3RcMOXsZwDWWtfWrX1CIQ&s",
+    "thumbnail": "/src/assets/images/generic_sports_thumb_1780279320047.png",
     "categories": ["Sports", "Trending Games", "2 Player"],
     "description": "Shoot hoops and play as a legend in this competitive basketball game. Master your shots, steals, and blocks to dominate the court in single-player or 2-player modes.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -133,7 +141,7 @@ const allEntries = [
     "id": "golf-orbit",
     "title": "Golf Orbit",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2123",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYbiEb5tS7wNx-siDywgLLc0M26k5aYkWaHw&s",
+    "thumbnail": "/src/assets/images/generic_sports_thumb_1780279320047.png",
     "categories": ["Sports", "Skill", "Arcade"],
     "description": "Launch your golf ball into the stratosphere! Master the perfect swing to send your ball orbiting through space in this addictive timing-based arcade game."
   },
@@ -141,7 +149,7 @@ const allEntries = [
     "id": "moto-x3m",
     "title": "Moto X3M",
     "iframeUrl": "https://lesson126.github.io/lesson305/lesson-332",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6dkOS1Oz4sPuSpxKPm_TwAnsjUUaageye0A&s",
+    "thumbnail": "/src/assets/images/generic_driving_thumb_1780279303494.png",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Master the art of motorcycle stunts in this high-speed physics-based racer. Navigate through challenging obstacle courses and beat the clock.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -150,7 +158,7 @@ const allEntries = [
     "id": "geometry-dash-wave",
     "title": "Geometry Dash Wave",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2119",
-    "thumbnail": "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000&auto=format&fit=crop",
+    "thumbnail": "/src/assets/images/geometry_dash_thumb_1780279184298.png",
     "categories": ["Skill", "Trending Games"],
     "description": "Master the wave form in this intense high-speed precision challenge. Navigate the zig-zag corridors with absolute timing.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -159,7 +167,7 @@ const allEntries = [
     "id": "stickman-hook",
     "title": "Stickman Hook",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-28",
-    "thumbnail": "https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=204,height=204,fit=cover,f=auto/99e090d154caf30f3625df7e456d5984/stickman-hook-logo.png",
+    "thumbnail": "/src/assets/images/stickman_hook_thumb_1780279355460.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "Swing like a spider! Master the physics of the hook and rope to navigate through challenging levels in this addictive skill-based platformer.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -169,7 +177,7 @@ const allEntries = [
     "id": "among-us",
     "title": "Among Us",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-1",
-    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/9/9a/Among_Us_cover_art.jpg",
+    "thumbnail": "/src/assets/images/among_us_thumb_1780279373395.png",
     "categories": ["Skill", "Trending Games", "Multiplayer"],
     "description": "Find the imposter or sabotage the crew! Master the art of deception and deduction in this social deduction sensation.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -187,7 +195,7 @@ const allEntries = [
     "id": "flappy-bird",
     "title": "Flappy Bird",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-130",
-    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png",
+    "thumbnail": "/src/assets/images/flappy_bird_thumb_1780279202809.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The viral flight sensation. Tap to flap your way through a treacherous landscape of pipes in this deceptively simple but incredibly challenging arcade classic.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -196,7 +204,7 @@ const allEntries = [
     "id": "level-devil",
     "title": "Level Devil",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2107",
-    "thumbnail": "https://i.ytimg.com/vi/KRv-x5eCFoU/hq720.jpg?sqp=-oaymwEXCK4FEIIDSFryq4qpAwkIARUAAIhCGAE=&rs=AOn4CLDitvnLMDHAnWeJx4QIz99ByUSB2g",
+    "thumbnail": "/src/assets/images/level_devil_thumb_1780279390279.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "A brutally difficult platformer where the levels are designed to trick you. Master the art of anticipation and reflexes to navigate through treacherous traps.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -214,7 +222,7 @@ const allEntries = [
     "id": "vex-8",
     "title": "Vex 8",
     "iframeUrl": "https://lesson126.github.io/lesson306/lesson-216",
-    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop",
+    "thumbnail": "/src/assets/images/vex_thumb_1780279237211.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The latest installment in the legendary platformer series. Master new mechanics, tackle treacherous levels, and prove your parkour prowess in this high-octane skill challenge.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -223,7 +231,7 @@ const allEntries = [
     "id": "infinite-craft",
     "title": "Infinite Craft Game",
     "iframeUrl": "https://y.demo.lhyang.org/https://infinitecraft-game.io/infinite-craft-game.embed",
-    "thumbnail": "https://neal.fun/share-cards/infinite-craft.png",
+    "thumbnail": "/src/assets/images/infinite_craft_thumb_1780279409975.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "Combine basic elements—Fire, Water, Earth, and Air—to discover anything from dinosaurs to entire universes in this limitless crafting sandbox."
   },
@@ -264,7 +272,7 @@ const allEntries = [
     "id": "pvz",
     "title": "Plants vs Zombies",
     "iframeUrl": "https://y.demo.lhyang.org/https://pvz.ee/iframe.php",
-    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/9/9c/PlantsvsZombiesCoverArt.jpg",
+    "thumbnail": "/src/assets/images/pvz_thumb_new_1780279453636.png",
     "categories": ["Strategy", "Fun"],
     "description": "Defend your home from a zombie invasion! Plant a variety of powerful plants to stop the undead horde in this classic tower defense game."
   },
@@ -272,7 +280,7 @@ const allEntries = [
     "id": "doodle-jump",
     "title": "Doodle Jump",
     "iframeUrl": "https://only-game.github.io/projects/doodle-jump/index.html",
-    "thumbnail": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Doodle_Jump.png",
+    "thumbnail": "/src/assets/images/doodle_jump_thumb_new_1780279437582.png",
     "categories": ["Skill", "Fun"],
     "description": "Jump from platform to platform, avoiding monsters and obstacles as you climb higher and higher in this addictive vertical jumper."
   },
@@ -500,6 +508,30 @@ function init() {
     cloakInput = document.getElementById('cloak-input');
     applyCloakBtn = document.getElementById('apply-cloak');
     resetCloakBtn = document.getElementById('reset-cloak');
+
+    // Music Player Initialization
+    spotifyIframe = document.getElementById('spotify-iframe');
+    const prevTrackBtn = document.getElementById('prev-track');
+    const nextTrackBtn = document.getElementById('next-track');
+
+    if (prevTrackBtn) {
+        prevTrackBtn.onclick = () => {
+            currentMusicIndex = (currentMusicIndex - 1 + MENU_MUSIC.length) % MENU_MUSIC.length;
+            updateMusicPlayer();
+        };
+    }
+    if (nextTrackBtn) {
+        nextTrackBtn.onclick = () => {
+            currentMusicIndex = (currentMusicIndex + 1) % MENU_MUSIC.length;
+            updateMusicPlayer();
+        };
+    }
+
+    function updateMusicPlayer() {
+        if (!spotifyIframe) return;
+        const track = MENU_MUSIC[currentMusicIndex];
+        spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
+    }
     
     // Forum Modal
     forumModal = document.getElementById('forum-modal');
@@ -1971,14 +2003,14 @@ function renderItems() {
         card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900 overflow-hidden">
+                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900 overflow-hidden hidden">
                     <span class="text-4xl font-black text-zinc-800 uppercase tracking-tighter opacity-50">${(item.title || '?').charAt(0)}</span>
                 </div>
                 <img src="${item.thumbnail || FALLBACK_IMAGE}" 
                      alt="${item.title || 'Untitled'}" 
                      class="absolute inset-0 w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md z-10" 
                      referrerpolicy="no-referrer"
-                     onerror="this.style.display='none';">
+                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}'; this.previousElementSibling.classList.remove('hidden');">
                 
                 <!-- Favorite Toggle -->
                 <button class="favorite-btn absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/60 group/fav" 
@@ -2071,14 +2103,14 @@ function renderRecentlyPlayed() {
         card.className = "flex-shrink-0 w-72 group cursor-pointer snap-start transition-all duration-500 hover:-translate-y-2";
         card.innerHTML = `
             <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
-                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900 hidden">
                     <span class="text-3xl font-black text-zinc-800 uppercase tracking-tighter opacity-50">${(item.title || '?').charAt(0)}</span>
                 </div>
                 <img src="${item.thumbnail || FALLBACK_IMAGE}" 
                      alt="${item.title || 'Game'}" 
                      class="absolute inset-0 w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md z-10" 
                      referrerpolicy="no-referrer"
-                     onerror="this.style.display='none';">
+                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}'; this.previousElementSibling.classList.remove('hidden');">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-60 z-20"></div>
                 
                 <!-- Hover Overlay -->
@@ -2166,6 +2198,11 @@ function trackAndLaunch(item) {
     // Show Player UI
     if (!playerOverlay) return;
     
+    // Mute menu music when playing
+    if (spotifyIframe) {
+        spotifyIframe.src = 'about:blank';
+    }
+
     playerOverlay.classList.remove('hidden');
     playerTitle.textContent = item.title;
     playerCategory.textContent = (item.categories || []).join(' // ');
@@ -2210,6 +2247,12 @@ function closePlayer() {
 
     if (playerOverlay) playerOverlay.classList.add('hidden');
     if (gameIframe) gameIframe.src = "about:blank";
+    
+    // Restore menu music when returning
+    if (spotifyIframe) {
+        const track = MENU_MUSIC[currentMusicIndex];
+        spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
+    }
     gameIframe.classList.add('opacity-0');
     document.body.style.overflow = '';
 }
@@ -2578,7 +2621,7 @@ async function openDetails(item) {
     // Fill basic info
     detailsImg.referrerPolicy = "no-referrer";
     const initialsPlaceholder = document.createElement('div');
-    initialsPlaceholder.className = "absolute inset-0 flex items-center justify-center bg-zinc-900 text-6xl font-black text-zinc-800 uppercase";
+    initialsPlaceholder.className = "absolute inset-0 flex items-center justify-center bg-zinc-900 text-6xl font-black text-zinc-800 uppercase hidden";
     initialsPlaceholder.textContent = (item.title || '?').charAt(0);
     
     const imgContainer = detailsImg.parentElement;
@@ -2593,8 +2636,9 @@ async function openDetails(item) {
 
     detailsImg.style.display = 'block';
     detailsImg.onerror = function() {
-        this.style.display = 'none';
         this.onerror = null;
+        this.src = FALLBACK_IMAGE;
+        if (initialsPlaceholder) initialsPlaceholder.classList.remove('hidden');
     };
     detailsImg.src = item.thumbnail || FALLBACK_IMAGE;
     detailsTitle.textContent = item.title || 'Untitled';

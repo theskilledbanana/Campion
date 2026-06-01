@@ -484,6 +484,35 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Audio Module -->
+                <div id="audio-panel" class="p-6 bg-zinc-900/30 border border-white/5 rounded-[2rem] backdrop-blur-md">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                        <span class="text-[9px] font-mono text-indigo-400 uppercase tracking-widest font-bold">Audio Uplink</span>
+                    </div>
+                    
+                    <div id="spotify-player-container" class="rounded-xl overflow-hidden bg-black/40 border border-white/5 mb-4">
+                        <iframe id="spotify-iframe" 
+                            src="https://open.spotify.com/embed/track/4MQ904y8jLUC1ZYgPPJ8KP?utm_source=generator&theme=0" 
+                            width="100%" 
+                            height="80" 
+                            frameBorder="0" 
+                            allowfullscreen="" 
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                            style="border-radius: 12px;">
+                        </iframe>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-2">
+                        <button id="prev-track" class="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white active:scale-95">
+                            Prev
+                        </button>
+                        <button id="next-track" class="flex-1 py-2 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white active:scale-95">
+                            Next
+                        </button>
+                    </div>
+                </div>
             </div>
         </aside>
 
