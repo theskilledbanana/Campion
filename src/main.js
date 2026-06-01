@@ -533,6 +533,9 @@ function init() {
         spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
     }
     
+    // Initial load
+    updateMusicPlayer();
+    
     // Forum Modal
     forumModal = document.getElementById('forum-modal');
     forumContainer = document.getElementById('forum-container');
@@ -614,35 +617,35 @@ function init() {
                     role = 'ceo';
                     name = 'CEO';
                     rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
-                } else if (isExeDev) {
-                    role = 'exe_dev';
-                    name = 'EXECUTIVE DEV';
-                    rank = '1';
-                } else if (isSupplier) {
-                    role = 'supplier';
-                    name = 'FAT GAME SUPPLIER';
-                    rank = '1';
-                } else if (isOgDev) {
-                    role = 'og_dev';
-                    name = 'OG DEV';
-                    rank = '1';
-                } else if (isDeveloper) {
-                    role = 'developer';
-                    name = 'DEVELOPER';
-                    rank = '3';
-                } else if (isMarlon) {
-                    role = 'og_dev';
-                    name = 'MARLON';
-                    rank = '2';
-                } else if (isByrnesey) {
-                    role = 'mod';
-                    name = 'BYRNESEY';
-                    rank = '2';
-                } else if (isUpTheBlues) {
-                    role = 'mod';
-                    name = 'UP THE BLUES STAFF';
-                    rank = '2';
-                }
+            } else if (isExeDev) {
+                role = 'exe_dev';
+                name = 'EXECUTIVE DEV';
+                rank = '1';
+            } else if (isSupplier) {
+                role = 'supplier';
+                name = 'FAT GAME SUPPLIER';
+                rank = '1';
+            } else if (isOgDev) {
+                role = 'og_dev';
+                name = 'OG DEV';
+                rank = '1';
+            } else if (isDeveloper) {
+                role = 'developer';
+                name = 'DEVELOPER';
+                rank = '3';
+            } else if (isMarlon) {
+                role = 'og_dev';
+                name = 'MARLON';
+                rank = '1';
+            } else if (isByrnesey) {
+                role = 'mod';
+                name = 'BYRNESEY';
+                rank = '2';
+            } else if (isUpTheBlues) {
+                role = 'mod';
+                name = 'UP THE BLUES STAFF';
+                rank = '2';
+            }
 
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_name', name);
@@ -881,7 +884,7 @@ async function handleTerminalAuth() {
             } else if (isMarlon) {
                 role = 'og_dev';
                 name = 'MARLON';
-                rank = '2';
+                rank = '1';
             } else if (isSupplier) {
                 role = 'supplier';
                 name = 'FAT GAME SUPPLIER';
