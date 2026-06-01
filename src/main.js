@@ -537,6 +537,7 @@ function init() {
     // CEO Panel Buttons
     const clearReportsBtn = document.getElementById('clear-reports-btn');
     const clearLogsBtn = document.getElementById('clear-logs-btn');
+    const unrevokeAllBtn = document.getElementById('unrevoke-all-btn');
     const closeMasterPanelBtn = document.getElementById('close-master-panel');
     const masterControlBtn = document.getElementById('master-control-btn');
 
@@ -549,6 +550,7 @@ function init() {
         }
         purgeCollection('forum_messages', 'CHAT LOGS');
     };
+    if (unrevokeAllBtn) unrevokeAllBtn.onclick = unrevokeAllHandshakes;
     if (masterControlBtn) {
         masterControlBtn.onclick = async () => {
             const panel = document.getElementById('ceo-master-panel');
@@ -618,11 +620,19 @@ function init() {
 
                 // Differentiate UI in the panel if needed
                 const clearLogsBtn = document.getElementById('clear-logs-btn');
+                const unrevokeAllBtn = document.getElementById('unrevoke-all-btn');
                 if (clearLogsBtn) {
-                    if (isCeoCode) {
+                    if (isCeo) {
                         clearLogsBtn.classList.remove('hidden');
                     } else {
                         clearLogsBtn.classList.add('hidden');
+                    }
+                }
+                if (unrevokeAllBtn) {
+                    if (isCeo) {
+                        unrevokeAllBtn.classList.remove('hidden');
+                    } else {
+                        unrevokeAllBtn.classList.add('hidden');
                     }
                 }
                 
@@ -1080,6 +1090,39 @@ async function logoutTerminal() {
         // Do NOT signOut, just drop local elevation
         updateForumAuthUI();
         alert("TERMINAL DISCONNECTED. LOCAL PROTOCOLS OFFLINE.");
+    }
+}
+
+async function unrevokeAllHandshakes() {
+    const currentUserRole = localStorage.getItem('vp_chat_role');
+    if (currentUserRole !== 'ceo') {
+        alert("ACCESS DENIED: ONLY THE CEO MAY RESTORE ALL HANDSHAKES.");
+        return;
+    }
+
+    if (!confirm("PROTOCOL: RESTORE ALL SYSTEM HANDSHAKES? \nThis will unrevoke EVERY blacklisted client and reset access statuses.")) return;
+
+    try {
+        // 1. Clear banned_clients
+        const bannedSnap = await getDocs(collection(db, 'banned_clients'));
+        const batch = writeBatch(db);
+        bannedSnap.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        
+        // 2. Clear status in authorized_users
+        const q = query(collection(db, 'authorized_users'), where('status', '==', 'banned'));
+        const bannedUsersSnap = await getDocs(q);
+        bannedUsersSnap.forEach((doc) => {
+            batch.update(doc.ref, { status: 'active', updatedAt: serverTimestamp() });
+        });
+
+        await batch.commit();
+        alert("SYSTEM PURGE COMPLETE: ALL HANDSHAKES RESTORED.");
+        location.reload();
+    } catch (err) {
+        console.error("Global unrevoke failed:", err);
+        alert(`PROTOCOL FAILURE: ${err.message}`);
     }
 }
 
