@@ -29,6 +29,8 @@ import {
 
 const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000&auto=format&fit=crop';
+
 const allEntries = [
   {
     "id": "eggy-car",
@@ -50,7 +52,7 @@ const allEntries = [
     "id": "soundboard-buttons",
     "title": "Soundboards",
     "iframeUrl": "https://soundbuttonspro.com/",
-    "thumbnail": "https://www.nintendo.com/eu/media/images/10_share_images/games_15/nintendo_switch_download_software_1/2x1_NSwitchDS_SoundboardButtonsWithInstantSounds_image1600w.jpg",
+    "thumbnail": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=1000&auto=format&fit=crop",
     "categories": ["Utility", "Fun"],
     "description": "Access a variety of instant sounds and soundboard buttons for ultimate fun and reactions."
   },
@@ -82,7 +84,7 @@ const allEntries = [
     "id": "geometry-dash",
     "title": "Geometry Dash",
     "iframeUrl": "https://web-dashers.github.io/",
-    "thumbnail": "https://static.wikia.nocookie.net/b213ondiscord/images/a/a6/Geometrydash.png/revision/latest?cb=20200721125515",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/3/35/Geometry_Dash_Logo.PNG",
     "categories": ["Skill", "Trending Games"],
     "description": "Jump, fly, and flip your way through dangerous passages and spiky obstacles in this high-intensity rhythm-based action platformer."
   },
@@ -148,7 +150,7 @@ const allEntries = [
     "id": "geometry-dash-wave",
     "title": "Geometry Dash Wave",
     "iframeUrl": "https://lesson126.github.io/lesson83/lesson-2119",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_7SeScDs80JQ9Aqk7Z2qd4FPVd_BS0Rw3aA&s",
+    "thumbnail": "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000&auto=format&fit=crop",
     "categories": ["Skill", "Trending Games"],
     "description": "Master the wave form in this intense high-speed precision challenge. Navigate the zig-zag corridors with absolute timing.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -185,7 +187,7 @@ const allEntries = [
     "id": "flappy-bird",
     "title": "Flappy Bird",
     "iframeUrl": "https://lesson126.github.io/lesson302/lesson-130",
-    "thumbnail": "https://static.wikia.nocookie.net/gamia_gamepedia_en/images/b/b5/Title.jpg/revision/latest?cb=20180806163955",
+    "thumbnail": "https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The viral flight sensation. Tap to flap your way through a treacherous landscape of pipes in this deceptively simple but incredibly challenging arcade classic.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -212,7 +214,7 @@ const allEntries = [
     "id": "vex-8",
     "title": "Vex 8",
     "iframeUrl": "https://lesson126.github.io/lesson306/lesson-216",
-    "thumbnail": "https://play-lh.googleusercontent.com/4tQSYur7SAvXeEvT5GBugYeqbh8KEQSLd1S16t8CJYyDN3g2p27wiPlXnqqAxeCqvg",
+    "thumbnail": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1000&auto=format&fit=crop",
     "categories": ["Skill", "Arcade", "Trending Games"],
     "description": "The latest installment in the legendary platformer series. Master new mechanics, tackle treacherous levels, and prove your parkour prowess in this high-octane skill challenge.",
     "customStyles": "width: 480px; height: 800px; max-width: 100%; max-height: 100%;"
@@ -1969,7 +1971,11 @@ function renderItems() {
         card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Untitled'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || FALLBACK_IMAGE}" 
+                     alt="${item.title || 'Untitled'}" 
+                     class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" 
+                     referrerpolicy="no-referrer"
+                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}';">
                 
                 <!-- Favorite Toggle -->
                 <button class="favorite-btn absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/60 group/fav" 
@@ -2062,7 +2068,11 @@ function renderRecentlyPlayed() {
         card.className = "flex-shrink-0 w-72 group cursor-pointer snap-start transition-all duration-500 hover:-translate-y-2";
         card.innerHTML = `
             <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
-                <img src="${item.thumbnail || ''}" alt="${item.title || 'Game'}" class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" referrerpolicy="no-referrer">
+                <img src="${item.thumbnail || FALLBACK_IMAGE}" 
+                     alt="${item.title || 'Game'}" 
+                     class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" 
+                     referrerpolicy="no-referrer"
+                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}';">
                 <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-60"></div>
                 
                 <!-- Hover Overlay -->
@@ -2561,7 +2571,11 @@ async function openDetails(item) {
     
     // Fill basic info
     detailsImg.referrerPolicy = "no-referrer";
-    detailsImg.src = item.thumbnail || '';
+    detailsImg.onerror = function() {
+        this.onerror = null;
+        this.src = FALLBACK_IMAGE;
+    };
+    detailsImg.src = item.thumbnail || FALLBACK_IMAGE;
     detailsTitle.textContent = item.title || 'Untitled';
     detailsDesc.textContent = item.description || '';
     detailsCategories.innerHTML = (item.categories || []).map(cat => `
