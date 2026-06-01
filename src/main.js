@@ -39,6 +39,12 @@ const MENU_MUSIC = [
 let currentMusicIndex = 0;
 let spotifyIframe;
 
+function updateMusicPlayer() {
+    if (!spotifyIframe) return;
+    const track = MENU_MUSIC[currentMusicIndex];
+    spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
+}
+
 const allEntries = [
   {
     "id": "eggy-car",
@@ -526,12 +532,6 @@ function init() {
             updateMusicPlayer();
         };
     }
-
-    function updateMusicPlayer() {
-        if (!spotifyIframe) return;
-        const track = MENU_MUSIC[currentMusicIndex];
-        spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
-    }
     
     // Initial load
     updateMusicPlayer();
@@ -577,6 +577,46 @@ function init() {
     const unrevokeAllBtn = document.getElementById('unrevoke-all-btn');
     const closeMasterPanelBtn = document.getElementById('close-master-panel');
     const masterControlBtn = document.getElementById('master-control-btn');
+    const manualRevokeBtn = document.getElementById('manual-revoke-btn');
+    const manualRevokeInput = document.getElementById('manual-revoke-id');
+
+    if (manualRevokeBtn && manualRevokeInput) {
+        manualRevokeBtn.onclick = async () => {
+            const authorId = manualRevokeInput.value.trim();
+            if (!authorId) {
+                alert("ERROR: NO CLIENT ID PROVIDED.");
+                return;
+            }
+
+            const currentUserRole = localStorage.getItem('vp_chat_role');
+            if (currentUserRole !== 'ceo') {
+                alert("ACCESS DENIED: ONLY THE CEO MAY REVOKE HANDSHAKES.");
+                return;
+            }
+
+            if (confirm(`PROTOCOL: REVOKE ACCESS FOR CLIENT [${authorId}]?`)) {
+                try {
+                    const passcode = localStorage.getItem('vp_chat_passcode');
+                    if (passcode !== '0304') {
+                        alert("REVOCATION ABORTED: INVALID CEO SESSION.");
+                        return;
+                    }
+
+                    await setDoc(doc(db, 'banned_clients', authorId), {
+                        status: 'banned',
+                        bannedAt: serverTimestamp(),
+                        bannedBy: 'CEO (MANUAL)',
+                        passcode: passcode
+                    });
+                    manualRevokeInput.value = '';
+                    alert("CLIENT TERMINATED. HANDSHAKE REVOKED.");
+                } catch (err) {
+                    console.error("Manual revoke failed:", err);
+                    alert(`REVOKE ERROR: ${err.message}`);
+                }
+            }
+        };
+    }
 
     if (clearReportsBtn) clearReportsBtn.classList.add('hidden');
     if (clearLogsBtn) clearLogsBtn.onclick = () => {
@@ -616,7 +656,7 @@ function init() {
                 if (isCeo) {
                     role = 'ceo';
                     name = 'CEO';
-                    rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
+                    rank = '1';
             } else if (isExeDev) {
                 role = 'exe_dev';
                 name = 'EXECUTIVE DEV';
@@ -741,6 +781,30 @@ function init() {
         if (indicator) {
             indicator.textContent = isDevOverridden ? 'SYSTEM: [OVERRIDE_ACTIVE]' : 'SYSTEM: [ONLINE]';
         }
+
+        // Global Ban Check
+        const uplinkId = localStorage.getItem('vp_uplink_id');
+        if (uplinkId && db) {
+            getDoc(doc(db, 'banned_clients', uplinkId)).then(docSnap => {
+                if (docSnap.exists()) {
+                    console.error("CRITICAL: CLIENT UNTRUSTED. TERMINATING SESSION.");
+                    // Effectively kill the app
+                    document.body.innerHTML = `
+                        <div class="fixed inset-0 z-[1000] bg-black flex flex-col items-center justify-center p-10 text-center">
+                            <i class="bi bi-shield-slash text-red-500 text-6xl mb-8 animate-pulse"></i>
+                            <h1 class="text-white text-5xl font-black uppercase italic tracking-tighter mb-4">ACCESS REVOKED</h1>
+                            <p class="text-zinc-500 text-sm font-mono uppercase tracking-[0.2em] max-w-lg leading-relaxed mb-12">The secure link with Client [${uplinkId}] has been terminated by terminal authority.</p>
+                            <div class="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl mb-12">
+                                <span class="text-[10px] font-mono text-red-400 uppercase tracking-widest leading-none">IDENTITY_BANNED_BY_CEO</span>
+                            </div>
+                            <p class="text-zinc-600 text-[8px] font-black uppercase tracking-widest animate-flicker">Connection Lost // Handshake Failed</p>
+                        </div>
+                    `;
+                    document.body.style.overflow = 'hidden';
+                }
+            }).catch(e => console.warn("Ban check error:", e));
+        }
+
         console.log("VaultPortal [INITIALIZATION COMPLETE]");
     } catch (err) {
         console.error("Initialization sequence fatal error:", err);
@@ -872,7 +936,7 @@ async function handleTerminalAuth() {
             if (isCeo) {
                 role = 'ceo';
                 name = 'CEO';
-                rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
+                rank = '1';
             } else if (isOgDev) {
                 role = 'og_dev';
                 name = 'OG DEV';
@@ -2252,10 +2316,8 @@ function closePlayer() {
     if (gameIframe) gameIframe.src = "about:blank";
     
     // Restore menu music when returning
-    if (spotifyIframe) {
-        const track = MENU_MUSIC[currentMusicIndex];
-        spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
-    }
+    updateMusicPlayer();
+    
     gameIframe.classList.add('opacity-0');
     document.body.style.overflow = '';
 }
