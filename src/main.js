@@ -32,9 +32,9 @@ const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 const FALLBACK_IMAGE = '/src/assets/images/game_placeholder_vault_1780278911383.png';
 
 const MENU_MUSIC = [
-    { id: '4MQ904y8jLUC1ZYgPPJ8KP', title: 'Space Song', artist: 'Beach House' },
-    { id: '0Z24rpGOYfgpcs48Ix0WwP', title: "YEBBA's Heartbreak", artist: 'Drake' },
-    { id: '4lXsvpjLhG7YqEehJFqpKV', title: 'Passionfruit', artist: 'Drake' }
+    { type: 'youtube', id: 'oSufECsSYxQ', title: 'Nights', artist: 'Frank Ocean' },
+    { type: 'youtube', id: 'eZtMtL2-vI4', title: 'The Color Violet', artist: 'Tory Lanez' },
+    { type: 'youtube', id: 'aSGeQA5eRqw', title: 'telepatía', artist: 'Kali Uchis' }
 ];
 let currentMusicIndex = 0;
 let spotifyIframe;
@@ -52,8 +52,29 @@ function updateMusicPlayer() {
             return;
         }
     }
-    
-    spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
+
+    if (trackId.includes('youtube.com/') || trackId.includes('youtu.be/')) {
+        let videoId = '';
+        if (trackId.includes('v=')) {
+            videoId = trackId.split('v=')[1].split('&')[0];
+        } else if (trackId.includes('youtu.be/')) {
+            videoId = trackId.split('youtu.be/')[1].split('?')[0];
+        }
+        if (videoId) {
+            spotifyIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0`;
+            spotifyIframe.allow = "autoplay; encrypted-media";
+            return;
+        }
+    }
+
+    // Embed based on type
+    if (track.type === 'youtube') {
+        spotifyIframe.src = `https://www.youtube.com/embed/${trackId}?autoplay=1&mute=0&rel=0`;
+        spotifyIframe.allow = "autoplay; encrypted-media";
+    } else {
+        spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
+        spotifyIframe.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
+    }
 }
 
 const allEntries = [
@@ -2517,6 +2538,7 @@ function syncForumMessages() {
             const isOwnMsg = msg.authorId === (localStorage.getItem('vp_uplink_id'));
             
             // Only the CEO can delete or revoke
+            // We ensure that BYRNESEY (who is a mod) and DEVELOPER roles are also revocable
             const canDelete = currentUserRole === 'ceo';
             const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
             const isMsgMarlon = msg.authorName === 'MARLON';
