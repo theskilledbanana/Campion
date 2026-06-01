@@ -59,7 +59,7 @@ service cloud.firestore {
     }
 
     function isPasscodeAuth(data) {
-      return (data.passcode == '0304' || data.passcode == '9871' || data.passcode == '8765' || data.passcode == '3421' || data.passcode == '0007' || data.passcode == '0981' || data.passcode == '7771');
+      return (data.passcode == '0304' || data.passcode == '9871' || data.passcode == '8765' || data.passcode == '3421' || data.passcode == '0007' || data.passcode == '0981' || data.passcode == '7771' || data.passcode.upper() == 'UP THE BLUES');
     }
 
     function isAuthorized() {
@@ -83,7 +83,7 @@ service cloud.firestore {
 
     match /authorized_users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isSignedIn() && (request.auth.uid == userId || incoming().passcode == '0304' || incoming().passcode == '0007' || incoming().passcode == '0981' || incoming().passcode == '7771');
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || incoming().passcode == '0304' || incoming().passcode == '0007' || incoming().passcode == '0981' || incoming().passcode == '7771' || incoming().passcode.upper() == 'UP THE BLUES');
       allow delete: if isCeo();
     }
 

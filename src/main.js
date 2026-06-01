@@ -557,20 +557,62 @@ function init() {
                 return;
             }
 
-            const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim();
-            if (code === '0304') {
-                const isCeoCode = true;
-                
-                let role = 'ceo';
-                let name = 'CEO';
-                let rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
+            const code = prompt("ENTER MASTER AUTHORIZATION CODE:")?.trim() || "";
+            const upperCode = code.toUpperCase();
+            
+            const isCeo = code === '0304';
+            const isSupplier = code === '9871';
+            const isOgDev = code === '3421';
+            const isExeDev = code === '0007';
+            const isDeveloper = code === '0981';
+            const isMarlon = code === '8765';
+            const isByrnesey = code === '7771';
+            const isUpTheBlues = upperCode === 'UP THE BLUES';
+            
+            if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isUpTheBlues) {
+                let role = 'staff';
+                let name = 'STAFF';
+                let rank = '2';
+
+                if (isCeo) {
+                    role = 'ceo';
+                    name = 'CEO';
+                    rank = 'RANK OWNER (JOHN PORK IS WATCHING)';
+                } else if (isExeDev) {
+                    role = 'exe_dev';
+                    name = 'EXECUTIVE DEV';
+                    rank = '1';
+                } else if (isSupplier) {
+                    role = 'supplier';
+                    name = 'FAT GAME SUPPLIER';
+                    rank = '1';
+                } else if (isOgDev) {
+                    role = 'og_dev';
+                    name = 'OG DEV';
+                    rank = '1';
+                } else if (isDeveloper) {
+                    role = 'developer';
+                    name = 'DEVELOPER';
+                    rank = '3';
+                } else if (isMarlon) {
+                    role = 'og_dev';
+                    name = 'MARLON';
+                    rank = '2';
+                } else if (isByrnesey) {
+                    role = 'mod';
+                    name = 'BYRNESEY';
+                    rank = '2';
+                } else if (isUpTheBlues) {
+                    role = 'mod';
+                    name = 'UP THE BLUES STAFF';
+                    rank = '2';
+                }
 
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_name', name);
                 localStorage.setItem('vp_chat_rank', rank);
                 localStorage.setItem('vp_chat_authorized', 'true');
                 localStorage.setItem('vp_chat_passcode', code);
-                localStorage.setItem('vp_chat_name', name);
                 
                 if (panel) panel.classList.remove('hidden');
 
@@ -761,6 +803,7 @@ async function handleTerminalAuth() {
     const isDeveloper = code === '0981';
     const isMarlon = code === '8765';
     const isByrnesey = code === '7771';
+    const isUpTheBlues = code.toUpperCase() === 'UP THE BLUES';
 
     if (code.toUpperCase() === 'JOHNPORK') {
         if (terminalStatusLog) terminalStatusLog.textContent = 'LOCATING SUBJECT... JOHN PORK IS WATCHING';
@@ -771,11 +814,11 @@ async function handleTerminalAuth() {
         return;
     }
 
-    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey) {
+    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isUpTheBlues) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
-            let role = 'guest_staff';
+            let role = 'staff';
             let name = 'Staff';
             let rank = '2';
 
@@ -807,6 +850,10 @@ async function handleTerminalAuth() {
                 role = 'mod';
                 name = 'BYRNESEY';
                 rank = '2';
+            } else if (isUpTheBlues) {
+                role = 'mod';
+                name = 'UP THE BLUES STAFF';
+                rank = '2';
             }
 
             localStorage.setItem('vp_chat_role', role);
@@ -819,8 +866,8 @@ async function handleTerminalAuth() {
                 localStorage.setItem('vp_uplink_id', 'client-' + Math.random().toString(36).substring(2, 15));
             }
 
-            // Sync certain roles to Firestore to prevent session drift
-            if (isCeo || isDeveloper || isExeDev) {
+            // Sync all special roles to Firestore to prevent session drift and role hijacking
+            if (isCeo || isDeveloper || isExeDev || isOgDev || isSupplier || isByrnesey) {
                 if (terminalStatusLog) terminalStatusLog.textContent = `ESTABLISHING ${role.toUpperCase()} LINK...`;
                 try {
                     let sessionUser = auth.currentUser;
@@ -842,18 +889,6 @@ async function handleTerminalAuth() {
                             updatedAt: serverTimestamp()
                         };
                         await setDoc(doc(db, 'authorized_users', sessionUser.uid), syncData, { merge: true });
-
-                        // AUTO-RESTORE DEVELOPER if they were somehow banned
-                        if (isDeveloper) {
-                            const uplinkId = localStorage.getItem('vp_uplink_id');
-                            if (uplinkId) {
-                                try {
-                                    await deleteDoc(doc(db, 'banned_clients', uplinkId));
-                                } catch (e) { console.warn("Dev auto-restore local failed", e); }
-                            }
-                            await deleteDoc(doc(db, 'banned_clients', sessionUser.uid));
-                        }
-
                         console.log(`${role.toUpperCase()} Link Synchronized [UID: ${sessionUser.uid}]`);
                         if (terminalStatusLog) terminalStatusLog.textContent = `${role.toUpperCase()} LINK ACTIVE. UPLINK RESTORED.`;
                     }
@@ -984,15 +1019,9 @@ async function postForumMessage() {
 
         const bannedDoc = await getDoc(doc(db, 'banned_clients', authorId));
         if (bannedDoc.exists()) {
-            const role = localStorage.getItem('vp_chat_role') || 'guest';
-            if (role === 'developer' || role === 'dev') {
-                console.log("Developer override: Auto-restoring access...");
-                await deleteDoc(doc(db, 'banned_clients', authorId));
-            } else {
-                alert("ACCESS REVOKED: You have been blocked from the network.");
-                location.reload(); 
-                return;
-            }
+            alert("ACCESS REVOKED: You have been blocked from the network.");
+            location.reload(); 
+            return;
         }
 
         const role = localStorage.getItem('vp_chat_role') || 'guest';
@@ -1002,13 +1031,17 @@ async function postForumMessage() {
         const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['developer', 'dev'].includes(role) ? '3' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2')));
         let name = storedName || 'Guest';
         
-        if (!storedName) {
+        if (!storedName || (storedName === 'STAFF' && role !== 'guest_staff')) {
             if (role === 'ceo') name = 'CEO';
             else if (role === 'supplier') name = 'FAT GAME SUPPLIER';
             else if (role === 'og_dev') name = 'OG DEV';
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
             else if (role === 'developer' || role === 'dev') name = 'DEVELOPER';
-            else if (role === 'mod') name = 'BYRNESEY';
+            else if (role === 'mod') {
+                if (storedPasscode === '7771') name = 'BYRNESEY';
+                else if (storedPasscode && storedPasscode.toUpperCase() === 'UP THE BLUES') name = 'UP THE BLUES STAFF';
+                else name = 'STAFF MOD';
+            }
         }
         
         const passcode = localStorage.getItem('vp_chat_passcode');
@@ -1376,25 +1409,14 @@ function setupEventListeners() {
     if (closeForumBtn) closeForumBtn.onclick = closeForumModal;
     if (sendForumMsgBtn) sendForumMsgBtn.onclick = postForumMessage;
 
-    // Developer Login (Integrated into Terminal logic usually, but keep for UI compatibility)
-    const terminalLogoutBtn = document.getElementById('terminal-logout-btn');
-    if (terminalLogoutBtn) terminalLogoutBtn.onclick = logoutTerminal;
-
-    const devLoginBtnElement = document.getElementById('dev-login-btn');
-    if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
-        const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim();
-        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771') {
-            if (terminalPassInput) terminalPassInput.value = code;
-            handleTerminalAuth();
-        } else if (code) {
-            alert("PROTOCOL ERROR: INVALID PASSCODE.");
-        }
-    };
-
     // Master Control Logic
     const masterControlBtn = document.getElementById('master-control-btn');
     const masterPanel = document.getElementById('ceo-master-panel');
     const closeMasterBtn = document.getElementById('close-master-panel');
+
+    // Developer Login (Integrated into Terminal logic usually, but keep for UI compatibility)
+    const terminalLogoutBtn = document.getElementById('terminal-logout-btn');
+    if (terminalLogoutBtn) terminalLogoutBtn.onclick = logoutTerminal;
 
     if (masterControlBtn) {
         masterControlBtn.onclick = () => {
@@ -1409,6 +1431,18 @@ function setupEventListeners() {
             }
         };
     }
+
+    const devLoginBtnElement = document.getElementById('dev-login-btn');
+    if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
+        const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim() || "";
+        const uc = code.toUpperCase();
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771' || uc === 'UP THE BLUES') {
+            if (terminalPassInput) terminalPassInput.value = code;
+            handleTerminalAuth();
+        } else if (code) {
+            alert("PROTOCOL ERROR: INVALID PASSCODE.");
+        }
+    };
 
     if (closeMasterBtn) {
         closeMasterBtn.onclick = () => {
@@ -1609,13 +1643,13 @@ function setupEventListeners() {
         const currentName = localStorage.getItem('vp_chat_name') || 'STAFF';
 
         // Ensure staff status is synced if authenticated
-        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev' || currentRole === 'developer' || currentRole === 'mod')) {
+        if (user && isAuthorized && (currentRole === 'ceo' || currentRole === 'exe_dev' || currentRole === 'developer' || currentRole === 'mod' || currentRole === 'supplier' || currentRole === 'og_dev' || currentRole === 'staff')) {
             try {
                 await setDoc(doc(db, 'authorized_users', user.uid), {
                     role: currentRole,
                     name: currentName,
                     status: 'active',
-                    passcode: storedPasscode || (currentRole === 'ceo' ? '0304' : (currentRole === 'developer' ? '0981' : (currentRole === 'mod' ? '7771' : '0007'))),
+                    passcode: storedPasscode || (currentRole === 'ceo' ? '0304' : (currentRole === 'developer' ? '0981' : (currentRole === 'mod' ? '7771' : (currentRole === 'supplier' ? '9871' : '0007')))),
                     updatedAt: serverTimestamp()
                 }, { merge: true });
             } catch (syncErr) {
