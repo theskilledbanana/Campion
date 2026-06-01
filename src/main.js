@@ -38,16 +38,34 @@ const MENU_MUSIC = [
 ];
 let currentMusicIndex = 0;
 let spotifyIframe;
+let isMusicPlaying = true;
 
 function updateMusicPlayer() {
     if (!spotifyIframe) return;
     const track = MENU_MUSIC[currentMusicIndex];
     let trackId = track.id;
+
+    // Update Text UI
+    const titleEl = document.getElementById('audio-title');
+    const artistEl = document.getElementById('audio-artist');
+    const progressBar = document.getElementById('audio-progress');
+    
+    if (titleEl) titleEl.textContent = track.title;
+    if (artistEl) artistEl.textContent = track.artist;
+    
+    // Reset progress bar animation
+    if (progressBar) {
+        progressBar.style.width = '0%';
+        setTimeout(() => {
+            progressBar.style.width = '100%';
+        }, 100);
+    }
     
     // Support full URLs if provided
     if (trackId.includes('spotify.com/')) {
         const match = trackId.match(/(track|album|playlist)\/([a-zA-Z0-9]+)/);
         if (match) {
+            spotifyIframe.setAttribute('allow', 'autoplay; encrypted-media');
             spotifyIframe.src = `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0&autoplay=1`;
             return;
         }
@@ -553,6 +571,8 @@ function init() {
     const nextTrackBtn = document.getElementById('next-track');
     const connectAudioBtn = document.getElementById('connect-audio-btn');
     const audioOverlay = document.getElementById('audio-overlay');
+    const audioToggle = document.getElementById('audio-toggle');
+    const audioToggleIcon = document.getElementById('audio-toggle-icon');
 
     if (connectAudioBtn && audioOverlay) {
         connectAudioBtn.onmousedown = (e) => {
@@ -563,16 +583,41 @@ function init() {
         };
     }
 
+    if (audioToggle) {
+        audioToggle.onclick = () => {
+            isMusicPlaying = !isMusicPlaying;
+            if (audioToggleIcon) {
+                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-xl' : 'bi bi-play-fill text-xl';
+            }
+            
+            // Post message to YouTube Iframe
+            try {
+                if (isMusicPlaying) {
+                    spotifyIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+                } else {
+                    spotifyIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+                }
+            } catch (e) {
+                console.error("Audio Command Error:", e);
+                // Fallback: If postMessage fails, we might need to re-src (not ideal but works)
+            }
+        };
+    }
+
     if (prevTrackBtn) {
         prevTrackBtn.onclick = () => {
             currentMusicIndex = (currentMusicIndex - 1 + MENU_MUSIC.length) % MENU_MUSIC.length;
             updateMusicPlayer();
+            isMusicPlaying = true;
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
         };
     }
     if (nextTrackBtn) {
         nextTrackBtn.onclick = () => {
             currentMusicIndex = (currentMusicIndex + 1) % MENU_MUSIC.length;
             updateMusicPlayer();
+            isMusicPlaying = true;
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
         };
     }
     
