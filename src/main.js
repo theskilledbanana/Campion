@@ -29,14 +29,14 @@ import {
 
 const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000&auto=format&fit=crop';
+const FALLBACK_IMAGE = '/src/assets/images/game_placeholder_vault_1780278911383.png';
 
 const allEntries = [
   {
     "id": "eggy-car",
     "title": "Eggy Car",
     "iframeUrl": "https://y.demo.lhyang.org/https://eggycargame.cc/embed/eggy-car_en.embed",
-    "thumbnail": "https://i.ytimg.com/vi/U2SgrOeRrrs/maxresdefault.jpg",
+    "thumbnail": "/src/assets/images/eggy_car_thumbnail_1780278958742.png",
     "categories": ["Driving", "Skill", "Trending Games"],
     "description": "Drive a car with an egg in it as far as you can without breaking the egg."
   },
@@ -1971,11 +1971,14 @@ function renderItems() {
         card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
         card.innerHTML = `
             <div class="aspect-video relative overflow-hidden bg-zinc-950">
+                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900 overflow-hidden">
+                    <span class="text-4xl font-black text-zinc-800 uppercase tracking-tighter opacity-50">${(item.title || '?').charAt(0)}</span>
+                </div>
                 <img src="${item.thumbnail || FALLBACK_IMAGE}" 
                      alt="${item.title || 'Untitled'}" 
-                     class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" 
+                     class="absolute inset-0 w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md z-10" 
                      referrerpolicy="no-referrer"
-                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}';">
+                     onerror="this.style.display='none';">
                 
                 <!-- Favorite Toggle -->
                 <button class="favorite-btn absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/60 group/fav" 
@@ -2068,12 +2071,15 @@ function renderRecentlyPlayed() {
         card.className = "flex-shrink-0 w-72 group cursor-pointer snap-start transition-all duration-500 hover:-translate-y-2";
         card.innerHTML = `
             <div class="relative aspect-video rounded-3xl overflow-hidden border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl bg-zinc-900/50 backdrop-blur-sm">
+                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900">
+                    <span class="text-3xl font-black text-zinc-800 uppercase tracking-tighter opacity-50">${(item.title || '?').charAt(0)}</span>
+                </div>
                 <img src="${item.thumbnail || FALLBACK_IMAGE}" 
                      alt="${item.title || 'Game'}" 
-                     class="w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md" 
+                     class="absolute inset-0 w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md z-10" 
                      referrerpolicy="no-referrer"
-                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}';">
-                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-60"></div>
+                     onerror="this.style.display='none';">
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent opacity-60 z-20"></div>
                 
                 <!-- Hover Overlay -->
                 <div class="absolute inset-0 z-40 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-zinc-950/90 flex flex-col items-center justify-center p-6 text-center">
@@ -2571,9 +2577,24 @@ async function openDetails(item) {
     
     // Fill basic info
     detailsImg.referrerPolicy = "no-referrer";
+    const initialsPlaceholder = document.createElement('div');
+    initialsPlaceholder.className = "absolute inset-0 flex items-center justify-center bg-zinc-900 text-6xl font-black text-zinc-800 uppercase";
+    initialsPlaceholder.textContent = (item.title || '?').charAt(0);
+    
+    const imgContainer = detailsImg.parentElement;
+    if (imgContainer) {
+        // Ensure container is relative and clear previous placeholders
+        imgContainer.style.position = 'relative';
+        const oldP = imgContainer.querySelector('.details-placeholder');
+        if (oldP) oldP.remove();
+        initialsPlaceholder.classList.add('details-placeholder');
+        imgContainer.prepend(initialsPlaceholder);
+    }
+
+    detailsImg.style.display = 'block';
     detailsImg.onerror = function() {
+        this.style.display = 'none';
         this.onerror = null;
-        this.src = FALLBACK_IMAGE;
     };
     detailsImg.src = item.thumbnail || FALLBACK_IMAGE;
     detailsTitle.textContent = item.title || 'Untitled';

@@ -330,47 +330,46 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 border-t border-white/5 pt-6">
                 <!-- Main Actions -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <button id="surprise-btn" class="flex items-center gap-2 px-4 py-2.5 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-500/50 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-cyan-400 group active:scale-95 shadow-[0_0_15px_-5px_rgba(34,211,238,0.3)]">
-                        <i class="bi bi-gift group-hover:bounce transition-transform duration-300"></i>
-                        <span>Surprise</span>
+                    <button id="surprise-btn" class="flex items-center gap-3 px-6 py-3.5 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 hover:border-cyan-500/50 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-cyan-400 group active:scale-95 shadow-[0_0_30px_-10px_rgba(34,211,238,0.3)]">
+                        <i class="bi bi-gift text-lg group-hover:bounce transition-transform duration-300"></i>
+                        <span>Surprise Me</span>
                     </button>
-                    <button id="forum-btn" class="relative flex items-center gap-2 px-4 py-2.5 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/50 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-indigo-400 group active:scale-95">
-                        <i class="bi bi-chat-left-text group-hover:scale-110 transition-transform duration-300"></i>
-                        <span>Chat</span>
-                        <div id="broadcast-badge" class="absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border-2 border-zinc-950 hidden animate-pulse"></div>
+                    <button id="forum-btn" class="relative flex items-center gap-3 px-6 py-3.5 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 hover:border-indigo-500/50 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-indigo-400 group active:scale-95">
+                        <i class="bi bi-chat-left-text text-lg group-hover:scale-110 transition-transform duration-300"></i>
+                        <span>Developer Chat</span>
+                        <div id="broadcast-badge" class="absolute -top-1 -right-1 w-4 h-4 bg-red-600 rounded-full border-2 border-zinc-950 hidden animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.5)]"></div>
                     </button>
-                    <button id="badges-btn" class="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 border border-white/5 hover:border-cyan-500/40 hover:bg-zinc-800 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-cyan-400 group active:scale-95">
-                        <i class="bi bi-trophy group-hover:scale-110 transition-transform duration-300"></i>
+                    <button id="badges-btn" class="flex items-center gap-3 px-6 py-3.5 bg-zinc-900 border border-white/5 hover:border-cyan-500/40 hover:bg-zinc-800 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-cyan-400 group active:scale-95">
+                        <i class="bi bi-trophy text-lg group-hover:scale-110 transition-transform duration-300"></i>
                         <span>Achievements</span>
                     </button>
-                    <!-- PRIZE BUTTON -->
-                    <a href="https://www.youtube.com/watch?v=QDia3e12czc" target="_blank" class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl transition-all text-[10px] font-black uppercase tracking-widest text-amber-200 hover:text-white group active:scale-95">
-                        <i class="bi bi-stars group-hover:rotate-12 transition-transform duration-300"></i>
+                    <a href="https://www.youtube.com/watch?v=QDia3e12czc" target="_blank" class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-amber-200 hover:text-white group active:scale-95 shadow-[0_0_30px_-10px_rgba(245,158,11,0.3)]">
+                        <i class="bi bi-stars text-lg group-hover:rotate-12 transition-transform duration-300"></i>
                         <span>Mystery Prize</span>
                     </a>
                 </div>
 
                 <!-- Utility & Support Group -->
-                <div class="flex flex-wrap items-center gap-2 md:justify-end">
-                    <div class="flex items-center bg-zinc-900/50 p-1 rounded-2xl border border-white/5 gap-1">
-                        <button id="cloak-tab-btn" class="p-2.5 hover:bg-white/5 rounded-xl transition-all text-zinc-500 hover:text-cyan-400" title="Tab Cloak">
+                <div class="flex flex-wrap items-center gap-6 md:justify-end">
+                    <div class="flex items-center bg-zinc-900 border border-white/5 p-1.5 rounded-2xl gap-1">
+                        <button id="cloak-tab-btn" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-white/5 rounded-xl transition-all text-zinc-500 hover:text-cyan-400 group">
                             <i class="bi bi-shield-shaded"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Cloak</span>
                         </button>
-                        <button id="theme-toggle" class="p-2.5 hover:bg-white/5 rounded-xl transition-all text-zinc-500 hover:text-white" title="Appearance Mode">
+                        <button id="theme-toggle" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-white/5 rounded-xl transition-all text-zinc-500 hover:text-white group">
                             <i id="theme-icon" class="bi bi-moon-stars-fill"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Theme</span>
                         </button>
                     </div>
                     
-                    <div class="h-8 w-px bg-white/5 mx-2 hidden lg:block"></div>
-
-                    <div class="flex items-center gap-2">
-                        <button id="update-site-btn" class="px-3 py-2 text-[9px] font-bold text-zinc-500 hover:text-cyan-400 transition-colors uppercase tracking-widest">
+                    <div class="flex items-center gap-1">
+                        <button id="update-site-btn" class="px-4 py-2.5 text-[10px] font-black text-zinc-600 hover:text-cyan-400 transition-all uppercase tracking-[0.2em] bg-white/5 rounded-xl hover:bg-white/10">
                             Update
                         </button>
-                        <a href="mailto:jackcampell608@gmail.com?subject=Feedback/Bug%20Report" class="px-3 py-2 text-[9px] font-bold text-zinc-500 hover:text-cyan-400 transition-colors uppercase tracking-widest">
+                        <a href="mailto:jackcampell608@gmail.com?subject=Feedback/Bug%20Report" class="px-4 py-2.5 text-[10px] font-black text-zinc-600 hover:text-cyan-400 transition-all uppercase tracking-[0.2em] bg-white/5 rounded-xl hover:bg-white/10">
                             Feedback
                         </a>
-                        <a href="mailto:jackcampell608@gmail.com?subject=Game Request" class="hidden sm:inline-block px-3 py-2 text-[9px] font-bold text-zinc-500 hover:text-cyan-400 transition-colors uppercase tracking-widest">
+                        <a href="mailto:jackcampell608@gmail.com?subject=Game Request" class="hidden sm:inline-block px-4 py-2.5 text-[10px] font-black text-zinc-600 hover:text-cyan-400 transition-all uppercase tracking-[0.2em] bg-white/5 rounded-xl hover:bg-white/10">
                             Request
                         </a>
                     </div>
