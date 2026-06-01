@@ -32,9 +32,9 @@ const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 const FALLBACK_IMAGE = '/src/assets/images/game_placeholder_vault_1780278911383.png';
 
 const MENU_MUSIC = [
-    { type: 'youtube', id: 'oSufECsSYxQ', title: 'Nights', artist: 'Frank Ocean' },
-    { type: 'youtube', id: 'eZtMtL2-vI4', title: 'The Color Violet', artist: 'Tory Lanez' },
-    { type: 'youtube', id: 'aSGeQA5eRqw', title: 'telepatía', artist: 'Kali Uchis' }
+    { type: 'youtube', id: 'oSufECsSYxQ', title: 'Sinking Town Tung Tung Tung Sahur', artist: 'Tung Tung Tung Sahur' },
+    { type: 'youtube', id: 'eZtMtL2-vI4', title: 'John Pork is Calling ...', artist: 'Viral Meme' },
+    { type: 'youtube', id: 'aSGeQA5eRqw', title: 'TIKI TIKI (Slowed)', artist: 'Kali Uchis' }
 ];
 let currentMusicIndex = 0;
 let spotifyIframe;
@@ -55,8 +55,11 @@ function updateMusicPlayer() {
     
     // Reset progress bar animation
     if (progressBar) {
+        progressBar.style.transition = 'none';
         progressBar.style.width = '0%';
         setTimeout(() => {
+            // Animate over a typical 3.5 minute song (210s)
+            progressBar.style.transition = 'width 210000ms linear';
             progressBar.style.width = '100%';
         }, 100);
     }
@@ -114,11 +117,19 @@ const allEntries = [
   },
   {
     "id": "soundboard-buttons",
-    "title": "Soundboards",
+    "title": "Soundboards V1",
     "iframeUrl": "https://soundbuttonspro.com/",
     "thumbnail": "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=1000&auto=format&fit=crop",
     "categories": ["Utility", "Fun"],
     "description": "Access a variety of instant sounds and soundboard buttons for ultimate fun and reactions."
+  },
+  {
+    "id": "soundboard-guys",
+    "title": "Soundboard Guys V2",
+    "iframeUrl": "https://soundboardguys.com/",
+    "thumbnail": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1000&auto=format&fit=crop",
+    "categories": ["Utility", "Fun"],
+    "description": "The alternative massive collection of memes, vine thuds, and viral sound effect buttons."
   },
   {
     "id": "doom-2",
@@ -587,7 +598,7 @@ function init() {
         audioToggle.onclick = () => {
             isMusicPlaying = !isMusicPlaying;
             if (audioToggleIcon) {
-                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-xl' : 'bi bi-play-fill text-xl';
+                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-4xl' : 'bi bi-play-fill text-4xl';
             }
             
             // Post message to YouTube Iframe
@@ -598,8 +609,9 @@ function init() {
                     spotifyIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
                 }
             } catch (e) {
-                console.error("Audio Command Error:", e);
-                // Fallback: If postMessage fails, we might need to re-src (not ideal but works)
+                console.warn("Audio Sync Payload Error:", e);
+                // Fallback for initial state or cross-origin
+                if (isMusicPlaying) updateMusicPlayer();
             }
         };
     }
@@ -609,7 +621,7 @@ function init() {
             currentMusicIndex = (currentMusicIndex - 1 + MENU_MUSIC.length) % MENU_MUSIC.length;
             updateMusicPlayer();
             isMusicPlaying = true;
-            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-4xl';
         };
     }
     if (nextTrackBtn) {
@@ -617,7 +629,41 @@ function init() {
             currentMusicIndex = (currentMusicIndex + 1) % MENU_MUSIC.length;
             updateMusicPlayer();
             isMusicPlaying = true;
-            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-4xl';
+        };
+    }
+
+    const progressContainer = document.getElementById('audio-progress-container');
+    if (progressContainer) {
+        progressContainer.onclick = (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = x / rect.width;
+            
+            // Assume 3:30 (210s) average duration for seeking without full API metadata
+            const seekTime = Math.floor(percentage * 210); 
+            
+            try {
+                spotifyIframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command',
+                    func: 'seekTo',
+                    args: [seekTime, true]
+                }), '*');
+                
+                // Update visual progress immediately
+                const progressBar = document.getElementById('audio-progress');
+                if (progressBar) {
+                    progressBar.style.transition = 'none';
+                    progressBar.style.width = (percentage * 100) + '%';
+                    setTimeout(() => {
+                        const remainingMs = Math.floor((1 - percentage) * 210000);
+                        progressBar.style.transition = `width ${remainingMs}ms linear`;
+                        progressBar.style.width = '100%';
+                    }, 50);
+                }
+            } catch (err) {
+                console.warn("Seek Command Failed:", err);
+            }
         };
     }
     
