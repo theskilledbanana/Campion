@@ -42,7 +42,18 @@ let spotifyIframe;
 function updateMusicPlayer() {
     if (!spotifyIframe) return;
     const track = MENU_MUSIC[currentMusicIndex];
-    spotifyIframe.src = `https://open.spotify.com/embed/track/${track.id}?utm_source=generator&theme=0`;
+    let trackId = track.id;
+    
+    // Support full URLs if provided
+    if (trackId.includes('spotify.com/')) {
+        const match = trackId.match(/(track|album|playlist)\/([a-zA-Z0-9]+)/);
+        if (match) {
+            spotifyIframe.src = `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0&autoplay=1`;
+            return;
+        }
+    }
+    
+    spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
 }
 
 const allEntries = [
@@ -2507,8 +2518,7 @@ function syncForumMessages() {
             
             // Only the CEO can delete or revoke
             const canDelete = currentUserRole === 'ceo';
-            const isTargetDev = msg.authorRole === 'developer' || msg.authorRole === 'dev';
-            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo && !isTargetDev;
+            const canRevoke = currentUserRole === 'ceo' && !isMsgCeo;
             const isMsgMarlon = msg.authorName === 'MARLON';
             
             // Check if this specific author is already revoked (this is expensive in a loop, but we do it for the UI)
