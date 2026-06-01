@@ -598,7 +598,7 @@ function init() {
         audioToggle.onclick = () => {
             isMusicPlaying = !isMusicPlaying;
             if (audioToggleIcon) {
-                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-4xl' : 'bi bi-play-fill text-4xl';
+                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-xl' : 'bi bi-play-fill text-xl';
             }
             
             // Post message to YouTube Iframe
@@ -621,7 +621,7 @@ function init() {
             currentMusicIndex = (currentMusicIndex - 1 + MENU_MUSIC.length) % MENU_MUSIC.length;
             updateMusicPlayer();
             isMusicPlaying = true;
-            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-4xl';
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
         };
     }
     if (nextTrackBtn) {
@@ -629,7 +629,7 @@ function init() {
             currentMusicIndex = (currentMusicIndex + 1) % MENU_MUSIC.length;
             updateMusicPlayer();
             isMusicPlaying = true;
-            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-4xl';
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
         };
     }
 

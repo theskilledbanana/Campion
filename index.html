@@ -495,82 +495,70 @@
 
         <!-- Main Content Area -->
         <main class="flex-1 min-w-0">
-            <!-- Audio Module (PROMINENT AT TOP) -->
-            <div id="audio-panel" class="mb-12 p-8 bg-zinc-900/40 border border-cyan-500/10 rounded-[2.5rem] backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                    <i class="bi bi-broadcast text-8xl text-cyan-500"></i>
-                </div>
-                
-                <div class="relative z-10">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-2.5 h-2.5 rounded-full bg-cyan-500 animate-pulse ring-4 ring-cyan-500/20"></div>
-                        <span class="text-[10px] font-black font-mono text-cyan-400 uppercase tracking-[0.4em] font-bold">Deep Space Transmission Hub</span>
+            <!-- Compact Audio Transmission Strip -->
+            <div id="audio-panel" class="mb-8 p-4 bg-zinc-900/40 border-b border-white/5 rounded-3xl backdrop-blur-xl relative overflow-hidden group">
+                <div id="audio-hub" class="relative z-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-8 px-4">
+                    
+                    <!-- Video Mask (Hidden Player) -->
+                    <div class="absolute inset-0 z-0 opacity-0 pointer-events-none overflow-hidden" style="width: 1px; height: 1px;">
+                        <iframe id="spotify-iframe" 
+                            src="about:blank"
+                            width="300" 
+                            height="200" 
+                            frameBorder="0">
+                        </iframe>
                     </div>
 
-                    <!-- Audio Hub -->
-                    <div id="audio-hub" class="rounded-[2.5rem] bg-black/40 border border-white/5 p-8 relative overflow-hidden group">
-                        <!-- Video Mask (Hidden Player) -->
-                        <div class="absolute inset-0 z-0 opacity-0 pointer-events-none overflow-hidden" style="width: 1px; height: 1px;">
-                            <iframe id="spotify-iframe" 
-                                src="about:blank"
-                                width="300" 
-                                height="200" 
-                                frameBorder="0">
-                            </iframe>
+                    <!-- Compact Autoplay Handshake Overlay -->
+                    <div id="audio-overlay" class="absolute inset-0 bg-zinc-950/98 flex items-center justify-between px-8 z-20 backdrop-blur-xl transition-all duration-700 rounded-3xl">
+                        <div class="flex items-center gap-3">
+                            <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
+                            <span class="text-[9px] font-black font-mono text-zinc-500 uppercase tracking-[0.3em]">Audio Handshake Pending</span>
                         </div>
-
-                        <!-- Autoplay Handshake Overlay -->
-                        <div id="audio-overlay" class="absolute inset-0 bg-zinc-950/98 flex flex-col items-center justify-center z-20 backdrop-blur-xl transition-all duration-700">
-                            <div class="mb-8 relative">
-                                <div class="absolute -inset-10 bg-cyan-500/10 blur-3xl animate-pulse"></div>
-                                <i class="bi bi-broadcast-pin text-6xl text-cyan-500/20"></i>
+                        <button id="connect-audio-btn" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all active:scale-95 flex items-center gap-2">
+                            <i class="bi bi-broadcast"></i>
+                            Connect Stream
+                        </button>
+                    </div>
+                    
+                    <!-- Integrated Custom UI -->
+                    <div class="flex items-center gap-4 shrink-0">
+                        <div class="w-10 h-10 bg-zinc-950 rounded-xl border border-white/10 flex items-center justify-center relative overflow-hidden">
+                            <div class="flex gap-0.5 items-end h-4">
+                                <div class="w-1 h-2 bg-cyan-500/80 animate-[music-bar_0.8s_infinite]"></div>
+                                <div class="w-1 h-4 bg-cyan-500 animate-[music-bar_1.2s_infinite]"></div>
+                                <div class="w-1 h-3 bg-cyan-500/80 animate-[music-bar_0.6s_infinite]"></div>
                             </div>
-                            <button id="connect-audio-btn" class="px-12 py-4 bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-black uppercase tracking-[0.3em] rounded-2xl shadow-[0_0_50px_rgba(6,182,212,0.4)] transition-all active:scale-95 flex items-center gap-4">
-                                <i class="bi bi-broadcast"></i>
-                                Initialize Audio Uplink
-                            </button>
-                            <span class="text-[9px] text-zinc-600 font-mono mt-5 uppercase tracking-[0.4em] animate-flicker">Waiting for Handshake [Secure]</span>
                         </div>
-                        
-                        <!-- Custom UI -->
-                        <div class="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                            <div class="flex-shrink-0 relative group/icon">
-                                <div class="absolute -inset-4 bg-cyan-500/10 rounded-full blur-2xl opacity-0 group-hover/icon:opacity-100 transition-opacity"></div>
-                                <div class="w-24 h-24 bg-zinc-950 rounded-[2rem] border border-white/10 flex items-center justify-center shadow-2xl relative overflow-hidden">
-                                    <div class="flex gap-1 items-end h-10">
-                                        <div class="w-1.5 h-3 bg-cyan-500 animate-[music-bar_0.8s_ease-in-out_infinite]"></div>
-                                        <div class="w-1.5 h-8 bg-cyan-500 animate-[music-bar_1.2s_ease-in-out_infinite]"></div>
-                                        <div class="w-1.5 h-5 bg-cyan-500 animate-[music-bar_0.6s_ease-in-out_infinite]"></div>
-                                        <div class="w-1.5 h-9 bg-cyan-500 animate-[music-bar_1.4s_ease-in-out_infinite]"></div>
-                                    </div>
-                                    <div class="absolute inset-0 bg-gradient-to-t from-cyan-500/10 to-transparent"></div>
-                                </div>
-                            </div>
+                        <div class="flex flex-col">
+                            <h4 id="audio-title" class="text-[11px] font-black text-white truncate max-w-[120px] uppercase tracking-tight italic">Initializing...</h4>
+                            <p id="audio-artist" class="text-[9px] text-zinc-500 font-bold truncate tracking-widest uppercase opacity-60">Ready for Uplink</p>
+                        </div>
+                    </div>
 
-                            <div class="flex-1 min-w-0 flex flex-col gap-6 text-center md:text-left">
-                                <div class="space-y-2">
-                                    <h4 id="audio-title" class="text-3xl font-black text-white truncate tracking-tighter uppercase italic leading-none">Initializing...</h4>
-                                    <p id="audio-artist" class="text-xs text-zinc-500 font-black truncate tracking-[0.2em] uppercase opacity-60">Handshake Required</p>
+                    <!-- Controls & Scrubber -->
+                    <div class="flex-1 w-full flex flex-col gap-2">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <button id="prev-track" class="text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
+                                    <i class="bi bi-skip-start-fill text-xl"></i>
+                                </button>
+                                <button id="audio-toggle" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-zinc-300 hover:bg-zinc-100 hover:text-black transition-all active:scale-90 shadow-lg">
+                                    <i id="audio-toggle-icon" class="bi bi-pause-fill text-xl"></i>
+                                </button>
+                                <button id="next-track" class="text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
+                                    <i class="bi bi-skip-end-fill text-xl"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Custom Progress Container -->
+                            <div class="flex-1 flex flex-col gap-1 mt-1 group cursor-pointer" id="audio-progress-container">
+                                <div class="h-1 bg-white/5 rounded-full overflow-hidden relative group-hover:bg-white/10 transition-colors">
+                                    <div id="audio-progress" class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-0 ease-linear shadow-[0_0_10px_rgba(34,211,238,0.3)]"></div>
                                 </div>
-                                
-                                <div class="flex flex-col gap-4">
-                                    <div class="flex items-center gap-6">
-                                        <button id="prev-track" class="text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
-                                            <i class="bi bi-skip-start-fill text-4xl"></i>
-                                        </button>
-                                        <button id="audio-toggle" class="w-16 h-16 flex items-center justify-center rounded-[1.5rem] bg-cyan-500 text-black hover:bg-cyan-400 transition-all active:scale-95 shadow-[0_0_30px_rgba(34,211,238,0.3)]">
-                                            <i id="audio-toggle-icon" class="bi bi-pause-fill text-4xl"></i>
-                                        </button>
-                                        <button id="next-track" class="text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
-                                            <i class="bi bi-skip-end-fill text-4xl"></i>
-                                        </button>
-                                        
-                                        <div class="flex-1 hidden md:block group/progress">
-                                            <div id="audio-progress-container" class="h-2 bg-white/5 rounded-full overflow-hidden relative cursor-pointer hover:bg-white/10 transition-all">
-                                                <div id="audio-progress" class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-0 ease-linear shadow-[0_0_15px_rgba(34,211,238,0.5)]"></div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="flex justify-between items-center px-0.5">
+                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">Signal Stream</span>
+                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">256KBPS/SEC</span>
                                 </div>
                             </div>
                         </div>
