@@ -61,19 +61,19 @@ function updateMusicPlayer() {
             videoId = trackId.split('youtu.be/')[1].split('?')[0];
         }
         if (videoId) {
-            spotifyIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0`;
-            spotifyIframe.allow = "autoplay; encrypted-media";
+            spotifyIframe.setAttribute('allow', 'autoplay; encrypted-media');
+            spotifyIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0&enablejsapi=1`;
             return;
         }
     }
 
     // Embed based on type
     if (track.type === 'youtube') {
-        spotifyIframe.src = `https://www.youtube.com/embed/${trackId}?autoplay=1&mute=0&rel=0`;
-        spotifyIframe.allow = "autoplay; encrypted-media";
+        spotifyIframe.setAttribute('allow', 'autoplay; encrypted-media');
+        spotifyIframe.src = `https://www.youtube.com/embed/${trackId}?autoplay=1&mute=0&rel=0&enablejsapi=1`;
     } else {
+        spotifyIframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
         spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
-        spotifyIframe.allow = "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture";
     }
 }
 
@@ -551,6 +551,17 @@ function init() {
     spotifyIframe = document.getElementById('spotify-iframe');
     const prevTrackBtn = document.getElementById('prev-track');
     const nextTrackBtn = document.getElementById('next-track');
+    const connectAudioBtn = document.getElementById('connect-audio-btn');
+    const audioOverlay = document.getElementById('audio-overlay');
+
+    if (connectAudioBtn && audioOverlay) {
+        connectAudioBtn.onmousedown = (e) => {
+            e.preventDefault();
+            audioOverlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => audioOverlay.classList.add('hidden'), 500);
+            updateMusicPlayer();
+        };
+    }
 
     if (prevTrackBtn) {
         prevTrackBtn.onclick = () => {
@@ -565,8 +576,10 @@ function init() {
         };
     }
     
-    // Initial load
-    updateMusicPlayer();
+    // Initial load - sync once connected
+    if (!connectAudioBtn) {
+        updateMusicPlayer();
+    }
     
     // Forum Modal
     forumModal = document.getElementById('forum-modal');
