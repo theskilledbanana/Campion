@@ -585,6 +585,19 @@ function init() {
     const audioToggle = document.getElementById('audio-toggle');
     const audioToggleIcon = document.getElementById('audio-toggle-icon');
 
+    const audioPanel = document.getElementById('audio-panel');
+    const musicFeatureBtn = document.getElementById('music-feature-btn');
+
+    if (musicFeatureBtn && audioPanel) {
+        musicFeatureBtn.onclick = () => {
+            audioPanel.classList.toggle('hidden');
+            if (!audioPanel.classList.contains('hidden')) {
+                // Ensure layout is correct on show
+                audioPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+    }
+
     if (connectAudioBtn && audioOverlay) {
         connectAudioBtn.onmousedown = (e) => {
             e.preventDefault();
