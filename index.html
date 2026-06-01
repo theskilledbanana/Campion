@@ -349,9 +349,11 @@
                         <i class="bi bi-trophy text-lg group-hover:scale-110 transition-transform duration-300"></i>
                         <span>Achievements</span>
                     </button>
-                    <button id="music-feature-btn" class="flex items-center gap-3 px-6 py-3.5 bg-zinc-900 border border-white/5 hover:border-cyan-500/40 hover:bg-zinc-800 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-cyan-400 group active:scale-95">
+                    <button id="music-feature-btn" class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 border border-cyan-500/30 hover:border-cyan-400 hover:bg-cyan-500/30 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-cyan-200 hover:text-white group active:scale-95 shadow-[0_0_20px_-5px_rgba(6,182,212,0.4)] relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                         <i class="bi bi-music-note-beamed text-lg group-hover:scale-110 transition-transform duration-300"></i>
-                        <span>Music</span>
+                        <span>Music System</span>
+                        <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse ml-1"></div>
                     </button>
                     <a href="https://www.youtube.com/watch?v=QDia3e12czc" target="_blank" class="flex items-center gap-3 px-6 py-3.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-2xl transition-all text-xs font-black uppercase tracking-[0.2em] text-amber-200 hover:text-white group active:scale-95 shadow-[0_0_30px_-10px_rgba(245,158,11,0.3)]">
                         <i class="bi bi-stars text-lg group-hover:rotate-12 transition-transform duration-300"></i>
@@ -499,9 +501,9 @@
 
         <!-- Main Content Area -->
         <main class="flex-1 min-w-0">
-            <!-- Music Player -->
-            <div id="audio-panel" class="hidden mb-8 p-4 bg-zinc-900/40 border-b border-white/5 rounded-3xl backdrop-blur-xl relative overflow-hidden group">
-                <div id="audio-hub" class="relative z-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-8 px-4">
+            <!-- Music Player (Compact & Always Reachable) -->
+            <div id="audio-panel" class="mb-8 p-3 bg-zinc-900/40 border border-white/5 rounded-[1.5rem] backdrop-blur-xl relative overflow-hidden group">
+                <div id="audio-hub" class="relative z-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-3">
                     
                     <!-- Video Mask (Hidden Player) -->
                     <div class="absolute inset-0 z-0 opacity-0 pointer-events-none overflow-hidden" style="width: 1px; height: 1px;">
@@ -514,57 +516,58 @@
                     </div>
 
                     <!-- Compact Autoplay Handshake Overlay -->
-                    <div id="audio-overlay" class="absolute inset-0 bg-zinc-950/98 flex items-center justify-between px-8 z-20 backdrop-blur-xl transition-all duration-700 rounded-3xl">
+                    <div id="audio-overlay" class="absolute inset-0 bg-zinc-950/98 flex items-center justify-between px-6 z-20 backdrop-blur-xl transition-all duration-700 rounded-[1.5rem]">
                         <div class="flex items-center gap-3">
-                            <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
-                            <span class="text-[9px] font-black font-mono text-zinc-500 uppercase tracking-[0.3em]">Connection Required</span>
+                            <i class="bi bi-broadcast text-cyan-500 animate-pulse"></i>
+                            <span class="text-[9px] font-black font-mono text-zinc-500 uppercase tracking-[0.3em]">Initialize Music</span>
                         </div>
-                        <button id="connect-audio-btn" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all active:scale-95 flex items-center gap-2">
-                            <i class="bi bi-broadcast"></i>
-                            Connect Music
+                        <button id="connect-audio-btn" class="px-6 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all active:scale-95 flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                            Power On
                         </button>
                     </div>
                     
-                    <!-- Integrated Custom UI -->
-                    <div class="flex items-center gap-4 shrink-0">
+                    <!-- Media Info -->
+                    <div class="flex items-center gap-3 shrink-0">
                         <div class="w-10 h-10 bg-zinc-950 rounded-xl border border-white/10 flex items-center justify-center relative overflow-hidden">
                             <div class="flex gap-0.5 items-end h-4">
-                                <div class="w-1 h-2 bg-cyan-500/80 animate-[music-bar_0.8s_infinite]"></div>
-                                <div class="w-1 h-4 bg-cyan-500 animate-[music-bar_1.2s_infinite]"></div>
-                                <div class="w-1 h-3 bg-cyan-500/80 animate-[music-bar_0.6s_infinite]"></div>
+                                <div id="v-bar-1" class="w-1 h-2 bg-cyan-500/80 animate-[music-bar_0.8s_infinite]"></div>
+                                <div id="v-bar-2" class="w-1 h-4 bg-cyan-500 animate-[music-bar_1.2s_infinite]"></div>
+                                <div id="v-bar-3" class="w-1 h-3 bg-cyan-500/80 animate-[music-bar_0.6s_infinite]"></div>
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <h4 id="audio-title" class="text-[11px] font-black text-white truncate max-w-[120px] uppercase tracking-tight italic">Music Player</h4>
-                            <p id="audio-artist" class="text-[9px] text-zinc-500 font-bold truncate tracking-widest uppercase opacity-60">Status: Ready</p>
+                            <h4 id="audio-title" class="text-[11px] font-black text-white truncate max-w-[140px] uppercase tracking-tight italic">Waiting...</h4>
+                            <p id="audio-artist" class="text-[8px] text-zinc-500 font-bold truncate tracking-widest uppercase opacity-60">Music Offline</p>
                         </div>
                     </div>
 
-                    <!-- Controls & Scrubber -->
-                    <div class="flex-1 w-full flex flex-col gap-2">
-                        <div class="flex items-center justify-between gap-4">
-                            <div class="flex items-center gap-4">
-                                <button id="prev-track" class="text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
-                                    <i class="bi bi-skip-start-fill text-xl"></i>
-                                </button>
-                                <button id="audio-toggle" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 text-zinc-300 hover:bg-zinc-100 hover:text-black transition-all active:scale-90 shadow-lg">
-                                    <i id="audio-toggle-icon" class="bi bi-pause-fill text-xl"></i>
-                                </button>
-                                <button id="next-track" class="text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
-                                    <i class="bi bi-skip-end-fill text-xl"></i>
-                                </button>
-                            </div>
-                            
-                            <!-- Custom Progress Container -->
-                            <div class="flex-1 flex flex-col gap-1 mt-1 group cursor-pointer" id="audio-progress-container">
-                                <div class="h-1 bg-white/5 rounded-full overflow-hidden relative group-hover:bg-white/10 transition-colors">
-                                    <div id="audio-progress" class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-0 ease-linear shadow-[0_0_10px_rgba(34,211,238,0.3)]"></div>
-                                </div>
-                                <div class="flex justify-between items-center px-0.5">
-                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">Music Stream</span>
-                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">Active</span>
-                                </div>
-                            </div>
+                    <!-- Controls -->
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button id="prev-track" class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
+                            <i class="bi bi-skip-start-fill text-lg"></i>
+                        </button>
+                        <button id="rewind-track" class="w-8 h-8 flex items-center justify-center text-zinc-600 hover:text-white active:scale-90 transition-all" title="Back 10s">
+                            <i class="bi bi-rewind-fill text-sm"></i>
+                        </button>
+                        <button id="audio-toggle" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 text-zinc-300 hover:bg-zinc-100 hover:text-black transition-all active:scale-90 shadow-lg border border-white/5">
+                            <i id="audio-toggle-icon" class="bi bi-play-fill text-2xl"></i>
+                        </button>
+                        <button id="fast-forward-track" class="w-8 h-8 flex items-center justify-center text-zinc-600 hover:text-white active:scale-90 transition-all" title="Forward 10s">
+                            <i class="bi bi-fast-forward-fill text-sm"></i>
+                        </button>
+                        <button id="next-track" class="w-8 h-8 flex items-center justify-center text-zinc-500 hover:text-cyan-400 active:scale-90 transition-all">
+                            <i class="bi bi-skip-end-fill text-lg"></i>
+                        </button>
+                    </div>
+
+                    <!-- Scrubber -->
+                    <div class="flex-1 w-full flex flex-col gap-1 group cursor-pointer" id="audio-progress-container">
+                        <div class="h-1 bg-white/5 rounded-full overflow-hidden relative group-hover:bg-white/10 transition-colors">
+                            <div id="audio-progress" class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-0 ease-linear shadow-[0_0_10px_rgba(34,211,238,0.3)]"></div>
+                        </div>
+                        <div class="flex justify-between items-center px-0.5">
+                            <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-widest uppercase">Streaming</span>
+                            <span id="audio-time-label" class="text-[7px] text-zinc-600 font-mono font-bold tracking-widest uppercase">0:00 / 3:30</span>
                         </div>
                     </div>
                 </div>

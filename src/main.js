@@ -49,9 +49,11 @@ function updateMusicPlayer() {
     const titleEl = document.getElementById('audio-title');
     const artistEl = document.getElementById('audio-artist');
     const progressBar = document.getElementById('audio-progress');
+    const timeLabel = document.getElementById('audio-time-label');
     
     if (titleEl) titleEl.textContent = track.title;
     if (artistEl) artistEl.textContent = track.artist;
+    if (timeLabel) timeLabel.textContent = `0:00 / 3:30`;
     
     // Reset progress bar animation
     if (progressBar) {
@@ -74,27 +76,24 @@ function updateMusicPlayer() {
         }
     }
 
-    if (trackId.includes('youtube.com/') || trackId.includes('youtu.be/')) {
-        let videoId = '';
-        if (trackId.includes('v=')) {
-            videoId = trackId.split('v=')[1].split('&')[0];
-        } else if (trackId.includes('youtu.be/')) {
-            videoId = trackId.split('youtu.be/')[1].split('?')[0];
-        }
-        if (videoId) {
-            spotifyIframe.setAttribute('allow', 'autoplay; encrypted-media');
-            spotifyIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0&enablejsapi=1`;
-            return;
-        }
-    }
+    // YouTube fallback with JS API enabled for control
+    spotifyIframe.setAttribute('allow', 'autoplay; encrypted-media');
+    spotifyIframe.src = `https://www.youtube.com/embed/${trackId}?autoplay=1&mute=0&rel=0&enablejsapi=1&origin=${window.location.origin}`;
+}
 
-    // Embed based on type
-    if (track.type === 'youtube') {
-        spotifyIframe.setAttribute('allow', 'autoplay; encrypted-media');
-        spotifyIframe.src = `https://www.youtube.com/embed/${trackId}?autoplay=1&mute=0&rel=0&enablejsapi=1`;
-    } else {
-        spotifyIframe.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
-        spotifyIframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0&autoplay=1`;
+// Global seeker state
+let currentSeekPosition = 0;
+
+function sendAudioCommand(command, args = []) {
+    if (!spotifyIframe || !spotifyIframe.contentWindow) return;
+    try {
+        spotifyIframe.contentWindow.postMessage(JSON.stringify({
+            event: 'command',
+            func: command,
+            args: args
+        }), '*');
+    } catch (e) {
+        console.warn("Audio Signal Error:", e);
     }
 }
 
@@ -580,6 +579,8 @@ function init() {
     spotifyIframe = document.getElementById('spotify-iframe');
     const prevTrackBtn = document.getElementById('prev-track');
     const nextTrackBtn = document.getElementById('next-track');
+    const rewindBtn = document.getElementById('rewind-track');
+    const fastForwardBtn = document.getElementById('fast-forward-track');
     const connectAudioBtn = document.getElementById('connect-audio-btn');
     const audioOverlay = document.getElementById('audio-overlay');
     const audioToggle = document.getElementById('audio-toggle');
@@ -590,20 +591,23 @@ function init() {
 
     if (musicFeatureBtn && audioPanel) {
         musicFeatureBtn.onclick = () => {
-            audioPanel.classList.toggle('hidden');
-            if (!audioPanel.classList.contains('hidden')) {
-                // Ensure layout is correct on show
-                audioPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            audioPanel.classList.remove('hidden');
+            audioPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            audioPanel.classList.add('ring-2', 'ring-cyan-500/50');
+            setTimeout(() => audioPanel.classList.remove('ring-2', 'ring-cyan-500/50'), 2000);
         };
     }
 
     if (connectAudioBtn && audioOverlay) {
         connectAudioBtn.onmousedown = (e) => {
             e.preventDefault();
-            audioOverlay.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => audioOverlay.classList.add('hidden'), 500);
-            updateMusicPlayer();
+            audioOverlay.style.opacity = '0';
+            setTimeout(() => {
+                audioOverlay.style.display = 'none';
+                updateMusicPlayer();
+                isMusicPlaying = true;
+                if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-2xl';
+            }, 700);
         };
     }
 
@@ -611,20 +615,13 @@ function init() {
         audioToggle.onclick = () => {
             isMusicPlaying = !isMusicPlaying;
             if (audioToggleIcon) {
-                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-xl' : 'bi bi-play-fill text-xl';
+                audioToggleIcon.className = isMusicPlaying ? 'bi bi-pause-fill text-2xl' : 'bi bi-play-fill text-2xl';
             }
             
-            // Post message to YouTube Iframe
-            try {
-                if (isMusicPlaying) {
-                    spotifyIframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
-                } else {
-                    spotifyIframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-                }
-            } catch (e) {
-                console.warn("Audio Sync Payload Error:", e);
-                // Fallback for initial state or cross-origin
-                if (isMusicPlaying) updateMusicPlayer();
+            if (isMusicPlaying) {
+                sendAudioCommand('playVideo');
+            } else {
+                sendAudioCommand('pauseVideo');
             }
         };
     }
@@ -634,16 +631,55 @@ function init() {
             currentMusicIndex = (currentMusicIndex - 1 + MENU_MUSIC.length) % MENU_MUSIC.length;
             updateMusicPlayer();
             isMusicPlaying = true;
-            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
+            currentSeekPosition = 0;
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-2xl';
         };
     }
+    
     if (nextTrackBtn) {
         nextTrackBtn.onclick = () => {
             currentMusicIndex = (currentMusicIndex + 1) % MENU_MUSIC.length;
             updateMusicPlayer();
             isMusicPlaying = true;
-            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-xl';
+            currentSeekPosition = 0;
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-pause-fill text-2xl';
         };
+    }
+
+    if (rewindBtn) {
+        rewindBtn.onclick = () => {
+            currentSeekPosition = Math.max(0, currentSeekPosition - 10);
+            sendAudioCommand('seekTo', [currentSeekPosition, true]);
+            updateProgressBarVisual(currentSeekPosition / 210);
+        };
+    }
+
+    if (fastForwardBtn) {
+        fastForwardBtn.onclick = () => {
+            currentSeekPosition = Math.min(210, currentSeekPosition + 10);
+            sendAudioCommand('seekTo', [currentSeekPosition, true]);
+            updateProgressBarVisual(currentSeekPosition / 210);
+        };
+    }
+
+    function updateProgressBarVisual(percentage) {
+        const progressBar = document.getElementById('audio-progress');
+        const timeLabel = document.getElementById('audio-time-label');
+        if (progressBar) {
+            progressBar.style.transition = 'none';
+            progressBar.style.width = (percentage * 100) + '%';
+            
+            const currentSecs = Math.floor(percentage * 210);
+            const mins = Math.floor(currentSecs / 60);
+            const secs = currentSecs % 60;
+            if (timeLabel) timeLabel.textContent = `${mins}:${secs.toString().padStart(2, '0')} / 3:30`;
+
+            setTimeout(() => {
+                const remainingMs = Math.floor((1 - percentage) * 210000);
+                progressBar.style.transition = `width ${remainingMs}ms linear`;
+                progressBar.style.width = '100%';
+            }, 50);
+        }
     }
 
     const progressContainer = document.getElementById('audio-progress-container');
@@ -652,31 +688,9 @@ function init() {
             const rect = progressContainer.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const percentage = x / rect.width;
-            
-            // Assume 3:30 (210s) average duration for seeking without full API metadata
-            const seekTime = Math.floor(percentage * 210); 
-            
-            try {
-                spotifyIframe.contentWindow.postMessage(JSON.stringify({
-                    event: 'command',
-                    func: 'seekTo',
-                    args: [seekTime, true]
-                }), '*');
-                
-                // Update visual progress immediately
-                const progressBar = document.getElementById('audio-progress');
-                if (progressBar) {
-                    progressBar.style.transition = 'none';
-                    progressBar.style.width = (percentage * 100) + '%';
-                    setTimeout(() => {
-                        const remainingMs = Math.floor((1 - percentage) * 210000);
-                        progressBar.style.transition = `width ${remainingMs}ms linear`;
-                        progressBar.style.width = '100%';
-                    }, 50);
-                }
-            } catch (err) {
-                console.warn("Seek Command Failed:", err);
-            }
+            currentSeekPosition = Math.floor(percentage * 210); 
+            sendAudioCommand('seekTo', [currentSeekPosition, true]);
+            updateProgressBarVisual(percentage);
         };
     }
     
