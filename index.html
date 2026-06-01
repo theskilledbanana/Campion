@@ -495,7 +495,7 @@
 
         <!-- Main Content Area -->
         <main class="flex-1 min-w-0">
-            <!-- Compact Audio Transmission Strip -->
+            <!-- Music Player -->
             <div id="audio-panel" class="mb-8 p-4 bg-zinc-900/40 border-b border-white/5 rounded-3xl backdrop-blur-xl relative overflow-hidden group">
                 <div id="audio-hub" class="relative z-10 flex flex-col sm:flex-row items-center gap-4 sm:gap-8 px-4">
                     
@@ -513,11 +513,11 @@
                     <div id="audio-overlay" class="absolute inset-0 bg-zinc-950/98 flex items-center justify-between px-8 z-20 backdrop-blur-xl transition-all duration-700 rounded-3xl">
                         <div class="flex items-center gap-3">
                             <div class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></div>
-                            <span class="text-[9px] font-black font-mono text-zinc-500 uppercase tracking-[0.3em]">Audio Handshake Pending</span>
+                            <span class="text-[9px] font-black font-mono text-zinc-500 uppercase tracking-[0.3em]">Connection Required</span>
                         </div>
                         <button id="connect-audio-btn" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-black text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all active:scale-95 flex items-center gap-2">
                             <i class="bi bi-broadcast"></i>
-                            Connect Stream
+                            Connect Music
                         </button>
                     </div>
                     
@@ -531,8 +531,8 @@
                             </div>
                         </div>
                         <div class="flex flex-col">
-                            <h4 id="audio-title" class="text-[11px] font-black text-white truncate max-w-[120px] uppercase tracking-tight italic">Initializing...</h4>
-                            <p id="audio-artist" class="text-[9px] text-zinc-500 font-bold truncate tracking-widest uppercase opacity-60">Ready for Uplink</p>
+                            <h4 id="audio-title" class="text-[11px] font-black text-white truncate max-w-[120px] uppercase tracking-tight italic">Music Player</h4>
+                            <p id="audio-artist" class="text-[9px] text-zinc-500 font-bold truncate tracking-widest uppercase opacity-60">Status: Ready</p>
                         </div>
                     </div>
 
@@ -557,8 +557,8 @@
                                     <div id="audio-progress" class="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 w-0 ease-linear shadow-[0_0_10px_rgba(34,211,238,0.3)]"></div>
                                 </div>
                                 <div class="flex justify-between items-center px-0.5">
-                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">Signal Stream</span>
-                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">256KBPS/SEC</span>
+                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">Music Stream</span>
+                                    <span class="text-[7px] text-zinc-600 font-mono font-bold tracking-tighter uppercase">Active</span>
                                 </div>
                             </div>
                         </div>
