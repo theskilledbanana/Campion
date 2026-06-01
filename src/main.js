@@ -598,6 +598,25 @@ function init() {
         };
     }
 
+    const updatesBtn = document.getElementById('updates-btn');
+    const feedbackBtn = document.getElementById('feedback-btn');
+
+    if (updatesBtn) {
+        updatesBtn.onclick = () => {
+            if (typeof openUpdateModal === 'function') {
+                openUpdateModal();
+            } else {
+                console.log("Updates requested");
+            }
+        };
+    }
+
+    if (feedbackBtn) {
+        feedbackBtn.onclick = () => {
+            window.location.href = "mailto:jackcampell608@gmail.com?subject=VaultPortal Feedback";
+        };
+    }
+
     if (connectAudioBtn && audioOverlay) {
         connectAudioBtn.onmousedown = (e) => {
             e.preventDefault();
