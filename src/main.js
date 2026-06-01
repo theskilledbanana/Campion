@@ -1849,31 +1849,40 @@ function renderCategories() {
         return String(a).localeCompare(String(b));
     });
     
-    // Static HTML for the filter label to ensure it's always there
-    const labelHTML = `
-        <div class="flex items-center gap-3 pr-6 border-r border-white/5 mr-3 flex-shrink-0">
-            <i class="bi bi-filter-left text-zinc-500 text-xl"></i>
-            <span class="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Filter</span>
-        </div>
-    `;
-    
-    nav.innerHTML = labelHTML;
-
+    nav.innerHTML = '';
     const categoriesList = ['All', 'Favorites ⭐', ...sortedCategories];
     
+    // Update Active Title
+    const activeHeader = getEl('active-category-title');
+    if (activeHeader) activeHeader.textContent = currentCategory === 'All' ? 'Central Archive' : currentCategory;
+
     categoriesList.forEach(category => {
         const btn = document.createElement('button');
         const isActive = currentCategory === category;
-        btn.className = `whitespace-nowrap px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${
+        
+        // Responsive Sidebar & Row Styling
+        btn.className = `flex-shrink-0 lg:w-full flex items-center justify-between px-6 lg:px-5 py-3 lg:py-4 rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 border group ${
             isActive 
-            ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)] translate-y-[-1px]' 
-            : 'bg-white/5 text-zinc-500 border-white/5 hover:bg-white/10 hover:text-zinc-300 hover:border-white/10'
+            ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] lg:scale-[1.05] z-10' 
+            : 'bg-zinc-900/40 lg:bg-transparent text-zinc-500 border-white/5 lg:border-transparent hover:bg-white/5 hover:text-zinc-300 hover:border-white/10'
         }`;
-        btn.textContent = category;
+        
+        const count = category === 'All' 
+            ? entries.length 
+            : category === 'Favorites ⭐' 
+                ? userData.favorites.length 
+                : entries.filter(e => (e.categories || []).includes(category)).length;
+
+        btn.innerHTML = `
+            <span>${category}</span>
+            <span class="${isActive ? 'text-black/50' : 'text-zinc-700'} font-mono text-[8px]">${count}</span>
+        `;
+
         btn.onclick = () => {
             currentCategory = category;
             renderCategories();
             renderItems();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
         nav.appendChild(btn);
     });
