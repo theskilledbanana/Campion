@@ -357,14 +357,6 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
     "categories": ["Sports", "Fun"],
     "description": "Step up to the plate and hit home runs in this competitive baseball game!"
-  },
-  {
-    "id": "cookie-clicker",
-    "title": "Cookie Clicker",
-    "iframeUrl": "https://trixter9994.github.io/Cookie-Clicker/",
-    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6z-0EVgZFZTyX7P7ibedXjdvakO-ViWKN6Q&s",
-    "categories": ["Skill", "Trending Games", "Arcade"],
-    "description": "The ultimate idle game where you click a giant cookie to bake as many cookies as you can. Upgrade your production and reach astronomical numbers!"
   }
 ];
 
