@@ -829,13 +829,14 @@ function init() {
             const isMarlon = code === '8765';
             const isByrnesey = code === '7771';
             const isBKirk = code === '0126';
+            const isChambo = code === '2468';
             const isUpTheBlues = code === '4242' || upperCode === 'UP THE BLUES';
             
-            if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isBKirk || isUpTheBlues) {
+            if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isBKirk || isChambo || isUpTheBlues) {
                 let role = 'staff';
                 let name = 'STAFF';
                 let rank = '2';
-
+                
                 if (isCeo) {
                     role = 'ceo';
                     name = 'CEO';
@@ -860,19 +861,23 @@ function init() {
                     role = 'junior_dev';
                     name = 'B. KIRK';
                     rank = '3';
+                } else if (isChambo) {
+                    role = 'senior_dev';
+                    name = 'CHAMBO';
+                    rank = '1';
                 } else if (isMarlon) {
-                role = 'og_dev';
-                name = 'MARLON';
-                rank = '1';
-            } else if (isByrnesey) {
-                role = 'mod';
-                name = 'BYRNESEY';
-                rank = '2';
-            } else if (isUpTheBlues) {
-                role = 'mod';
-                name = 'UP THE BLUES STAFF';
-                rank = '2';
-            }
+                    role = 'og_dev';
+                    name = 'MARLON';
+                    rank = '1';
+                } else if (isByrnesey) {
+                    role = 'mod';
+                    name = 'BYRNESEY';
+                    rank = '2';
+                } else if (isUpTheBlues) {
+                    role = 'mod';
+                    name = 'UP THE BLUES STAFF';
+                    rank = '2';
+                }
 
                 localStorage.setItem('vp_chat_role', role);
                 localStorage.setItem('vp_chat_name', name);
@@ -1111,6 +1116,7 @@ async function handleTerminalAuth() {
     const isMarlon = code === '8765';
     const isByrnesey = code === '7771';
     const isBKirk = code === '0126';
+    const isChambo = code === '2468';
     const isUpTheBlues = code === '4242' || code.toUpperCase() === 'UP THE BLUES';
 
     if (code.toUpperCase() === 'JOHNPORK') {
@@ -1122,7 +1128,7 @@ async function handleTerminalAuth() {
         return;
     }
 
-    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isBKirk || isUpTheBlues) {
+    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isBKirk || isChambo || isUpTheBlues) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
@@ -1146,6 +1152,10 @@ async function handleTerminalAuth() {
                 role = 'junior_dev';
                 name = 'B. KIRK';
                 rank = '3';
+            } else if (isChambo) {
+                role = 'senior_dev';
+                name = 'CHAMBO';
+                rank = '1';
             } else if (isMarlon) {
                 role = 'og_dev';
                 name = 'MARLON';
@@ -1179,7 +1189,7 @@ async function handleTerminalAuth() {
             }
 
             // Sync all special roles to Firestore to prevent session drift and role hijacking
-            if (isCeo || isDeveloper || isExeDev || isOgDev || isSupplier || isByrnesey || isBKirk || isUpTheBlues) {
+            if (isCeo || isDeveloper || isExeDev || isOgDev || isSupplier || isByrnesey || isBKirk || isChambo || isUpTheBlues) {
                 if (terminalStatusLog) terminalStatusLog.textContent = `ESTABLISHING ${role.toUpperCase()} LINK...`;
                 try {
                     let sessionUser = auth.currentUser;
@@ -1377,9 +1387,11 @@ async function postForumMessage() {
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
             else if (role === 'developer' || role === 'dev') name = 'DEVELOPER';
             else if (role === 'junior_dev') name = 'B. KIRK';
+            else if (role === 'senior_dev') name = 'CHAMBO';
             else if (role === 'mod') {
                 if (storedPasscode === '7771') name = 'BYRNESEY';
                 else if (storedPasscode && (storedPasscode === '4242' || storedPasscode.toUpperCase() === 'UP THE BLUES')) name = 'UP THE BLUES STAFF';
+                else if (storedPasscode === '2468') name = 'CHAMBO';
                 else name = 'STAFF MOD';
             }
         }
@@ -1821,7 +1833,7 @@ function setupEventListeners() {
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim() || "";
         const uc = code.toUpperCase();
-        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771' || code === '0126' || code === '4242' || uc === 'UP THE BLUES') {
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771' || code === '0126' || code === '2468' || code === '4242' || uc === 'UP THE BLUES') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
