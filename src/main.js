@@ -1179,7 +1179,7 @@ async function handleTerminalAuth() {
             }
 
             // Sync all special roles to Firestore to prevent session drift and role hijacking
-            if (isCeo || isDeveloper || isExeDev || isOgDev || isSupplier || isByrnesey) {
+            if (isCeo || isDeveloper || isExeDev || isOgDev || isSupplier || isByrnesey || isBKirk || isUpTheBlues) {
                 if (terminalStatusLog) terminalStatusLog.textContent = `ESTABLISHING ${role.toUpperCase()} LINK...`;
                 try {
                     let sessionUser = auth.currentUser;
@@ -1367,7 +1367,7 @@ async function postForumMessage() {
         const storedPasscode = localStorage.getItem('vp_chat_passcode');
 
         const storedName = localStorage.getItem('vp_chat_name');
-        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['developer', 'dev'].includes(role) ? '3' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2')));
+        const rank = localStorage.getItem('vp_chat_rank') || (role === 'ceo' ? 'RANK OWNER (JOHN PORK IS WATCHING)' : (['developer', 'dev', 'junior_dev'].includes(role) ? '3' : (['supplier', 'og_dev', 'exe_dev'].includes(role) ? '1' : '2')));
         let name = storedName || 'Guest';
         
         if (!storedName || (storedName === 'STAFF' && role !== 'guest_staff')) {
@@ -1376,9 +1376,10 @@ async function postForumMessage() {
             else if (role === 'og_dev') name = 'OG DEV';
             else if (role === 'exe_dev') name = 'EXECUTIVE DEV';
             else if (role === 'developer' || role === 'dev') name = 'DEVELOPER';
+            else if (role === 'junior_dev') name = 'B. KIRK';
             else if (role === 'mod') {
                 if (storedPasscode === '7771') name = 'BYRNESEY';
-                else if (storedPasscode && storedPasscode.toUpperCase() === 'UP THE BLUES') name = 'UP THE BLUES STAFF';
+                else if (storedPasscode && (storedPasscode === '4242' || storedPasscode.toUpperCase() === 'UP THE BLUES')) name = 'UP THE BLUES STAFF';
                 else name = 'STAFF MOD';
             }
         }
@@ -1820,7 +1821,7 @@ function setupEventListeners() {
     if (devLoginBtnElement) devLoginBtnElement.onclick = () => {
         const code = prompt("ENTER AUTHORIZATION PASSCODE:")?.trim() || "";
         const uc = code.toUpperCase();
-        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771' || uc === 'UP THE BLUES') {
+        if (code === '0304' || code === '9871' || code === '3421' || code === '0007' || code === '8765' || code === '0981' || code === '7771' || code === '0126' || code === '4242' || uc === 'UP THE BLUES') {
             if (terminalPassInput) terminalPassInput.value = code;
             handleTerminalAuth();
         } else if (code) {
