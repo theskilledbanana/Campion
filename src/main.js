@@ -551,7 +551,12 @@ function init() {
     iframeLoader = document.getElementById('iframe-loader');
     loaderMessage = document.getElementById('loader-message');
     dismissLoaderBtn = document.getElementById('dismiss-loader');
-    updateSiteBtn = document.getElementById('update-site-btn');
+    updateSiteBtn = document.getElementById('updates-btn');
+    const feedbackBtn = document.getElementById('feedback-btn');
+    const requestBtn = document.getElementById('request-btn'); // If exists
+    const musicFeatureBtn = document.getElementById('music-feature-btn');
+    const panicBtn = document.getElementById('panic-mode-btn');
+    const audioPanel = document.getElementById('audio-panel');
     updateModal = document.getElementById('update-modal');
     updateContainer = document.getElementById('update-container');
     closeUpdateBtn = document.getElementById('close-update');
@@ -586,8 +591,14 @@ function init() {
     const audioToggle = document.getElementById('audio-toggle');
     const audioToggleIcon = document.getElementById('audio-toggle-icon');
 
-    const audioPanel = document.getElementById('audio-panel');
-    const musicFeatureBtn = document.getElementById('music-feature-btn');
+    // Feature Buttons Initialization
+    if (updateSiteBtn) updateSiteBtn.onclick = openUpdateModal;
+    if (feedbackBtn) {
+        feedbackBtn.onclick = () => {
+            window.location.href = "mailto:jackcampell608@gmail.com?subject=VaultPortal Feedback";
+        };
+    }
+    if (panicBtn) panicBtn.onclick = toggleAcademicMode;
 
     if (musicFeatureBtn && audioPanel) {
         musicFeatureBtn.onclick = () => {
@@ -595,25 +606,6 @@ function init() {
             audioPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
             audioPanel.classList.add('ring-2', 'ring-cyan-500/50');
             setTimeout(() => audioPanel.classList.remove('ring-2', 'ring-cyan-500/50'), 2000);
-        };
-    }
-
-    const updatesBtn = document.getElementById('updates-btn');
-    const feedbackBtn = document.getElementById('feedback-btn');
-
-    if (updatesBtn) {
-        updatesBtn.onclick = () => {
-            if (typeof openUpdateModal === 'function') {
-                openUpdateModal();
-            } else {
-                console.log("Updates requested");
-            }
-        };
-    }
-
-    if (feedbackBtn) {
-        feedbackBtn.onclick = () => {
-            window.location.href = "mailto:jackcampell608@gmail.com?subject=VaultPortal Feedback";
         };
     }
 
@@ -1230,6 +1222,14 @@ function toggleAcademicMode() {
         overlay.classList.remove('hidden');
         document.title = "Year 7 Mathematics - Chapter 4 Review Packet";
         document.body.style.overflow = 'hidden';
+        
+        // PAUSE MUSIC for safety
+        if (isMusicPlaying) {
+            sendAudioCommand('pauseVideo');
+            const audioToggleIcon = document.getElementById('audio-toggle-icon');
+            if (audioToggleIcon) audioToggleIcon.className = 'bi bi-play-fill text-2xl';
+            isMusicPlaying = false;
+        }
     } else {
         overlay.classList.add('hidden');
         const cloakedTitle = localStorage.getItem('vp_cloaked_title');
@@ -1705,13 +1705,16 @@ function setupEventListeners() {
     if (applyCloakBtn) applyCloakBtn.onclick = applyCloak;
     if (resetCloakBtn) resetCloakBtn.onclick = resetCloak;
 
-    const panicBtn = document.getElementById('panic-mode-btn');
-    if (panicBtn) {
-        panicBtn.onclick = toggleAcademicMode;
-    }
+    // Academic Mode Toggle
     const academicOverlay = document.getElementById('academic-overlay');
     if (academicOverlay) {
-        academicOverlay.onclick = toggleAcademicMode;
+        academicOverlay.onclick = (e) => {
+            // Only toggle if clicking the main container or if they triple click
+            // to prevent accidental closing while reading
+            if (e.detail >= 3 || e.target === academicOverlay) {
+                toggleAcademicMode();
+            }
+        };
     }
 
     // Terminal
