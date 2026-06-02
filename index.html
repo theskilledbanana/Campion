@@ -393,7 +393,10 @@
                     <div class="flex items-center bg-zinc-900 border border-white/5 p-1.5 rounded-2xl gap-1">
                         <button id="panic-mode-btn" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-white/5 rounded-xl transition-all text-zinc-500 hover:text-cyan-400 group" title="Academic Mode (Ctrl+Q)">
                             <i class="bi bi-book"></i>
-                            <span class="text-[10px] font-black uppercase tracking-widest">Chapter Review</span>
+                            <div class="flex flex-col items-start leading-none">
+                                <span class="text-[10px] font-black uppercase tracking-widest">Chapter Review</span>
+                                <span class="text-[8px] font-bold text-zinc-600 group-hover:text-cyan-400/50 mt-0.5">CTRL + Q</span>
+                            </div>
                         </button>
                         <button id="cloak-tab-btn" class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-white/5 rounded-xl transition-all text-zinc-500 hover:text-cyan-400 group">
                             <i class="bi bi-shield-shaded"></i>
@@ -729,15 +732,110 @@
             <section class="space-y-6">
                 <h2 class="text-2xl font-bold text-slate-900">3. Order of Operations (BIDMAS)</h2>
                 <p class="text-lg leading-relaxed">
-                    Always follow the correct order to solve expressions: <strong>B</strong>rackets, <strong>I</strong>ndices, <strong>D</strong>ivision/<strong>M</strong>ultiplication, <strong>A</strong>ddition/<strong>S</strong>ubtraction.
+                    Always follow the correct order to solve expressions: <strong>B</strong>rackets, <strong>I</strong>ndices, <strong>D</strong>ivision/<strong>M</strong>ultiplication, <strong>A</strong>ddition/<strong>S</strong>ubtraction. Multiplication and Division have equal priority and are solved left to right.
                 </p>
-                <div class="bg-slate-100 p-6 rounded-lg border-l-4 border-slate-800 italic">
-                    Practice Task: Solve 5 + (12 &div; 3) &times; 2
+                <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                    <p class="font-mono text-slate-700 italic">Example walk-through:</p>
+                    <p class="font-mono mt-2">10 + (2 × 3)² - 5</p>
+                    <ul class="list-disc list-inside mt-2 text-sm space-y-1 text-slate-600">
+                        <li>Brackets: 10 + (6)² - 5</li>
+                        <li>Indices: 10 + 36 - 5</li>
+                        <li>Addition/Subtraction: 46 - 5 = 41</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section class="space-y-6">
+                <h2 class="text-2xl font-bold text-slate-900">4. Directed Numbers (Integers)</h2>
+                <p class="text-lg leading-relaxed">
+                    Integers include all whole numbers, their opposites, and zero. When adding a negative number, it is the same as subtracting a positive number.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="p-4 border-2 border-slate-100 rounded-lg">
+                        <h3 class="font-bold mb-3 text-slate-700">Rules for Multiplication</h3>
+                        <ul class="space-y-2 font-mono text-sm">
+                            <li class="flex justify-between"><span>(+) × (+)</span> <span class="font-bold text-emerald-600">= (+)</span></li>
+                            <li class="flex justify-between"><span>(-) × (-)</span> <span class="font-bold text-emerald-600">= (+)</span></li>
+                            <li class="flex justify-between"><span>(+) × (-)</span> <span class="font-bold text-rose-600">= (-)</span></li>
+                            <li class="flex justify-between"><span>(-) × (+)</span> <span class="font-bold text-rose-600">= (-)</span></li>
+                        </ul>
+                    </div>
+                    <div class="p-4 border-2 border-slate-100 rounded-lg">
+                        <h3 class="font-bold mb-3 text-slate-700">Temperature Examples</h3>
+                        <p class="text-sm leading-relaxed text-slate-600">
+                            If the temperature is -5°C and it drops by 3°C, the new temperature is: <br>
+                            <span class="font-mono font-bold">-5 - 3 = -8°C</span>
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-6">
+                <h2 class="text-2xl font-bold text-slate-900">5. Geometry: Angles and Triangles</h2>
+                <p class="text-lg leading-relaxed">
+                    Angles are measured in degrees (°). We classify angles based on their size:
+                </p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50">
+                                <th class="p-3 border-b-2 border-slate-200">Angle Type</th>
+                                <th class="p-3 border-b-2 border-slate-200">Size Range</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="p-3 border-b border-slate-100">Acute</td><td class="p-3 border-b border-slate-100">Between 0° and 90°</td></tr>
+                            <tr><td class="p-3 border-b border-slate-100 font-bold">Right Angle</td><td class="p-3 border-b border-slate-100">Exactly 90°</td></tr>
+                            <tr><td class="p-3 border-b border-slate-100">Obtuse</td><td class="p-3 border-b border-slate-100">Between 90° and 180°</td></tr>
+                            <tr><td class="p-3 border-b border-slate-100">Reflex</td><td class="p-3 border-b border-slate-100">Between 180° and 360°</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="bg-blue-50/50 p-6 rounded-lg border-2 border-blue-100">
+                    <p class="text-blue-900 font-bold">Memory Check:</p>
+                    <p class="text-blue-800">The interior angles of any triangle always add up to exactly <strong>180°</strong>.</p>
+                </div>
+            </section>
+
+            <section class="space-y-6">
+                <h2 class="text-2xl font-bold text-slate-900">6. Introduction to Probability</h2>
+                <p class="text-lg leading-relaxed">
+                    Probability is the chance that an event will happen. It is always expressed as a number between 0 (impossible) and 1 (certain).
+                </p>
+                <div class="flex items-center justify-between gap-4 py-4 px-2">
+                    <div class="flex-1 h-2 bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 rounded-full relative">
+                        <div class="absolute -top-6 left-0 text-xs font-bold">0</div>
+                        <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold">0.5</div>
+                        <div class="absolute -top-6 right-0 text-xs font-bold">1.0</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-xs font-bold uppercase tracking-widest text-slate-400">
+                    <div>Impossible</div>
+                    <div>Even Chance</div>
+                    <div>Certain</div>
+                </div>
+            </section>
+
+            <section class="space-y-6">
+                <h2 class="text-2xl font-bold text-slate-900">7. Cumulative Practice Set</h2>
+                <div class="space-y-4">
+                    <div class="p-4 bg-white border-2 border-slate-100 rounded-lg flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">A</div>
+                        <p class="text-slate-700">Calculate 15% of $80.</p>
+                    </div>
+                    <div class="p-4 bg-white border-2 border-slate-100 rounded-lg flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">B</div>
+                        <p class="text-slate-700">Simplify the ratio 24:36.</p>
+                    </div>
+                    <div class="p-4 bg-white border-2 border-slate-100 rounded-lg flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">C</div>
+                        <p class="text-slate-700">Solve for x: 3x + 4 = 19.</p>
+                    </div>
                 </div>
             </section>
 
             <footer class="pt-12 border-t border-slate-200 text-sm text-slate-400 text-center italic pb-20">
-                Mathematics Course Guide - Term 2 Review Packet
+                Mathematics Course Guide - Year 7 Term 2 Review Portfolio - property of Academic Dept.
             </footer>
         </div>
     </div>
