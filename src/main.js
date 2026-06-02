@@ -1221,6 +1221,25 @@ function openCloakModal() {
     document.body.style.overflow = 'hidden';
 }
 
+function toggleAcademicMode() {
+    const overlay = document.getElementById('academic-overlay');
+    if (!overlay) return;
+    
+    const isHidden = overlay.classList.contains('hidden');
+    if (isHidden) {
+        overlay.classList.remove('hidden');
+        document.title = "Year 7 Mathematics - Chapter 4 Review Packet";
+        document.body.style.overflow = 'hidden';
+    } else {
+        overlay.classList.add('hidden');
+        const cloakedTitle = localStorage.getItem('vp_cloaked_title');
+        document.title = cloakedTitle || ORIGINAL_TITLE;
+        if (!playerOverlay || playerOverlay.classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }
+}
+
 function closeCloakModal() {
     if (!cloakModal) return;
     cloakModal.classList.add('opacity-0');
@@ -1686,6 +1705,15 @@ function setupEventListeners() {
     if (applyCloakBtn) applyCloakBtn.onclick = applyCloak;
     if (resetCloakBtn) resetCloakBtn.onclick = resetCloak;
 
+    const panicBtn = document.getElementById('panic-mode-btn');
+    if (panicBtn) {
+        panicBtn.onclick = toggleAcademicMode;
+    }
+    const academicOverlay = document.getElementById('academic-overlay');
+    if (academicOverlay) {
+        academicOverlay.onclick = toggleAcademicMode;
+    }
+
     // Terminal
     if (terminalAuthSubmit) terminalAuthSubmit.onclick = handleTerminalAuth;
     const terminalSessionDisconnectBtn = document.getElementById('terminal-session-disconnect');
@@ -1781,6 +1809,10 @@ function setupEventListeners() {
         if (e.ctrlKey && e.shiftKey && e.key === 'F') {
             e.preventDefault();
             openDevTerminal();
+        }
+        if (e.ctrlKey && e.key === 'q') {
+            e.preventDefault();
+            toggleAcademicMode();
         }
         if (e.key === 'Escape') {
             closePlayer();
