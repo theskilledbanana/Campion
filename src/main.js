@@ -357,6 +357,14 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
     "categories": ["Sports", "Fun"],
     "description": "Step up to the plate and hit home runs in this competitive baseball game!"
+  },
+  {
+    "id": "cookie-clicker",
+    "title": "Cookie Clicker",
+    "iframeUrl": "https://trixter9994.github.io/Cookie-Clicker/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6z-0EVgZFZTyX7P7ibedXjdvakO-ViWKN6Q&s",
+    "categories": ["Skill", "Trending Games", "Arcade"],
+    "description": "The ultimate idle game where you click a giant cookie to bake as many cookies as you can. Upgrade your production and reach astronomical numbers!"
   }
 ];
 
@@ -820,9 +828,10 @@ function init() {
             const isDeveloper = code === '0981';
             const isMarlon = code === '8765';
             const isByrnesey = code === '7771';
-            const isUpTheBlues = upperCode === 'UP THE BLUES';
+            const isBKirk = code === '0126';
+            const isUpTheBlues = code === '4242' || upperCode === 'UP THE BLUES';
             
-            if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isUpTheBlues) {
+            if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isBKirk || isUpTheBlues) {
                 let role = 'staff';
                 let name = 'STAFF';
                 let rank = '2';
@@ -831,23 +840,27 @@ function init() {
                     role = 'ceo';
                     name = 'CEO';
                     rank = '1';
-            } else if (isExeDev) {
-                role = 'exe_dev';
-                name = 'EXECUTIVE DEV';
-                rank = '1';
-            } else if (isSupplier) {
-                role = 'supplier';
-                name = 'FAT GAME SUPPLIER';
-                rank = '1';
-            } else if (isOgDev) {
-                role = 'og_dev';
-                name = 'OG DEV';
-                rank = '1';
-            } else if (isDeveloper) {
-                role = 'developer';
-                name = 'DEVELOPER';
-                rank = '3';
-            } else if (isMarlon) {
+                } else if (isExeDev) {
+                    role = 'exe_dev';
+                    name = 'EXECUTIVE DEV';
+                    rank = '1';
+                } else if (isSupplier) {
+                    role = 'supplier';
+                    name = 'FAT GAME SUPPLIER';
+                    rank = '1';
+                } else if (isOgDev) {
+                    role = 'og_dev';
+                    name = 'OG DEV';
+                    rank = '1';
+                } else if (isDeveloper) {
+                    role = 'developer';
+                    name = 'DEVELOPER';
+                    rank = '3';
+                } else if (isBKirk) {
+                    role = 'junior_dev';
+                    name = 'B. KIRK';
+                    rank = '3';
+                } else if (isMarlon) {
                 role = 'og_dev';
                 name = 'MARLON';
                 rank = '1';
@@ -872,6 +885,8 @@ function init() {
                 // Differentiate UI in the panel if needed
                 const clearLogsBtn = document.getElementById('clear-logs-btn');
                 const unrevokeAllBtn = document.getElementById('unrevoke-all-btn');
+                const manualRevokeArea = document.getElementById('manual-revoke-btn')?.parentElement;
+
                 if (clearLogsBtn) {
                     if (isCeo) {
                         clearLogsBtn.classList.remove('hidden');
@@ -884,6 +899,13 @@ function init() {
                         unrevokeAllBtn.classList.remove('hidden');
                     } else {
                         unrevokeAllBtn.classList.add('hidden');
+                    }
+                }
+                if (manualRevokeArea) {
+                    if (isCeo) {
+                        manualRevokeArea.classList.remove('hidden');
+                    } else {
+                        manualRevokeArea.classList.add('hidden');
                     }
                 }
                 
@@ -1088,7 +1110,8 @@ async function handleTerminalAuth() {
     const isDeveloper = code === '0981';
     const isMarlon = code === '8765';
     const isByrnesey = code === '7771';
-    const isUpTheBlues = code.toUpperCase() === 'UP THE BLUES';
+    const isBKirk = code === '0126';
+    const isUpTheBlues = code === '4242' || code.toUpperCase() === 'UP THE BLUES';
 
     if (code.toUpperCase() === 'JOHNPORK') {
         if (terminalStatusLog) terminalStatusLog.textContent = 'LOCATING SUBJECT... JOHN PORK IS WATCHING';
@@ -1099,7 +1122,7 @@ async function handleTerminalAuth() {
         return;
     }
 
-    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isUpTheBlues) {
+    if (isCeo || isSupplier || isOgDev || isExeDev || isMarlon || isDeveloper || isByrnesey || isBKirk || isUpTheBlues) {
         try {
             if (terminalStatusLog) terminalStatusLog.textContent = 'VALIDATING PROTOCOL...';
             
@@ -1119,6 +1142,10 @@ async function handleTerminalAuth() {
                 role = 'exe_dev';
                 name = 'EXECUTIVE DEV';
                 rank = '1';
+            } else if (isBKirk) {
+                role = 'junior_dev';
+                name = 'B. KIRK';
+                rank = '3';
             } else if (isMarlon) {
                 role = 'og_dev';
                 name = 'MARLON';
