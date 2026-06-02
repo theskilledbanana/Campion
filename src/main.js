@@ -864,7 +864,7 @@ function init() {
                 } else if (isChambo) {
                     role = 'senior_dev';
                     name = 'CHAMBO';
-                    rank = '1';
+                    rank = '2';
                 } else if (isMarlon) {
                     role = 'og_dev';
                     name = 'MARLON';
@@ -1155,7 +1155,7 @@ async function handleTerminalAuth() {
             } else if (isChambo) {
                 role = 'senior_dev';
                 name = 'CHAMBO';
-                rank = '1';
+                rank = '2';
             } else if (isMarlon) {
                 role = 'og_dev';
                 name = 'MARLON';
@@ -1353,6 +1353,12 @@ async function postForumMessage() {
 
     if (!user && !isManualDev) {
         alert("PROTOCOL ERROR: YOU MUST BE AUTHORIZED TO BROADCAST");
+        return;
+    }
+
+    const role = localStorage.getItem('vp_chat_role') || 'guest';
+    if (role === 'senior_dev') {
+        alert("cloud sync error: missing or insufficient permission");
         return;
     }
 
