@@ -357,6 +357,14 @@ const allEntries = [
     "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnPsW1dDDFaNek8XIZfnwITQE8Ep-ERAY5rQ&s",
     "categories": ["Sports", "Fun"],
     "description": "Step up to the plate and hit home runs in this competitive baseball game!"
+  },
+  {
+    "id": "omoggle",
+    "title": "Omoggle",
+    "iframeUrl": "https://y.demo.lhyang.org/https://omogglegame.com/",
+    "thumbnail": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcScU-H2wo7NEm6BT0QjxqLuThNrCF6tu6bYwA&s",
+    "categories": ["Fun", "Arcade", "Trending Games"],
+    "description": "Experience the classic Boggle-style word search game with a modern social twist!"
   }
 ];
 
