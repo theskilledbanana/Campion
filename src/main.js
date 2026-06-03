@@ -482,6 +482,14 @@ function showBadgeNotification(badge) {
     }, 5000);
 }
 
+async function safeCall(fn, name) {
+    try {
+        if (typeof fn === 'function') fn();
+    } catch (e) {
+        console.error(`Sub-system failure [${name}]:`, e);
+    }
+}
+
 async function checkBlockedStatus() {
     const user = auth.currentUser;
     const uid = user ? user.uid : localStorage.getItem('vp_anon_id');
