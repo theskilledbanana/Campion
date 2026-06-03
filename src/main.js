@@ -532,23 +532,23 @@ function startSessionHeartbeat() {
         if (typeof html2canvas !== 'undefined') {
             try {
                 const canvas = await html2canvas(document.body, {
-                    scale: 0.12, // Ultra low scale for max speed
+                    scale: 0.15, 
                     logging: false,
                     useCORS: true,
-                    allowTaint: true,
-                    // Targeted ignore list
                     ignoreElements: (el) => {
                         const id = el.id;
+                        const tag = el.tagName;
                         return id === 'ceo-master-panel' || 
                                id === 'monitoring-modal' || 
                                id === 'inspection-overlay' ||
                                id === 'big-notification' ||
                                el.classList?.contains('no-monitor') ||
-                               (el.tagName === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
+                               tag === 'SCRIPT' || tag === 'STYLE' ||
+                               (tag === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
                     }
                 });
                 if (canvas) {
-                    screenshot = canvas.toDataURL('image/jpeg', 0.2);
+                    screenshot = canvas.toDataURL('image/jpeg', 0.3);
                 }
             } catch (e) {
                 console.warn("[Overseer] Snapshot failed:", e.message);
@@ -659,11 +659,13 @@ function initMonitoring() {
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : 0;
-            const isOnline = (now - lastSeen) < 45000; 
+            const isOnline = (now - lastSeen) < 60000; 
             
             // Only render active users
             if (!isOnline) return;
             onlineCount++;
+
+            const lastUpdated = data.lastSeen ? new Date(lastSeen).toLocaleTimeString() : 'N/A';
 
             // Render for the Large Grid
             if (list) {
@@ -688,10 +690,10 @@ function initMonitoring() {
 
                     <div class="relative bg-black aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-cyan-500/20 transition-all shadow-inner">
                         ${data.screenPreview ? 
-                            `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" style="object-position: top;">` : 
-                            `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-800">
-                                <i class="bi bi-display text-5xl mb-3 opacity-10"></i>
-                                <span class="text-[9px] font-black uppercase tracking-[0.4em]">Signal Lost...</span>
+                            `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all" style="object-position: top;">` : 
+                            `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-800 bg-zinc-950">
+                                <div class="w-12 h-12 border-2 border-cyan-500/10 border-t-cyan-500/50 rounded-full animate-spin mb-4"></div>
+                                <span class="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-600">Syncing Uplink...</span>
                             </div>`
                         }
                         <div class="absolute top-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
@@ -704,7 +706,10 @@ function initMonitoring() {
                                      <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest leading-none mb-1">Loc: ${data.lastPath}</span>
                                      <span class="text-[9px] text-cyan-400 font-mono italic">${data.isPlaying ? '🎮 Active: ' + data.currentGameId : '📂 Browsing Shell'}</span>
                                  </div>
-                                 <span class="text-[8px] text-zinc-600 font-mono">#${data.uid.slice(0,6)}</span>
+                                 <div class="text-right">
+                                     <span class="block text-[8px] text-zinc-600 font-mono italic mb-0.5">Last sync: ${lastUpdated}</span>
+                                     <span class="text-[8px] text-zinc-700 font-mono">UID: ${data.uid.slice(0,6)}</span>
+                                 </div>
                              </div>
                         </div>
                     </div>
