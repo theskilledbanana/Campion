@@ -61,6 +61,7 @@
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
+        "email": { "type": "string" },
         "username": { "type": "string" },
         "lastPath": { "type": "string" },
         "currentGameId": { "type": "string" },

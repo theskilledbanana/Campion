@@ -526,6 +526,7 @@ function startSessionHeartbeat() {
 
         const sessionData = {
             uid: uid,
+            email: user?.email || 'Anonymous',
             username: (typeof userData !== 'undefined' && userData.username) ? userData.username : (user?.displayName || 'Anonymous User'),
             lastPath: window.location.pathname,
             currentGameId: currentGameId || 'Menu',
@@ -612,19 +613,23 @@ function initMonitoring() {
                     <div class="w-10 h-10 rounded-full flex items-center justify-center ${isOnline ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
                         <i class="bi bi-person-fill"></i>
                     </div>
-                    <div>
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-2">
-                             <span class="text-xs font-bold text-white">${data.username}</span>
+                             <span class="text-xs font-bold text-white truncate">${data.username}</span>
                              <span class="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-full uppercase tracking-tighter">${data.role || 'guest'}</span>
                         </div>
-                        <p class="text-[8px] text-zinc-500 font-mono uppercase truncate max-w-[100px]">${data.uid}</p>
+                        <p class="text-[9px] text-zinc-400 font-mono truncate">${data.email || 'N/A'}</p>
+                        <p class="text-[7px] text-zinc-600 font-mono uppercase truncate">${data.uid}</p>
                     </div>
                 </div>
-                <div class="flex flex-col items-end">
-                    <span class="text-[9px] text-cyan-400 font-mono">${data.isPlaying ? 'PLAYING: ' + data.currentGameId : 'IDLE: Menu'}</span>
-                    <div class="flex gap-2 mt-2">
-                        <button onclick="sendGlobalMessage('${data.uid}')" class="p-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest"><i class="bi bi-chat-text"></i></button>
-                        <button onclick="blockUser('${data.uid}')" class="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest"><i class="bi bi-slash-circle"></i></button>
+                <div class="flex flex-col items-end gap-2">
+                    <div class="text-right">
+                        <span class="text-[9px] text-cyan-400 font-mono block">${data.isPlaying ? '<span class="animate-pulse">🎮</span> ' + data.currentGameId : '📂 Menu'}</span>
+                        <span class="text-[7px] text-zinc-500 font-mono block truncate max-w-[120px]" title="${data.lastPath}">Loc: ${data.lastPath}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="sendGlobalMessage('${data.uid}')" class="p-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest" title="Send Notification"><i class="bi bi-chat-text"></i></button>
+                        <button onclick="blockUser('${data.uid}')" class="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest" title="Terminate Session"><i class="bi bi-slash-circle"></i></button>
                     </div>
                 </div>
             `;
