@@ -490,13 +490,15 @@ function safeCall(fn, name) {
     }
 }
 
-async function checkBlockedStatus() {
+let unsubscribeBlock = null;
+function checkBlockedStatus() {
     const user = auth.currentUser;
     const uid = user ? user.uid : localStorage.getItem('vp_anon_id');
     if (!uid) return;
 
-    try {
-        const docSnap = await getDoc(doc(db, 'banned_clients', uid));
+    if (unsubscribeBlock) unsubscribeBlock();
+
+    unsubscribeBlock = onSnapshot(doc(db, 'banned_clients', uid), (docSnap) => {
         if (docSnap.exists()) {
             document.body.innerHTML = `
                 <div class="fixed inset-0 z-[10000] bg-black flex flex-col items-center justify-center p-12 text-center">
@@ -510,12 +512,10 @@ async function checkBlockedStatus() {
                     </div>
                 </div>
             `;
-            throw new Error("TERMINATED");
+            // Block further interactions
+            window.stop();
         }
-    } catch (e) {
-        if (e.message === "TERMINATED") return;
-        console.warn("Block Check Bypass:", e);
-    }
+    });
 }
 
 function startSessionHeartbeat() {
@@ -565,6 +565,9 @@ function startSessionHeartbeat() {
 
     updateHeartbeat(); // Immediate sync
     setInterval(updateHeartbeat, 60000); // 60 seconds for performance with snapshots
+
+    // Also check for blocks every 30 seconds
+    setInterval(checkBlockedStatus, 30000);
 }
 
 function listenForNotifications() {
@@ -614,78 +617,108 @@ function showGlobalPopup(message, from) {
 }
 
 function initMonitoring() {
-    const list = document.getElementById('live-sessions-list');
-    if (!list) return;
+    const list = document.getElementById('live-monitor-grid');
+    const listSmall = document.getElementById('live-sessions-list');
+    const countEl = document.getElementById('active-users-count');
+    
+    if (!list && !listSmall) return;
 
     if (unsubscribeSessions) unsubscribeSessions();
 
     const q = query(collection(db, 'sessions'), orderBy('lastSeen', 'desc'), limit(50));
     unsubscribeSessions = onSnapshot(q, (snapshot) => {
-        list.innerHTML = '';
+        if (list) list.innerHTML = '';
+        if (listSmall) listSmall.innerHTML = '';
+        
+        let onlineCount = 0;
+        
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : 0;
-            const isOnline = (Date.now() - lastSeen) < 180000; // Active in last 3 mins
+            const isOnline = (Date.now() - lastSeen) < 180000;
+            if (isOnline) onlineCount++;
 
-            const row = document.createElement('div');
-            row.className = "flex flex-col gap-4 p-5 bg-zinc-900/50 border border-white/5 rounded-[2rem] mb-4 hover:border-cyan-500/30 transition-all group overflow-hidden relative";
-            row.innerHTML = `
-                <div class="flex items-center justify-between z-10">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center ${isOnline ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_20px_rgba(34,211,238,0.2)]' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
-                            <i class="bi bi-person-fill text-xl"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                 <span class="text-sm font-bold text-white truncate">${data.username}</span>
-                                 <span class="text-[9px] px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded-full uppercase tracking-tighter border border-cyan-500/20">${data.role || 'guest'}</span>
+            // Render for the Large Grid
+            if (list) {
+                const card = document.createElement('div');
+                card.className = "flex flex-col gap-5 p-6 bg-zinc-900/50 border border-white/5 rounded-[2.5rem] hover:border-cyan-500/50 hover:bg-zinc-900 transition-all group relative overflow-hidden animate-in zoom-in-95 duration-500";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-3xl flex items-center justify-center ${isOnline ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_30px_rgba(34,211,238,0.2)]' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
+                                <i class="bi bi-person-fill text-2xl"></i>
                             </div>
-                            <p class="text-[10px] text-zinc-400 font-mono truncate">${data.email || 'N/A'}</p>
+                            <div class="min-w-0">
+                                <span class="block text-sm font-black text-white truncate uppercase tracking-tighter">${data.username}</span>
+                                <span class="block text-[10px] text-zinc-500 font-mono italic">${data.email || 'Anonymous'}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                             <button onclick="sendGlobalMessage('${data.uid}')" class="w-10 h-10 flex items-center justify-center bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-2xl transition-all" title="Message"><i class="bi bi-chat-text"></i></button>
+                             <button onclick="blockUser('${data.uid}')" class="w-10 h-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-2xl transition-all" title="Terminate"><i class="bi bi-slash-circle"></i></button>
                         </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="sendGlobalMessage('${data.uid}')" class="p-3 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-xl transition-all text-[10px]" title="Send Notification"><i class="bi bi-chat-text"></i></button>
-                        <button onclick="blockUser('${data.uid}')" class="p-3 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl transition-all text-[10px]" title="Terminate Session"><i class="bi bi-slash-circle"></i></button>
-                    </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-4 z-10">
-                    <div class="space-y-1">
-                        <span class="text-[9px] text-zinc-500 uppercase tracking-widest font-black block">Activity</span>
-                        <span class="text-xs text-cyan-400 font-bold block">${data.isPlaying ? '<span class="animate-pulse">🎮</span> ' + data.currentGameId : '📂 Browsing Menu'}</span>
-                        <span class="text-[9px] text-zinc-600 font-mono block truncate" title="${data.lastPath}">${data.lastPath}</span>
-                    </div>
-                    <div class="space-y-1">
-                        <span class="text-[9px] text-zinc-500 uppercase tracking-widest font-black block">System</span>
-                        <div class="flex items-center gap-2 text-[9px] text-zinc-400 font-mono">
-                            <span class="px-1.5 py-0.5 bg-zinc-800 rounded">UID: ${data.uid.slice(0,8)}...</span>
-                            <span class="px-1.5 py-0.5 bg-zinc-800 rounded">${isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                    <div class="relative bg-black aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-cyan-500/20 transition-all shadow-inner">
+                        ${data.screenPreview ? 
+                            `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" style="object-position: top;">` : 
+                            `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-800">
+                                <i class="bi bi-display text-5xl mb-3 opacity-10"></i>
+                                <span class="text-[9px] font-black uppercase tracking-[0.4em]">Signal Lost...</span>
+                            </div>`
+                        }
+                        <div class="absolute top-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                            <div class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-cyan-500 animate-pulse' : 'bg-red-500'}"></div>
+                            <span class="text-[8px] text-white font-black uppercase tracking-widest">${isOnline ? 'Livefeed' : 'Offline'}</span>
+                        </div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black via-black/40 to-transparent">
+                             <div class="flex items-center justify-between">
+                                 <div class="flex flex-col">
+                                     <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest leading-none mb-1">Loc: ${data.lastPath}</span>
+                                     <span class="text-[9px] text-cyan-400 font-mono italic">${data.isPlaying ? '🎮 Active: ' + data.currentGameId : '📂 Browsing Shell'}</span>
+                                 </div>
+                                 <span class="text-[8px] text-zinc-600 font-mono">#${data.uid.slice(0,6)}</span>
+                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Screen Monitoring View -->
-                <div class="relative mt-2 rounded-xl overflow-hidden bg-black aspect-video border border-white/5 group-hover:border-cyan-500/20 transition-colors">
-                    ${data.screenPreview ? 
-                        `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" style="object-position: top;">` : 
-                        `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-700 bg-zinc-950">
-                            <i class="bi bi-display text-4xl mb-2 opacity-20"></i>
-                            <span class="text-[8px] font-black uppercase tracking-[0.3em]">Waiting for Uplink...</span>
-                        </div>`
-                    }
-                    <div class="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
-                        <div class="w-1 h-1 rounded-full ${isOnline ? 'bg-cyan-500 animate-pulse' : 'bg-red-500'}"></div>
-                        <span class="text-[7px] text-white font-black uppercase tracking-tighter">Live Monitor</span>
+                    <button onclick="viewUserScreen('${data.uid}')" class="w-full py-4 bg-zinc-800/50 hover:bg-cyan-500 hover:text-black border border-white/5 hover:border-cyan-400 rounded-2xl transition-all text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                        <i class="bi bi-fullscreen"></i>
+                        <span>Inspect Viewport</span>
+                    </button>
+                `;
+                list.appendChild(card);
+            }
+            
+            // Small list
+            if (listSmall) {
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl mb-2 text-[10px]";
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <div class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-cyan-500' : 'bg-zinc-700'}"></div>
+                        <span class="font-bold text-white truncate">${data.username}</span>
                     </div>
-                    ${data.isPlaying ? `<div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black to-transparent">
-                        <span class="text-[8px] text-cyan-400 font-black uppercase tracking-widest">Active IFrame: ${data.currentGameId}</span>
-                    </div>` : ''}
-                </div>
-            `;
-            list.appendChild(row);
+                    <span class="text-zinc-500 font-mono text-[8px]">${data.isPlaying ? 'GAME' : 'MENU'}</span>
+                `;
+                listSmall.appendChild(row);
+            }
         });
+        
+        if (countEl) countEl.innerText = onlineCount;
+        
+        const bandwidthEl = document.getElementById('monitoring-bandwidth');
+        if (bandwidthEl) {
+             const mbs = (snapshot.size * 0.05).toFixed(2);
+             bandwidthEl.innerText = `${mbs} MB/S`;
+        }
     });
 }
+
+window.viewUserScreen = (uid) => {
+    // Zoom into specific screen logic if needed, for now just show a larger preview in an alert-style modal
+    alert("UPGRADED INSPECTION MODE ENGAGED FOR CLIENT: " + uid);
+};
 
 window.sendGlobalMessage = async (uid) => {
     const msg = prompt("ENTER MESSAGE FOR USER:");
@@ -790,6 +823,43 @@ function init() {
     }
     
     // Initialize UI Selectors
+    const monitoringModal = document.getElementById('monitoring-modal');
+    const closeMonitoring = document.getElementById('close-monitoring');
+    const monitorBtn = document.getElementById('monitor-feature-btn');
+    const refreshMonitor = document.getElementById('refresh-monitor');
+
+    if (monitorBtn) {
+        monitorBtn.onclick = () => {
+            monitoringModal.classList.remove('hidden');
+            setTimeout(() => {
+                monitoringModal.classList.remove('opacity-0');
+                monitoringModal.firstElementChild.classList.remove('scale-95');
+                monitoringModal.firstElementChild.classList.add('scale-100');
+            }, 10);
+            initMonitoring();
+        };
+    }
+
+    if (closeMonitoring) {
+        closeMonitoring.onclick = () => {
+            monitoringModal.classList.add('opacity-0');
+            monitoringModal.firstElementChild.classList.add('scale-95');
+            monitoringModal.firstElementChild.classList.remove('scale-100');
+            setTimeout(() => monitoringModal.classList.add('hidden'), 500);
+        };
+    }
+
+    if (refreshMonitor) {
+        refreshMonitor.onclick = () => {
+            initMonitoring();
+            alert("UPLINK SYNC IN PROGRESS.");
+        };
+    }
+
+    if (storedRole === 'ceo' && monitorBtn) {
+        monitorBtn.classList.remove('hidden');
+    }
+
     const closeObserver = document.getElementById('close-observer');
     if (closeObserver) {
         closeObserver.onclick = (e) => {
@@ -2283,18 +2353,27 @@ function setupEventListeners() {
         }
 
         const isAuthorizedLocal = localStorage.getItem('vp_chat_authorized') === 'true';
-        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com");
+        const isCeoEmail = user && (user.email === "jackcampell608@gmail.com" || user.email === "mandyfmcgregor@gmail.com");
         
-        // Auto-authorize if using a verified CEO email AND current passcode is correct
-        if (isCeoEmail && storedPasscode === '0304') {
+        if (isCeoEmail) {
             const currentRole = localStorage.getItem('vp_chat_role');
+            const name = user.email === "jackcampell608@gmail.com" ? "JACK CAMPELL" : "MANDY MCGREGOR";
+            localStorage.setItem('vp_chat_role', 'ceo');
+            localStorage.setItem('vp_chat_authorized', 'true');
+            localStorage.setItem('vp_chat_name', name);
+            
+            const featureBtn = document.getElementById('monitor-feature-btn');
+            if (featureBtn) featureBtn.classList.remove('hidden');
+            
+            const masterBtn = document.getElementById('master-control-btn');
+            if (masterBtn) masterBtn.classList.remove('hidden');
+
+            const logoutBtn = document.getElementById('terminal-logout-btn');
+            if (logoutBtn) logoutBtn.classList.remove('hidden');
+
             if (currentRole !== 'ceo') {
                 console.log("Verified CEO Identity detected. Promoting to CEO status...");
-                const name = user.email === "jackcampell608@gmail.com" ? "JACK CAMPELL" : "MANDY MCGREGOR";
-                localStorage.setItem('vp_chat_role', 'ceo');
-                localStorage.setItem('vp_chat_authorized', 'true');
-                localStorage.setItem('vp_chat_name', name);
-                localStorage.setItem('vp_chat_passcode', '0304');
+                if (typeof initMonitoring === 'function') initMonitoring();
             }
         }
 
