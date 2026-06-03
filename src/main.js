@@ -526,14 +526,14 @@ function startSessionHeartbeat() {
 
         let screenshot = null;
         try {
-            // Capture a small, low-quality snapshot for monitoring
+            // High fidelity snapshot for Overseer monitoring
             const canvas = await html2canvas(document.body, {
-                scale: 0.1, // Very small for performance
+                scale: 0.3, 
                 logging: false,
                 useCORS: true,
-                ignoreElements: (el) => el.tagName === 'IFRAME' || el.id === 'ceo-master-panel'
+                ignoreElements: (el) => el.id === 'ceo-master-panel' || el.id === 'monitoring-modal'
             });
-            screenshot = canvas.toDataURL('image/jpeg', 0.1);
+            screenshot = canvas.toDataURL('image/jpeg', 0.6);
         } catch (e) {
             console.warn("Snapshot Skip:", e);
         }
@@ -715,9 +715,48 @@ function initMonitoring() {
     });
 }
 
-window.viewUserScreen = (uid) => {
-    // Zoom into specific screen logic if needed, for now just show a larger preview in an alert-style modal
-    alert("UPGRADED INSPECTION MODE ENGAGED FOR CLIENT: " + uid);
+let activeInspectionUid = null;
+let inspectionZoom = 1;
+
+window.viewUserScreen = async (uid) => {
+    const overlay = document.getElementById('inspection-overlay');
+    const img = document.getElementById('inspect-img');
+    const nameEl = document.getElementById('inspect-name');
+    if (!overlay || !img) return;
+
+    try {
+        const docSnap = await getDoc(doc(db, 'live_sessions', uid));
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            activeInspectionUid = uid;
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            nameEl.innerText = `VIEWING: ${data.username.toUpperCase()}`;
+            img.src = data.screenPreview || '';
+            window.resetInspectZoom();
+        }
+    } catch (e) {
+        console.error("Inspection Error:", e);
+    }
+};
+
+window.zoomInspect = (delta) => {
+    const img = document.getElementById('inspect-img');
+    inspectionZoom = Math.max(0.5, Math.min(3, inspectionZoom + delta));
+    img.style.transform = `scale(${inspectionZoom})`;
+};
+
+window.resetInspectZoom = () => {
+    const img = document.getElementById('inspect-img');
+    inspectionZoom = 1;
+    img.style.transform = `scale(1)`;
+};
+
+window.terminateInspectedUser = () => {
+    if (activeInspectionUid && confirm("CONFIRM TERMINATION?")) {
+        window.blockUser(activeInspectionUid);
+        document.getElementById('close-inspection').click();
+    }
 };
 
 window.sendGlobalMessage = async (uid) => {
