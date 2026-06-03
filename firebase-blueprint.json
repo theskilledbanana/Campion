@@ -54,6 +54,33 @@
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last update time." }
       },
       "required": ["displayName", "avatarUrl", "stats", "settings", "updatedAt"]
+    },
+    "UserSession": {
+      "title": "User Session",
+      "description": "Real-time session tracker.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "username": { "type": "string" },
+        "lastPath": { "type": "string" },
+        "currentGameId": { "type": "string" },
+        "isPlaying": { "type": "boolean" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" }
+      },
+      "required": ["uid", "lastSeen"]
+    },
+    "UserNotification": {
+      "title": "User Notification",
+      "description": "Messages sent to a user.",
+      "type": "object",
+      "properties": {
+        "targetUid": { "type": "string" },
+        "message": { "type": "string" },
+        "from": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["targetUid", "message", "timestamp"]
     }
   },
   "firestore": {
@@ -72,6 +99,18 @@
     "/forum_posts/{postId}/comments/{commentId}": {
       "schema": "ForumComment",
       "description": "Comments belonging to a specific post."
+    },
+    "/sessions/{sessionId}": {
+      "schema": "UserSession",
+      "description": "Real-time user session data."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "UserNotification",
+      "description": "Global notifications for users."
+    },
+    "/banned_clients/{clientId}": {
+      "schema": "object",
+      "description": "Banned users."
     }
   }
 }

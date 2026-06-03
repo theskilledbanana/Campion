@@ -104,6 +104,16 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isCeo();
     }
+
+    match /sessions/{sessionId} {
+      allow read: if isCeo();
+      allow write: if true; // Allow anonymous and auth users to report their session
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if true; // Query filtering by targetUid will happen in client
+      allow write: if isCeo();
+    }
     
     // Forum Posts (Legacy)
     match /forum_posts/{postId} {

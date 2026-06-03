@@ -398,6 +398,8 @@ let activeDetailsGameId = null;
 let gameMetrics = {};
 let unsubscribeMetrics = null;
 let unsubscribeReviews = null;
+let unsubscribeNotifications = null;
+let unsubscribeSessions = null;
 
 const BADGES = [
     { id: 'early_adopter', name: 'Early Adopter', icon: 'bi-rocket-takeoff', desc: 'Sync with the network in the alpha stage.', color: 'text-indigo-400', condition: () => true },
@@ -480,12 +482,181 @@ function showBadgeNotification(badge) {
     }, 5000);
 }
 
-function safeCall(fn, name) {
+async function checkBlockedStatus() {
+    const user = auth.currentUser;
+    const uid = user ? user.uid : localStorage.getItem('vp_anon_id');
+    if (!uid) return;
+
     try {
-        fn();
+        const docSnap = await getDoc(doc(db, 'banned_clients', uid));
+        if (docSnap.exists()) {
+            document.body.innerHTML = `
+                <div class="fixed inset-0 z-[10000] bg-black flex flex-col items-center justify-center p-12 text-center">
+                    <div class="w-32 h-32 bg-red-500/10 rounded-full flex items-center justify-center border-4 border-red-500/30 mb-12 animate-pulse">
+                        <i class="bi bi-slash-circle text-red-500 text-6xl"></i>
+                    </div>
+                    <h1 class="text-white text-5xl font-black uppercase italic tracking-tighter mb-4">Access Terminated</h1>
+                    <p class="text-zinc-600 font-mono text-xs uppercase tracking-[0.4em] mb-12">Handshake Revoked by Master Control</p>
+                    <div class="p-8 bg-zinc-900 border border-red-500/20 rounded-[2rem] max-w-md">
+                         <p class="text-zinc-400 text-sm font-medium leading-relaxed italic">"Your session token has been invalidated. If you believe this is an error, contact technical support."</p>
+                    </div>
+                </div>
+            `;
+            throw new Error("TERMINATED");
+        }
     } catch (e) {
-        console.error(`Sub-system failure [${name}]:`, e);
+        if (e.message === "TERMINATED") return;
+        console.warn("Block Check Bypass:", e);
     }
+}
+
+function startSessionHeartbeat() {
+    setInterval(async () => {
+        const user = auth.currentUser;
+        const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'guest_' + Math.random().toString(36).substr(2, 9));
+        if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
+
+        const sessionData = {
+            uid: uid,
+            username: userData.username || 'Anonymous User',
+            lastPath: window.location.pathname,
+            currentGameId: currentGameId || 'Menu',
+            isPlaying: !!currentGameId,
+            lastSeen: serverTimestamp(),
+            role: localStorage.getItem('vp_chat_role') || 'guest'
+        };
+
+        try {
+            await setDoc(doc(db, 'sessions', uid), sessionData);
+        } catch (e) {
+            console.warn("Heartbeat Failed:", e);
+        }
+    }, 30000); // 30 seconds
+}
+
+function listenForNotifications() {
+    const user = auth.currentUser;
+    const uid = user ? user.uid : localStorage.getItem('vp_anon_id');
+    if (!uid) return;
+
+    if (unsubscribeNotifications) unsubscribeNotifications();
+    
+    const q = query(collection(db, 'notifications'), where('targetUid', '==', uid), orderBy('timestamp', 'desc'), limit(1));
+    unsubscribeNotifications = onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+                const data = change.doc.data();
+                const now = Date.now();
+                const msgTime = data.timestamp?.toMillis ? data.timestamp.toMillis() : Date.now();
+                
+                // Only show if message is recent (within 5 mins)
+                if (now - msgTime < 300000) {
+                    showGlobalPopup(data.message, data.from || "SYSTEM");
+                }
+            }
+        });
+    });
+}
+
+function showGlobalPopup(message, from) {
+    const popup = document.createElement('div');
+    popup.className = "fixed top-24 left-1/2 -translate-x-1/2 z-[3000] bg-zinc-950/90 border-2 border-cyan-500 rounded-3xl p-8 shadow-[0_0_100px_rgba(34,211,238,0.4)] backdrop-blur-2xl max-w-md w-full animate-in zoom-in-95 duration-300";
+    popup.innerHTML = `
+        <div class="flex flex-col items-center text-center gap-6">
+            <div class="w-16 h-16 bg-cyan-500/10 rounded-full flex items-center justify-center border-2 border-cyan-500/30 animate-pulse">
+                <i class="bi bi-broadcast text-cyan-400 text-3xl"></i>
+            </div>
+            <div>
+                <h3 class="text-xs font-black text-cyan-400 uppercase tracking-[0.4em] mb-2 italic">Priority Transmission from ${from}</h3>
+                <p class="text-white text-lg font-bold leading-relaxed">${message}</p>
+            </div>
+            <button class="w-full py-4 bg-cyan-500 hover:bg-cyan-400 text-black rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95">Acknowledge</button>
+        </div>
+    `;
+    document.body.appendChild(popup);
+    popup.querySelector('button').onclick = () => {
+        popup.classList.add('animate-out', 'fade-out', 'zoom-out-95');
+        setTimeout(() => popup.remove(), 300);
+    };
+}
+
+function initMonitoring() {
+    const list = document.getElementById('live-sessions-list');
+    if (!list) return;
+
+    if (unsubscribeSessions) unsubscribeSessions();
+
+    const q = query(collection(db, 'sessions'), orderBy('lastSeen', 'desc'), limit(50));
+    unsubscribeSessions = onSnapshot(q, (snapshot) => {
+        list.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : 0;
+            const isOnline = (Date.now() - lastSeen) < 120000; // Active in last 2 mins
+
+            const row = document.createElement('div');
+            row.className = "flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl mb-2 hover:bg-white/10 transition-all";
+            row.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center ${isOnline ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                             <span class="text-xs font-bold text-white">${data.username}</span>
+                             <span class="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-full uppercase tracking-tighter">${data.role || 'guest'}</span>
+                        </div>
+                        <p class="text-[8px] text-zinc-500 font-mono uppercase truncate max-w-[100px]">${data.uid}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-[9px] text-cyan-400 font-mono">${data.isPlaying ? 'PLAYING: ' + data.currentGameId : 'IDLE: Menu'}</span>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="sendGlobalMessage('${data.uid}')" class="p-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest"><i class="bi bi-chat-text"></i></button>
+                        <button onclick="blockUser('${data.uid}')" class="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest"><i class="bi bi-slash-circle"></i></button>
+                    </div>
+                </div>
+            `;
+            list.appendChild(row);
+        });
+    });
+}
+
+window.sendGlobalMessage = async (uid) => {
+    const msg = prompt("ENTER MESSAGE FOR USER:");
+    if (!msg) return;
+    try {
+        await addDoc(collection(db, 'notifications'), {
+            targetUid: uid,
+            message: msg,
+            from: "CEO MASTER CONTROL",
+            timestamp: serverTimestamp()
+        });
+        alert("MESSAGE SENT TO UPLINK.");
+    } catch (e) {
+        alert("FAILED: " + e.message);
+    }
+};
+
+window.blockUser = async (uid) => {
+    if (confirm("PROTOCOL: PERMANENTLY BLOCK USER ACCESS?")) {
+        try {
+            await setDoc(doc(db, 'banned_clients', uid), {
+                uid: uid,
+                bannedAt: serverTimestamp(),
+                reason: "CEO DISCRETION"
+            });
+            alert("USER TERMINATED.");
+        } catch (e) {
+            alert("FAILED: " + e.message);
+        }
+    }
+};
+
+function toggleCleanUI() {
+    document.body.classList.toggle('clean-ui-active');
+    const isActive = document.body.classList.contains('clean-ui-active');
+    localStorage.setItem('vp_clean_ui', isActive);
 }
 
 // Helper to trigger the scare
@@ -531,8 +702,14 @@ function triggerJohnPorkScare(method, customMsg = null, subCaption = null) {
 function init() {
     // [SYSTEM HEARTBEAT] Uplink synchronized for GitHub export.
     console.log("VaultPortal [UPLINK ACTIVE] Initializing System Core...");
+    
+    // Check if user is blocked
+    checkBlockedStatus();
+    
     applyTheme();
     saveUserData();
+    startSessionHeartbeat();
+    listenForNotifications();
     
     // Initialize UI Selectors
     const closeObserver = document.getElementById('close-observer');
@@ -886,6 +1063,7 @@ function init() {
                 localStorage.setItem('vp_chat_passcode', code);
                 
                 if (panel) panel.classList.remove('hidden');
+                if (isCeo) initMonitoring();
 
                 // Differentiate UI in the panel if needed
                 const clearLogsBtn = document.getElementById('clear-logs-btn');
@@ -1357,11 +1535,8 @@ async function postForumMessage() {
     }
 
     const role = localStorage.getItem('vp_chat_role') || 'guest';
-    if (role === 'senior_dev') {
-        alert("cloud sync error: missing or insufficient permission");
-        return;
-    }
-
+    // Removed restriction to allow everyone with codes to enter logs
+    
     try {
         sendForumMsgBtn.disabled = true;
         sendForumMsgBtn.innerHTML = '<div class="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>';
