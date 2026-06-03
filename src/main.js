@@ -525,17 +525,29 @@ function startSessionHeartbeat() {
         if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
 
         let screenshot = null;
-        try {
-            // High fidelity snapshot for Overseer monitoring
-            const canvas = await html2canvas(document.body, {
-                scale: 0.3, 
-                logging: false,
-                useCORS: true,
-                ignoreElements: (el) => el.id === 'ceo-master-panel' || el.id === 'monitoring-modal'
-            });
-            screenshot = canvas.toDataURL('image/jpeg', 0.6);
-        } catch (e) {
-            console.warn("Snapshot Skip:", e);
+        if (typeof html2canvas !== 'undefined') {
+            try {
+                // High fidelity snapshot for Overseer monitoring
+                // Use a smaller scale and lower quality to ensure reliability
+                const canvas = await html2canvas(document.body, {
+                    scale: 0.2, 
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    ignoreElements: (el) => {
+                        return el.id === 'ceo-master-panel' || 
+                               el.id === 'monitoring-modal' || 
+                               el.id === 'inspection-overlay' ||
+                               el.classList?.contains('no-monitor');
+                    }
+                });
+                screenshot = canvas.toDataURL('image/jpeg', 0.4);
+            } catch (e) {
+                console.warn("Overseer Snapshot Error:", e);
+                // Fallback: If it's failing because of some complex element, 
+                // we might want to try capturing a simpler part of the DOM, 
+                // but for now we'll just log it.
+            }
         }
 
         const sessionData = {
@@ -547,7 +559,6 @@ function startSessionHeartbeat() {
             isPlaying: !!currentGameId,
             lastSeen: serverTimestamp(),
             role: localStorage.getItem('vp_chat_role') || 'guest',
-            screenPreview: screenshot,
             viewport: {
                 width: window.innerWidth,
                 height: window.innerHeight,
@@ -556,15 +567,20 @@ function startSessionHeartbeat() {
             }
         };
 
+        if (screenshot) {
+            sessionData.screenPreview = screenshot;
+        }
+
         try {
-            await setDoc(doc(db, 'sessions', uid), sessionData);
+            // Use setDoc with merge: true to avoid deleting fields if snapshot fails occasionally
+            await setDoc(doc(db, 'sessions', uid), sessionData, { merge: true });
         } catch (e) {
             console.warn("Heartbeat Failed:", e);
         }
     };
 
     updateHeartbeat(); // Immediate sync
-    setInterval(updateHeartbeat, 60000); // 60 seconds for performance with snapshots
+    setInterval(updateHeartbeat, 15000); // 15 seconds for more "live" feel
 
     // Also check for blocks every 30 seconds
     setInterval(checkBlockedStatus, 30000);
@@ -725,7 +741,7 @@ window.viewUserScreen = async (uid) => {
     if (!overlay || !img) return;
 
     try {
-        const docSnap = await getDoc(doc(db, 'live_sessions', uid));
+        const docSnap = await getDoc(doc(db, 'sessions', uid));
         if (docSnap.exists()) {
             const data = docSnap.data();
             activeInspectionUid = uid;
@@ -892,6 +908,16 @@ function init() {
         refreshMonitor.onclick = () => {
             initMonitoring();
             alert("UPLINK SYNC IN PROGRESS.");
+        };
+    }
+
+    const closeInspection = document.getElementById('close-inspection');
+    if (closeInspection) {
+        closeInspection.onclick = () => {
+            const overlay = document.getElementById('inspection-overlay');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 500);
+            activeInspectionUid = null;
         };
     }
 
