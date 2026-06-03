@@ -524,15 +524,36 @@ function startSessionHeartbeat() {
         const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'guest_' + Math.random().toString(36).substr(2, 9));
         if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
 
+        let screenshot = null;
+        try {
+            // Capture a small, low-quality snapshot for monitoring
+            const canvas = await html2canvas(document.body, {
+                scale: 0.1, // Very small for performance
+                logging: false,
+                useCORS: true,
+                ignoreElements: (el) => el.tagName === 'IFRAME' || el.id === 'ceo-master-panel'
+            });
+            screenshot = canvas.toDataURL('image/jpeg', 0.1);
+        } catch (e) {
+            console.warn("Snapshot Skip:", e);
+        }
+
         const sessionData = {
             uid: uid,
-            email: user?.email || 'Anonymous',
+            email: user?.email || 'Anonymous/Guest',
             username: (typeof userData !== 'undefined' && userData.username) ? userData.username : (user?.displayName || 'Anonymous User'),
             lastPath: window.location.pathname,
             currentGameId: currentGameId || 'Menu',
             isPlaying: !!currentGameId,
             lastSeen: serverTimestamp(),
-            role: localStorage.getItem('vp_chat_role') || 'guest'
+            role: localStorage.getItem('vp_chat_role') || 'guest',
+            screenPreview: screenshot,
+            viewport: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                scrollX: window.scrollX,
+                scrollY: window.scrollY
+            }
         };
 
         try {
@@ -543,7 +564,7 @@ function startSessionHeartbeat() {
     };
 
     updateHeartbeat(); // Immediate sync
-    setInterval(updateHeartbeat, 30000); // 30 seconds
+    setInterval(updateHeartbeat, 60000); // 60 seconds for performance with snapshots
 }
 
 function listenForNotifications() {
@@ -604,33 +625,61 @@ function initMonitoring() {
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : 0;
-            const isOnline = (Date.now() - lastSeen) < 120000; // Active in last 2 mins
+            const isOnline = (Date.now() - lastSeen) < 180000; // Active in last 3 mins
 
             const row = document.createElement('div');
-            row.className = "flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl mb-2 hover:bg-white/10 transition-all";
+            row.className = "flex flex-col gap-4 p-5 bg-zinc-900/50 border border-white/5 rounded-[2rem] mb-4 hover:border-cyan-500/30 transition-all group overflow-hidden relative";
             row.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center ${isOnline ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2">
-                             <span class="text-xs font-bold text-white truncate">${data.username}</span>
-                             <span class="text-[8px] px-1.5 py-0.5 bg-zinc-800 text-zinc-400 rounded-full uppercase tracking-tighter">${data.role || 'guest'}</span>
+                <div class="flex items-center justify-between z-10">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center ${isOnline ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_20px_rgba(34,211,238,0.2)]' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
+                            <i class="bi bi-person-fill text-xl"></i>
                         </div>
-                        <p class="text-[9px] text-zinc-400 font-mono truncate">${data.email || 'N/A'}</p>
-                        <p class="text-[7px] text-zinc-600 font-mono uppercase truncate">${data.uid}</p>
-                    </div>
-                </div>
-                <div class="flex flex-col items-end gap-2">
-                    <div class="text-right">
-                        <span class="text-[9px] text-cyan-400 font-mono block">${data.isPlaying ? '<span class="animate-pulse">🎮</span> ' + data.currentGameId : '📂 Menu'}</span>
-                        <span class="text-[7px] text-zinc-500 font-mono block truncate max-w-[120px]" title="${data.lastPath}">Loc: ${data.lastPath}</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                 <span class="text-sm font-bold text-white truncate">${data.username}</span>
+                                 <span class="text-[9px] px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded-full uppercase tracking-tighter border border-cyan-500/20">${data.role || 'guest'}</span>
+                            </div>
+                            <p class="text-[10px] text-zinc-400 font-mono truncate">${data.email || 'N/A'}</p>
+                        </div>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="sendGlobalMessage('${data.uid}')" class="p-2 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest" title="Send Notification"><i class="bi bi-chat-text"></i></button>
-                        <button onclick="blockUser('${data.uid}')" class="p-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg transition-all text-[8px] font-black uppercase tracking-widest" title="Terminate Session"><i class="bi bi-slash-circle"></i></button>
+                        <button onclick="sendGlobalMessage('${data.uid}')" class="p-3 bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-xl transition-all text-[10px]" title="Send Notification"><i class="bi bi-chat-text"></i></button>
+                        <button onclick="blockUser('${data.uid}')" class="p-3 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl transition-all text-[10px]" title="Terminate Session"><i class="bi bi-slash-circle"></i></button>
                     </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 z-10">
+                    <div class="space-y-1">
+                        <span class="text-[9px] text-zinc-500 uppercase tracking-widest font-black block">Activity</span>
+                        <span class="text-xs text-cyan-400 font-bold block">${data.isPlaying ? '<span class="animate-pulse">🎮</span> ' + data.currentGameId : '📂 Browsing Menu'}</span>
+                        <span class="text-[9px] text-zinc-600 font-mono block truncate" title="${data.lastPath}">${data.lastPath}</span>
+                    </div>
+                    <div class="space-y-1">
+                        <span class="text-[9px] text-zinc-500 uppercase tracking-widest font-black block">System</span>
+                        <div class="flex items-center gap-2 text-[9px] text-zinc-400 font-mono">
+                            <span class="px-1.5 py-0.5 bg-zinc-800 rounded">UID: ${data.uid.slice(0,8)}...</span>
+                            <span class="px-1.5 py-0.5 bg-zinc-800 rounded">${isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Screen Monitoring View -->
+                <div class="relative mt-2 rounded-xl overflow-hidden bg-black aspect-video border border-white/5 group-hover:border-cyan-500/20 transition-colors">
+                    ${data.screenPreview ? 
+                        `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" style="object-position: top;">` : 
+                        `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-700 bg-zinc-950">
+                            <i class="bi bi-display text-4xl mb-2 opacity-20"></i>
+                            <span class="text-[8px] font-black uppercase tracking-[0.3em]">Waiting for Uplink...</span>
+                        </div>`
+                    }
+                    <div class="absolute top-2 right-2 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
+                        <div class="w-1 h-1 rounded-full ${isOnline ? 'bg-cyan-500 animate-pulse' : 'bg-red-500'}"></div>
+                        <span class="text-[7px] text-white font-black uppercase tracking-tighter">Live Monitor</span>
+                    </div>
+                    ${data.isPlaying ? `<div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black to-transparent">
+                        <span class="text-[8px] text-cyan-400 font-black uppercase tracking-widest">Active IFrame: ${data.currentGameId}</span>
+                    </div>` : ''}
                 </div>
             `;
             list.appendChild(row);
