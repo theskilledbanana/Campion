@@ -519,7 +519,11 @@ function checkBlockedStatus() {
 }
 
 function startSessionHeartbeat() {
+    let isUpdatingHeartbeat = false;
     const updateHeartbeat = async () => {
+        if (isUpdatingHeartbeat) return;
+        isUpdatingHeartbeat = true;
+
         const user = auth.currentUser;
         const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'guest_' + Math.random().toString(36).substr(2, 9));
         if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
@@ -527,26 +531,27 @@ function startSessionHeartbeat() {
         let screenshot = null;
         if (typeof html2canvas !== 'undefined') {
             try {
-                // High fidelity snapshot for Overseer monitoring
-                // Use a smaller scale and lower quality to ensure reliability
                 const canvas = await html2canvas(document.body, {
-                    scale: 0.2, 
+                    scale: 0.12, // Ultra low scale for max speed
                     logging: false,
                     useCORS: true,
                     allowTaint: true,
+                    // Targeted ignore list
                     ignoreElements: (el) => {
-                        return el.id === 'ceo-master-panel' || 
-                               el.id === 'monitoring-modal' || 
-                               el.id === 'inspection-overlay' ||
-                               el.classList?.contains('no-monitor');
+                        const id = el.id;
+                        return id === 'ceo-master-panel' || 
+                               id === 'monitoring-modal' || 
+                               id === 'inspection-overlay' ||
+                               id === 'big-notification' ||
+                               el.classList?.contains('no-monitor') ||
+                               (el.tagName === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
                     }
                 });
-                screenshot = canvas.toDataURL('image/jpeg', 0.4);
+                if (canvas) {
+                    screenshot = canvas.toDataURL('image/jpeg', 0.2);
+                }
             } catch (e) {
-                console.warn("Overseer Snapshot Error:", e);
-                // Fallback: If it's failing because of some complex element, 
-                // we might want to try capturing a simpler part of the DOM, 
-                // but for now we'll just log it.
+                console.warn("[Overseer] Snapshot failed:", e.message);
             }
         }
 
@@ -576,11 +581,13 @@ function startSessionHeartbeat() {
             await setDoc(doc(db, 'sessions', uid), sessionData, { merge: true });
         } catch (e) {
             console.warn("Heartbeat Failed:", e);
+        } finally {
+            isUpdatingHeartbeat = false;
         }
     };
 
     updateHeartbeat(); // Immediate sync
-    setInterval(updateHeartbeat, 15000); // 15 seconds for more "live" feel
+    setInterval(updateHeartbeat, 8000); // 8 seconds for a more "live" feel
 
     // Also check for blocks every 30 seconds
     setInterval(checkBlockedStatus, 30000);
@@ -647,12 +654,16 @@ function initMonitoring() {
         if (listSmall) listSmall.innerHTML = '';
         
         let onlineCount = 0;
+        const now = Date.now();
         
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : 0;
-            const isOnline = (Date.now() - lastSeen) < 180000;
-            if (isOnline) onlineCount++;
+            const isOnline = (now - lastSeen) < 45000; 
+            
+            // Only render active users
+            if (!isOnline) return;
+            onlineCount++;
 
             // Render for the Large Grid
             if (list) {
@@ -733,27 +744,30 @@ function initMonitoring() {
 
 let activeInspectionUid = null;
 let inspectionZoom = 1;
+let unsubscribeInspection = null;
 
-window.viewUserScreen = async (uid) => {
+window.viewUserScreen = (uid) => {
     const overlay = document.getElementById('inspection-overlay');
     const img = document.getElementById('inspect-img');
     const nameEl = document.getElementById('inspect-name');
     if (!overlay || !img) return;
 
-    try {
-        const docSnap = await getDoc(doc(db, 'sessions', uid));
+    if (unsubscribeInspection) unsubscribeInspection();
+    activeInspectionUid = uid;
+
+    unsubscribeInspection = onSnapshot(doc(db, 'sessions', uid), (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            activeInspectionUid = uid;
             overlay.classList.remove('hidden');
             setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             nameEl.innerText = `VIEWING: ${data.username.toUpperCase()}`;
-            img.src = data.screenPreview || '';
-            window.resetInspectZoom();
+            if (data.screenPreview) {
+                img.src = data.screenPreview;
+            }
         }
-    } catch (e) {
-        console.error("Inspection Error:", e);
-    }
+    });
+
+    window.resetInspectZoom();
 };
 
 window.zoomInspect = (delta) => {
@@ -907,7 +921,6 @@ function init() {
     if (refreshMonitor) {
         refreshMonitor.onclick = () => {
             initMonitoring();
-            alert("UPLINK SYNC IN PROGRESS.");
         };
     }
 
@@ -918,6 +931,10 @@ function init() {
             overlay.classList.add('opacity-0');
             setTimeout(() => overlay.classList.add('hidden'), 500);
             activeInspectionUid = null;
+            if (unsubscribeInspection) {
+                unsubscribeInspection();
+                unsubscribeInspection = null;
+            }
         };
     }
 
