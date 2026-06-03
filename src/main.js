@@ -482,7 +482,7 @@ function showBadgeNotification(badge) {
     }, 5000);
 }
 
-async function safeCall(fn, name) {
+function safeCall(fn, name) {
     try {
         if (typeof fn === 'function') fn();
     } catch (e) {
@@ -519,14 +519,14 @@ async function checkBlockedStatus() {
 }
 
 function startSessionHeartbeat() {
-    setInterval(async () => {
+    const updateHeartbeat = async () => {
         const user = auth.currentUser;
         const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'guest_' + Math.random().toString(36).substr(2, 9));
         if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
 
         const sessionData = {
             uid: uid,
-            username: userData.username || 'Anonymous User',
+            username: (typeof userData !== 'undefined' && userData.username) ? userData.username : (user?.displayName || 'Anonymous User'),
             lastPath: window.location.pathname,
             currentGameId: currentGameId || 'Menu',
             isPlaying: !!currentGameId,
@@ -539,7 +539,10 @@ function startSessionHeartbeat() {
         } catch (e) {
             console.warn("Heartbeat Failed:", e);
         }
-    }, 30000); // 30 seconds
+    };
+
+    updateHeartbeat(); // Immediate sync
+    setInterval(updateHeartbeat, 30000); // 30 seconds
 }
 
 function listenForNotifications() {
@@ -718,6 +721,19 @@ function init() {
     saveUserData();
     startSessionHeartbeat();
     listenForNotifications();
+
+    const storedRole = localStorage.getItem('vp_chat_role');
+    if (storedRole === 'ceo') {
+        initMonitoring();
+    }
+
+    const toggleCleanUiBtn = document.getElementById('toggle-clean-ui');
+    if (toggleCleanUiBtn) {
+        toggleCleanUiBtn.onclick = toggleCleanUI;
+        if (localStorage.getItem('vp_clean_ui') === 'true') {
+            document.body.classList.add('clean-ui-active');
+        }
+    }
     
     // Initialize UI Selectors
     const closeObserver = document.getElementById('close-observer');
