@@ -529,12 +529,16 @@ function startSessionHeartbeat() {
         if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
 
         let screenshot = null;
+        let debugStatus = "Idle";
+        
         if (typeof html2canvas !== 'undefined') {
             try {
-                const canvas = await html2canvas(document.body, {
-                    scale: 0.15, 
+                debugStatus = "Capturing...";
+                const capturePromise = html2canvas(document.body, {
+                    scale: 0.1, 
                     logging: false,
                     useCORS: true,
+                    allowTaint: false,
                     ignoreElements: (el) => {
                         const id = el.id;
                         const tag = el.tagName;
@@ -542,33 +546,43 @@ function startSessionHeartbeat() {
                                id === 'monitoring-modal' || 
                                id === 'inspection-overlay' ||
                                id === 'big-notification' ||
+                               id === 'top-notification' ||
                                el.classList?.contains('no-monitor') ||
                                tag === 'SCRIPT' || tag === 'STYLE' ||
                                (tag === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
                     }
                 });
+
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout')), 5000)
+                );
+
+                const canvas = await Promise.race([capturePromise, timeoutPromise]);
                 if (canvas) {
-                    screenshot = canvas.toDataURL('image/jpeg', 0.3);
+                    screenshot = canvas.toDataURL('image/jpeg', 0.2);
+                    debugStatus = "Success";
                 }
             } catch (e) {
-                console.warn("[Overseer] Snapshot failed:", e.message);
+                console.warn("[Overseer] Heartbeat snapshot skipped:", e.message);
+                debugStatus = "Error: " + e.message;
             }
+        } else {
+            debugStatus = "Missing Lib";
         }
 
         const sessionData = {
             uid: uid,
-            email: user?.email || 'Anonymous/Guest',
-            username: (typeof userData !== 'undefined' && userData.username) ? userData.username : (user?.displayName || 'Anonymous User'),
+            email: user?.email || 'Anonymous Client',
+            username: (typeof userData !== 'undefined' && userData.username) ? userData.username : (user?.displayName || 'Guest User'),
             lastPath: window.location.pathname,
-            currentGameId: currentGameId || 'Menu',
+            currentGameId: currentGameId || 'Dashboard',
             isPlaying: !!currentGameId,
             lastSeen: serverTimestamp(),
             role: localStorage.getItem('vp_chat_role') || 'guest',
+            debugStatus: debugStatus,
             viewport: {
                 width: window.innerWidth,
-                height: window.innerHeight,
-                scrollX: window.scrollX,
-                scrollY: window.scrollY
+                height: window.innerHeight
             }
         };
 
@@ -577,17 +591,16 @@ function startSessionHeartbeat() {
         }
 
         try {
-            // Use setDoc with merge: true to avoid deleting fields if snapshot fails occasionally
             await setDoc(doc(db, 'sessions', uid), sessionData, { merge: true });
         } catch (e) {
-            console.warn("Heartbeat Failed:", e);
+            console.warn("[Overseer] Heartbeat persistence failed:", e.message);
         } finally {
             isUpdatingHeartbeat = false;
         }
     };
 
-    updateHeartbeat(); // Immediate sync
-    setInterval(updateHeartbeat, 8000); // 8 seconds for a more "live" feel
+    updateHeartbeat(); 
+    setInterval(updateHeartbeat, 12000); // 12 seconds
 
     // Also check for blocks every 30 seconds
     setInterval(checkBlockedStatus, 30000);
@@ -658,14 +671,15 @@ function initMonitoring() {
         
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
-            const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : 0;
-            const isOnline = (now - lastSeen) < 60000; 
+            const lastSeenRaw = data.lastSeen;
+            const lastSeen = lastSeenRaw?.toMillis ? lastSeenRaw.toMillis() : (lastSeenRaw ? Date.now() : 0);
+            const isOnline = (now - lastSeen) < 90000; 
             
             // Only render active users
             if (!isOnline) return;
             onlineCount++;
 
-            const lastUpdated = data.lastSeen ? new Date(lastSeen).toLocaleTimeString() : 'N/A';
+            const lastUpdated = data.lastSeen ? new Date(lastSeen).toLocaleTimeString() : 'Syncing...';
 
             // Render for the Large Grid
             if (list) {
@@ -691,9 +705,10 @@ function initMonitoring() {
                     <div class="relative bg-black aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-cyan-500/20 transition-all shadow-inner">
                         ${data.screenPreview ? 
                             `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all" style="object-position: top;">` : 
-                            `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-800 bg-zinc-950">
+                            `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-800 bg-zinc-950 px-6">
                                 <div class="w-12 h-12 border-2 border-cyan-500/10 border-t-cyan-500/50 rounded-full animate-spin mb-4"></div>
-                                <span class="text-[9px] font-black uppercase tracking-[0.4em] text-zinc-600">Syncing Uplink...</span>
+                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/50 text-center">${data.debugStatus || 'CONNECTING...'}</span>
+                                <span class="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-700 mt-2">Uplink Unstable</span>
                             </div>`
                         }
                         <div class="absolute top-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
