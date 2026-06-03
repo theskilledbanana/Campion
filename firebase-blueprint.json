@@ -82,6 +82,27 @@
         "timestamp": { "type": "string", "format": "date-time" }
       },
       "required": ["targetUid", "message", "timestamp"]
+    },
+    "GameMetric": {
+      "title": "Game Metric",
+      "description": "Counter for likes and dislikes for a game.",
+      "type": "object",
+      "properties": {
+        "likes": { "type": "number" },
+        "dislikes": { "type": "number" }
+      },
+      "required": ["likes", "dislikes"]
+    },
+    "GlobalMessage": {
+      "title": "Global Message",
+      "description": "A message broadcasted to all users in the system.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "from": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "createdAt"]
     }
   },
   "firestore": {
@@ -108,6 +129,14 @@
     "/notifications/{notificationId}": {
       "schema": "UserNotification",
       "description": "Global notifications for users."
+    },
+    "/game_metrics/{gameId}": {
+      "schema": "GameMetric",
+      "description": "Likes and dislikes for each game."
+    },
+    "/global_messages/{msgId}": {
+      "schema": "GlobalMessage",
+      "description": "Global broadcasts."
     },
     "/banned_clients/{clientId}": {
       "schema": "object",

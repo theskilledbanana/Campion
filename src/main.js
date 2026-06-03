@@ -29,6 +29,37 @@ import {
 
 const ALLOWED_DEVS = []; // Strictly using passcode for CEO access as requested
 
+const OperationType = {
+  CREATE: 'create',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  LIST: 'list',
+  GET: 'get',
+  WRITE: 'write',
+};
+
+function handleFirestoreError(error, operationType, path) {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  // Not throwing here to allow the app to continue without crashing hard if possible, 
+  // but logging it clearly for the agent to see.
+}
+
 const FALLBACK_IMAGE = '/src/assets/images/game_placeholder_vault_1780278911383.png';
 
 const MENU_MUSIC = [
@@ -525,61 +556,67 @@ function startSessionHeartbeat() {
         isUpdatingHeartbeat = true;
 
         const user = auth.currentUser;
-        const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'guest_' + Math.random().toString(36).substr(2, 9));
+        const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'client_' + Math.random().toString(36).substr(2, 9));
+        const activeGame = allEntries.find(e => e.id === currentGameId);
+        
         if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
 
         let screenshot = null;
         let debugStatus = "Idle";
         
-        if (typeof html2canvas !== 'undefined') {
-            try {
-                debugStatus = "Capturing...";
-                const capturePromise = html2canvas(document.body, {
-                    scale: 0.1, 
-                    logging: false,
-                    useCORS: true,
-                    allowTaint: false,
-                    ignoreElements: (el) => {
-                        const id = el.id;
-                        const tag = el.tagName;
-                        return id === 'ceo-master-panel' || 
-                               id === 'monitoring-modal' || 
-                               id === 'inspection-overlay' ||
-                               id === 'big-notification' ||
-                               id === 'top-notification' ||
-                               el.classList?.contains('no-monitor') ||
-                               tag === 'SCRIPT' || tag === 'STYLE' ||
-                               (tag === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
+        // Only try to capture if the tab is visible to save resources and avoid stale shots
+        if (document.visibilityState === 'visible') {
+            if (typeof html2canvas !== 'undefined') {
+                try {
+                    debugStatus = "Capturing...";
+                    const canvas = await html2canvas(document.body, {
+                        scale: 0.15, 
+                        logging: false,
+                        useCORS: true,
+                        allowTaint: false,
+                        timeout: 3000, // Faster timeout
+                        ignoreElements: (el) => {
+                            const id = el.id;
+                            const tag = el.tagName;
+                            return id === 'ceo-master-panel' || 
+                                   id === 'monitoring-modal' || 
+                                   id === 'inspection-overlay' ||
+                                   id === 'big-notification' ||
+                                   id === 'top-notification' ||
+                                   id === 'pork-easter-egg-1' ||
+                                   el.classList?.contains('no-monitor') ||
+                                   tag === 'SCRIPT' || tag === 'STYLE' ||
+                                   (tag === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
+                        }
+                    });
+                    if (canvas) {
+                        screenshot = canvas.toDataURL('image/jpeg', 0.2); // Lower quality for speed
+                        debugStatus = "Success";
                     }
-                });
-
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Timeout')), 5000)
-                );
-
-                const canvas = await Promise.race([capturePromise, timeoutPromise]);
-                if (canvas) {
-                    screenshot = canvas.toDataURL('image/jpeg', 0.2);
-                    debugStatus = "Success";
+                } catch (e) {
+                    console.warn("[Overseer] Heartbeat snapshot skipped:", e.message);
+                    debugStatus = "Snapshot Error";
                 }
-            } catch (e) {
-                console.warn("[Overseer] Heartbeat snapshot skipped:", e.message);
-                debugStatus = "Error: " + e.message;
+            } else {
+                debugStatus = "Lib Missing";
             }
         } else {
-            debugStatus = "Missing Lib";
+            debugStatus = "Tab Background";
         }
 
         const sessionData = {
             uid: uid,
-            email: user?.email || 'Anonymous Client',
-            username: (typeof userData !== 'undefined' && userData.username) ? userData.username : (user?.displayName || 'Guest User'),
+            email: user?.email || 'Guest Client',
+            username: userData.username || (user?.displayName || 'Guest User'),
             lastPath: window.location.pathname,
             currentGameId: currentGameId || 'Dashboard',
+            activeGameTitle: activeGame ? activeGame.title : 'Portal Shell',
+            activeGameThumb: activeGame ? activeGame.thumbnail : null,
             isPlaying: !!currentGameId,
             lastSeen: serverTimestamp(),
             role: localStorage.getItem('vp_chat_role') || 'guest',
             debugStatus: debugStatus,
+            tabActive: document.visibilityState === 'visible',
             viewport: {
                 width: window.innerWidth,
                 height: window.innerHeight
@@ -600,9 +637,7 @@ function startSessionHeartbeat() {
     };
 
     updateHeartbeat(); 
-    setInterval(updateHeartbeat, 12000); // 12 seconds
-
-    // Also check for blocks every 30 seconds
+    setInterval(updateHeartbeat, 10000); // Slightly more frequent
     setInterval(checkBlockedStatus, 30000);
 }
 
@@ -627,6 +662,8 @@ function listenForNotifications() {
                 }
             }
         });
+    }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'notifications');
     });
 }
 
@@ -654,111 +691,116 @@ function showGlobalPopup(message, from) {
 
 function initMonitoring() {
     const list = document.getElementById('live-monitor-grid');
-    const listSmall = document.getElementById('live-sessions-list');
     const countEl = document.getElementById('active-users-count');
     
-    if (!list && !listSmall) return;
+    if (!list) return;
 
     if (unsubscribeSessions) unsubscribeSessions();
 
-    const q = query(collection(db, 'sessions'), orderBy('lastSeen', 'desc'), limit(50));
+    const q = query(collection(db, 'sessions'), orderBy('lastSeen', 'desc'), limit(40));
     unsubscribeSessions = onSnapshot(q, (snapshot) => {
-        if (list) list.innerHTML = '';
-        if (listSmall) listSmall.innerHTML = '';
-        
+        list.innerHTML = '';
+        const currentUid = auth.currentUser ? auth.currentUser.uid : localStorage.getItem('vp_anon_id');
         let onlineCount = 0;
         const now = Date.now();
         
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
-            const lastSeenRaw = data.lastSeen;
-            const lastSeen = lastSeenRaw?.toMillis ? lastSeenRaw.toMillis() : (lastSeenRaw ? Date.now() : 0);
-            const isOnline = (now - lastSeen) < 90000; 
+            const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : now;
+            const isOnline = (now - lastSeen) < 90000; // 90 second cutoff
+            const isSelf = data.uid === currentUid;
             
-            // Only render active users
-            if (!isOnline) return;
-            onlineCount++;
+            if ((now - lastSeen) > 3600000) return; // Hide sessions older than 1 hour
+            if (isOnline) onlineCount++;
 
-            const lastUpdated = data.lastSeen ? new Date(lastSeen).toLocaleTimeString() : 'Syncing...';
+            const statusColor = isOnline ? 'bg-cyan-500' : 'bg-zinc-700';
+            const statusText = isOnline ? 'Uplink Active' : 'Signal Lost';
 
-            // Render for the Large Grid
-            if (list) {
-                const card = document.createElement('div');
-                card.className = "flex flex-col gap-5 p-6 bg-zinc-900/50 border border-white/5 rounded-[2.5rem] hover:border-cyan-500/50 hover:bg-zinc-900 transition-all group relative overflow-hidden animate-in zoom-in-95 duration-500";
-                card.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-3xl flex items-center justify-center ${isOnline ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_30px_rgba(34,211,238,0.2)]' : 'bg-zinc-800 text-zinc-500 border border-zinc-700'}">
-                                <i class="bi bi-person-fill text-2xl"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <span class="block text-sm font-black text-white truncate uppercase tracking-tighter">${data.username}</span>
-                                <span class="block text-[10px] text-zinc-500 font-mono italic">${data.email || 'Anonymous'}</span>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                             <button onclick="sendGlobalMessage('${data.uid}')" class="w-10 h-10 flex items-center justify-center bg-indigo-500/10 hover:bg-indigo-500 text-indigo-400 hover:text-white rounded-2xl transition-all" title="Message"><i class="bi bi-chat-text"></i></button>
-                             <button onclick="blockUser('${data.uid}')" class="w-10 h-10 flex items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-2xl transition-all" title="Terminate"><i class="bi bi-slash-circle"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="relative bg-black aspect-video rounded-3xl overflow-hidden border border-white/5 group-hover:border-cyan-500/20 transition-all shadow-inner">
-                        ${data.screenPreview ? 
-                            `<img src="${data.screenPreview}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all" style="object-position: top;">` : 
-                            `<div class="absolute inset-0 flex flex-col items-center justify-center text-zinc-800 bg-zinc-950 px-6">
-                                <div class="w-12 h-12 border-2 border-cyan-500/10 border-t-cyan-500/50 rounded-full animate-spin mb-4"></div>
-                                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-500/50 text-center">${data.debugStatus || 'CONNECTING...'}</span>
-                                <span class="text-[7px] font-black uppercase tracking-[0.3em] text-zinc-700 mt-2">Uplink Unstable</span>
-                            </div>`
-                        }
-                        <div class="absolute top-3 right-3 flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                            <div class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-cyan-500 animate-pulse' : 'bg-red-500'}"></div>
-                            <span class="text-[8px] text-white font-black uppercase tracking-widest">${isOnline ? 'Livefeed' : 'Offline'}</span>
-                        </div>
-                        <div class="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black via-black/40 to-transparent">
-                             <div class="flex items-center justify-between">
-                                 <div class="flex flex-col">
-                                     <span class="text-[10px] text-zinc-400 font-black uppercase tracking-widest leading-none mb-1">Loc: ${data.lastPath}</span>
-                                     <span class="text-[9px] text-cyan-400 font-mono italic">${data.isPlaying ? '🎮 Active: ' + data.currentGameId : '📂 Browsing Shell'}</span>
-                                 </div>
-                                 <div class="text-right">
-                                     <span class="block text-[8px] text-zinc-600 font-mono italic mb-0.5">Last sync: ${lastUpdated}</span>
-                                     <span class="text-[8px] text-zinc-700 font-mono">UID: ${data.uid.slice(0,6)}</span>
-                                 </div>
-                             </div>
-                        </div>
-                    </div>
-
-                    <button onclick="viewUserScreen('${data.uid}')" class="w-full py-4 bg-zinc-800/50 hover:bg-cyan-500 hover:text-black border border-white/5 hover:border-cyan-400 rounded-2xl transition-all text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                        <i class="bi bi-fullscreen"></i>
-                        <span>Inspect Viewport</span>
-                    </button>
-                `;
-                list.appendChild(card);
-            }
+            const card = document.createElement('div');
+            card.className = `group relative flex flex-col bg-zinc-950 border rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:scale-[1.02] ${isSelf ? 'border-cyan-500/40 shadow-[0_0_40px_-10px_rgba(34,211,238,0.2)]' : 'border-white/5 hover:border-white/20'}`;
             
-            // Small list
-            if (listSmall) {
-                const row = document.createElement('div');
-                row.className = "flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl mb-2 text-[10px]";
-                row.innerHTML = `
-                    <div class="flex items-center gap-2 overflow-hidden">
-                        <div class="w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-cyan-500' : 'bg-zinc-700'}"></div>
-                        <span class="font-bold text-white truncate">${data.username}</span>
+            card.innerHTML = `
+                <!-- Header -->
+                <div class="p-6 flex items-center justify-between bg-zinc-900/30">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-500 group-hover:text-cyan-400 transition-colors">
+                            <i class="bi ${isSelf ? 'bi-shield-lock-fill' : 'bi-person-fill'} text-xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h4 class="text-sm font-black text-white uppercase italic tracking-tighter truncate">${data.username || 'Unknown Citizen'} ${isSelf ? '<span class="text-xs text-cyan-500"> (HOST)</span>' : ''}</h4>
+                            <p class="text-[9px] font-mono text-zinc-500 uppercase tracking-widest truncate opacity-60">${data.email || 'Handshake Protocol Active'}</p>
+                        </div>
                     </div>
-                    <span class="text-zinc-500 font-mono text-[8px]">${data.isPlaying ? 'GAME' : 'MENU'}</span>
-                `;
-                listSmall.appendChild(row);
-            }
+                    <div class="flex gap-2">
+                        ${!isSelf ? `
+                            <button onclick="sendGlobalMessage('${data.uid}')" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-cyan-500 hover:text-black flex items-center justify-center transition-all"><i class="bi bi-chat-dots"></i></button>
+                            <button onclick="blockUser('${data.uid}')" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center transition-all"><i class="bi bi-slash-circle"></i></button>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <!-- Preview Area -->
+                <div class="relative aspect-video bg-zinc-900 overflow-hidden group/screen cursor-zoom-in" onclick="viewUserScreen('${data.uid}')">
+                    ${data.screenPreview ? 
+                        `<img src="${data.screenPreview}" class="w-full h-full object-cover grayscale-[40%] group-hover:grayscale-0 transition-all duration-700" style="object-position: top;">` : 
+                        `<div class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 p-8 text-center">
+                            ${data.activeGameThumb ? `<img src="${data.activeGameThumb}" class="absolute inset-0 w-full h-full object-cover opacity-10 blur-2xl">` : ''}
+                            <div class="relative z-10 w-12 h-12 border-2 border-cyan-500/10 border-t-cyan-500/60 rounded-full animate-spin mb-4"></div>
+                            <p class="relative z-10 text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/40">${data.debugStatus || 'Awaiting Uplink'}</p>
+                            ${data.activeGameTitle ? `<p class="relative z-10 text-[7px] text-zinc-700 font-mono mt-2 uppercase tracking-widest">Target is in: ${data.activeGameTitle}</p>` : ''}
+                        </div>`
+                    }
+                    
+                    <!-- Overlay Grid -->
+                    <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+                    
+                    <!-- Badge Overlays -->
+                    <div class="absolute top-4 left-4 flex flex-col gap-2">
+                        ${data.isPlaying ? `
+                            <div class="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full scale-90 origin-left">
+                                <div class="w-1 h-4 bg-orange-500 rounded-full animate-pulse"></div>
+                                <span class="text-[8px] font-black text-white uppercase tracking-widest">${data.activeGameTitle}</span>
+                            </div>
+                        ` : `
+                            <div class="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full scale-90 origin-left">
+                                <div class="w-1 h-4 bg-blue-500 rounded-full"></div>
+                                <span class="text-[8px] font-black text-white uppercase tracking-widest italic">Shell Browser</span>
+                            </div>
+                        `}
+                    </div>
+
+                    <div class="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full flex items-center gap-2 scale-90 origin-right">
+                        <div class="w-1.5 h-1.5 rounded-full ${statusColor} ${isOnline ? 'animate-pulse' : ''}"></div>
+                        <span class="text-[7px] font-black text-white uppercase tracking-widest">${statusText}</span>
+                    </div>
+
+                    <div class="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black via-black/40 to-transparent">
+                        <div class="flex items-end justify-between">
+                            <div class="flex flex-col">
+                                <span class="text-[7px] font-mono text-zinc-500 uppercase tracking-widest opacity-60">Handshake: ${data.uid.slice(0,8).toUpperCase()}</span>
+                                <span class="text-[8px] font-black text-cyan-400 uppercase tracking-widest mt-0.5">${data.viewport ? `${data.viewport.width}x${data.viewport.height} RES` : 'AUTO_RES'}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[7px] font-mono text-zinc-600 uppercase tracking-widest">${isOnline ? 'Latency: 24ms' : 'Last Relay: ' + new Date(lastSeen).toLocaleTimeString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inspect Button -->
+                <button onclick="viewUserScreen('${data.uid}')" class="m-6 mt-4 py-4 bg-zinc-900 hover:bg-white/10 border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
+                    <i class="bi bi-eye-fill transition-transform group-hover/btn:scale-125"></i>
+                    <span>Inspect Node Viewport</span>
+                </button>
+            `;
+            list.appendChild(card);
         });
-        
-        if (countEl) countEl.innerText = onlineCount;
-        
-        const bandwidthEl = document.getElementById('monitoring-bandwidth');
-        if (bandwidthEl) {
-             const mbs = (snapshot.size * 0.05).toFixed(2);
-             bandwidthEl.innerText = `${mbs} MB/S`;
+
+        if (countEl) {
+            countEl.innerHTML = `<span class="text-cyan-400">${onlineCount}</span> Nodes Active`;
         }
+    }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'sessions');
     });
 }
 
@@ -1406,6 +1448,7 @@ function init() {
         safeCall(showDisclaimer, "Disclaimer");
         safeCall(startSystemTicker, "Ticker");
         safeCall(initBadgeSubscription, "BadgeSub");
+        safeCall(initNewsRelay, "NewsRelay");
         
         if (indicator) {
             indicator.textContent = isDevOverridden ? 'SYSTEM: [OVERRIDE_ACTIVE]' : 'SYSTEM: [ONLINE]';
@@ -2635,6 +2678,25 @@ function hideDisclaimer() {
     }, 1000);
 }
 
+const CATEGORY_META = {
+    'All': { icon: 'bi-grid-fill', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/20' },
+    'Trending Games': { icon: 'bi-fire', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+    'Favorites ⭐': { icon: 'bi-star-fill', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
+    'Action': { icon: 'bi-lightning-fill', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+    'Driving': { icon: 'bi-car-front-fill', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+    'Racing': { icon: 'bi-flag-fill', color: 'text-blue-500', bg: 'bg-blue-600/10', border: 'border-blue-600/20' },
+    'Sports': { icon: 'bi-trophy-fill', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    'Skill': { icon: 'bi-mortarboard-fill', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+    'Simulation': { icon: 'bi-cpu-fill', color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
+    'Arcade': { icon: 'bi-joystick', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20' },
+    'Strategy': { icon: 'bi-chess-board', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+    'Multiplayer': { icon: 'bi-people-fill', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+    'Utility': { icon: 'bi-tools', color: 'text-zinc-400', bg: 'bg-zinc-500/10', border: 'border-zinc-500/20' },
+    'Fun': { icon: 'bi-emoji-smile-fill', color: 'text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/20' },
+    'Retro': { icon: 'bi-cassette-fill', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/20' },
+    '2 Player': { icon: 'bi-person-vcard-fill', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' }
+};
+
 function renderCategories() {
     const nav = getEl('categories-nav');
     if (!nav) return;
@@ -2652,18 +2714,19 @@ function renderCategories() {
     
     // Update Active Title
     const activeHeader = getEl('active-category-title');
-    if (activeHeader) activeHeader.textContent = currentCategory === 'All' ? 'Central Archive' : currentCategory;
+    if (activeHeader) {
+        if (currentCategory === 'All') {
+            activeHeader.innerHTML = 'Central <span class="text-cyan-400">Archive</span>';
+        } else if (currentCategory === 'Favorites ⭐') {
+            activeHeader.innerHTML = 'Secure <span class="text-yellow-400">Bookmarks</span>';
+        } else {
+             activeHeader.innerHTML = `${currentCategory} <span class="text-cyan-400">Archive</span>`;
+        }
+    }
 
     categoriesList.forEach(category => {
-        const btn = document.createElement('button');
+        const meta = CATEGORY_META[category] || { icon: 'bi-tag-fill', color: 'text-zinc-400', bg: 'bg-zinc-800', border: 'border-white/5' };
         const isActive = currentCategory === category;
-        
-        // Responsive Sidebar & Row Styling
-        btn.className = `flex-shrink-0 lg:w-full flex items-center justify-between px-6 lg:px-5 py-3 lg:py-4 rounded-xl lg:rounded-2xl text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 border group ${
-            isActive 
-            ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)] lg:scale-[1.05] z-10' 
-            : 'bg-zinc-900/40 lg:bg-transparent text-zinc-500 border-white/5 lg:border-transparent hover:bg-white/5 hover:text-zinc-300 hover:border-white/10'
-        }`;
         
         const count = category === 'All' 
             ? entries.length 
@@ -2671,11 +2734,25 @@ function renderCategories() {
                 ? userData.favorites.length 
                 : entries.filter(e => (e.categories || []).includes(category)).length;
 
+        const btn = document.createElement('button');
+        btn.className = `flex-shrink-0 lg:w-full flex items-center gap-4 px-6 lg:px-5 py-4 rounded-[1.8rem] transition-all duration-500 text-left group relative overflow-hidden ${
+            isActive 
+            ? `${meta.bg} ${meta.border} border shadow-[0_0_30px_-5px_rgba(34,211,238,0.2)]` 
+            : 'bg-transparent text-zinc-500 border border-transparent hover:bg-white/5 hover:text-zinc-300'
+        }`;
+        
         btn.innerHTML = `
-            <span>${category}</span>
-            <span class="${isActive ? 'text-black/50' : 'text-zinc-700'} font-mono text-[8px]">${count}</span>
+            <div class="relative z-10 p-2.5 rounded-2xl ${isActive ? `${meta.bg} ${meta.color} border ${meta.border}` : 'bg-zinc-900 text-zinc-500'} group-hover:scale-110 transition-transform duration-500">
+                <i class="bi ${meta.icon} text-lg font-bold"></i>
+            </div>
+            <div class="relative z-10 flex flex-col min-w-0">
+                <span class="text-[10px] font-black uppercase tracking-[0.1em] ${isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'} truncate">${category}</span>
+                <span class="text-[7px] font-mono uppercase tracking-widest text-zinc-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">${count} Node(s)</span>
+            </div>
+            ${isActive ? `<div class="absolute right-5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee] animate-pulse"></div>` : ''}
+            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
         `;
-
+        
         btn.onclick = () => {
             currentCategory = category;
             renderCategories();
@@ -2733,14 +2810,14 @@ function renderItems() {
             ? "Your bookmark archive is currently empty. Star games to add them here." 
             : "No interactive modules match your current decryption parameters.";
         grid.innerHTML = `
-            <div class="col-span-full py-32 text-center">
-                <div class="inline-block p-10 bg-zinc-900/20 rounded-[3rem] border border-dashed border-white/5 backdrop-blur-sm">
-                    <div class="w-16 h-16 bg-zinc-950 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-white/5">
-                        <i class="bi bi-grid-3x3-gap text-zinc-700 text-2xl"></i>
+            <div class="col-span-full py-32 text-center flex flex-col items-center">
+                <div class="inline-block p-12 bg-zinc-900/20 rounded-[4rem] border border-dashed border-white/10 backdrop-blur-sm animate-pulse">
+                    <div class="w-20 h-20 bg-zinc-950 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-white/5 text-zinc-800">
+                        <i class="bi bi-search text-3xl"></i>
                     </div>
-                    <h3 class="text-2xl font-black text-white tracking-tight uppercase">Void Detected</h3>
-                    <p class="text-zinc-500 mt-2 font-medium max-w-xs mx-auto">${emptyMsg}</p>
-                    <button onclick="document.getElementById('search-input').value=''; document.getElementById('search-input').dispatchEvent(new Event('input'));" class="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 hover:text-white transition-colors">Reset Query</button>
+                    <h3 class="text-2xl font-black text-white tracking-widest uppercase italic">Decryption Failure</h3>
+                    <p class="text-zinc-500 mt-4 font-mono text-[10px] max-w-xs mx-auto tracking-widest uppercase">${emptyMsg}</p>
+                    <button onclick="document.getElementById('search-input').value=''; currentSearch = ''; renderItems();" class="mt-10 px-8 py-3 bg-white/5 hover:bg-cyan-500 hover:text-black border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-[0.4em] transition-all active:scale-95">Reset Uplink</button>
                 </div>
             </div>`;
         return;
@@ -2749,89 +2826,79 @@ function renderItems() {
     filtered.forEach((item, index) => {
         if (!item || !item.id) return;
         
-        const nodeId = `V-P node [${(index + 101).toString(16).toUpperCase()}]`;
-        const categories = Array.isArray(item.categories) ? item.categories : ['Uncategorized'];
         const isFavorited = userData.favorites.includes(item.id);
-        
         const metrics = gameMetrics[item.id] || { likes: 0, dislikes: 0 };
         const total = metrics.likes + metrics.dislikes;
         const ratingPct = total > 0 ? Math.round((metrics.likes / total) * 100) : 0;
-        const ratingHTML = total > 0 ? `
-            <div class="flex items-center gap-1.5 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10 group-hover:border-cyan-500/30 transition-colors">
-                <i class="bi bi-hand-thumbs-up-fill text-[10px] text-cyan-400"></i>
-                <span class="text-[10px] font-black text-white">${ratingPct}%</span>
-            </div>
-        ` : '';
-
+        
         const card = document.createElement('div');
-        card.className = "group relative bg-zinc-900/40 rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-cyan-500/50 transition-all duration-500 shadow-2xl backdrop-blur-sm hover:-translate-y-2 hover:shadow-cyan-500/20";
+        card.className = "group relative flex flex-col bg-zinc-950 border border-white/5 rounded-[2.8rem] overflow-hidden hover:border-cyan-500/40 transition-all duration-700 hover:shadow-[0_40px_100px_-20px_rgba(0,0,30,0.8)] hover:-translate-y-3 animate-in fade-in slide-in-from-bottom-8 duration-700 hover:z-10";
+        card.style.animationDelay = `${index * 40}ms`;
+        
         card.innerHTML = `
-            <div class="aspect-video relative overflow-hidden bg-zinc-950">
-                <div class="absolute inset-0 flex items-center justify-center bg-zinc-900 overflow-hidden hidden">
-                    <span class="text-4xl font-black text-zinc-800 uppercase tracking-tighter opacity-50">${(item.title || '?').charAt(0)}</span>
+            <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+            
+            <div class="relative w-full aspect-[16/10] overflow-hidden bg-zinc-900 group/thumb cursor-pointer" onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openDetails(g)">
+                <img 
+                    src="${item.thumbnail || FALLBACK_IMAGE}" 
+                    alt="${item.title}" 
+                    class="w-full h-full object-cover transition-all duration-1000 group-hover:scale-115 group-hover:rotate-1 group-hover:brightness-110"
+                    referrerpolicy="no-referrer"
+                    onerror="this.src='${FALLBACK_IMAGE}'"
+                >
+                <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-all duration-700"></div>
+                
+                <!-- Badge Overlays -->
+                <div class="absolute top-6 left-6 flex flex-col gap-2">
+                    ${item.categories.slice(0, 1).map(cat => {
+                        const meta = CATEGORY_META[cat] || { bg: 'bg-black/60', color: 'text-zinc-400' };
+                        return `<span class="px-3 py-1 ${meta.bg} backdrop-blur-xl border border-white/10 rounded-full text-[7px] font-black uppercase tracking-widest ${meta.color} italic">${cat}</span>`;
+                    }).join('')}
+                    ${total > 0 ? `
+                        <div class="flex items-center gap-1.5 px-3 py-1 bg-black/60 backdrop-blur-xl rounded-full border border-white/10">
+                            <i class="bi bi-star-fill text-[8px] text-yellow-400"></i>
+                            <span class="text-[8px] font-black text-white">${ratingPct}% Accuracy</span>
+                        </div>
+                    ` : ''}
                 </div>
-                <img src="${item.thumbnail || FALLBACK_IMAGE}" 
-                     alt="${item.title || 'Untitled'}" 
-                     class="absolute inset-0 w-full h-full object-contain p-4 transition-all duration-700 group-hover:scale-110 group-hover:blur-md z-10" 
-                     referrerpolicy="no-referrer"
-                     onerror="this.onerror=null; this.src='${FALLBACK_IMAGE}'; this.previousElementSibling.classList.remove('hidden');">
                 
                 <!-- Favorite Toggle -->
-                <button class="favorite-btn absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all hover:scale-110 hover:bg-black/60 group/fav" 
-                        data-id="${item.id}">
-                    <i class="bi ${isFavorited ? 'bi-star-fill text-yellow-400' : 'bi-star text-zinc-400'} text-xl group-hover/fav:text-yellow-400 transition-colors"></i>
+                <button onclick="event.stopPropagation(); toggleFavorite(event, '${item.id}')" class="absolute top-6 right-6 w-11 h-11 rounded-3xl bg-black/60 backdrop-blur-xl border border-white/10 flex items-center justify-center transition-all hover:scale-110 active:scale-90 ${isFavorited ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-zinc-500 hover:text-white'}">
+                    <i class="bi ${isFavorited ? 'bi-heart-fill' : 'bi-heart'} text-lg"></i>
                 </button>
 
-                <!-- Hover Overlay -->
-                <div class="absolute inset-0 z-40 flex flex-col items-center justify-center bg-zinc-950/90 opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 text-center">
-                    <div class="transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 ease-out">
-                        <div class="w-16 h-16 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-[0_0_30px_rgba(34,211,238,0.5)] mb-4 mx-auto group-hover:scale-110 transition-transform">
-                            <i class="bi bi-play-fill text-4xl ml-1"></i>
-                        </div>
-                        <h2 class="text-3xl font-black text-white uppercase italic tracking-tighter leading-none mb-2">Launch Game</h2>
-                        <div class="flex items-center justify-center gap-4">
-                             <div class="flex items-center gap-2">
-                                <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
-                                <p class="text-cyan-400 font-mono text-[9px] uppercase tracking-[0.4em] font-bold">Uplink Ready</p>
-                            </div>
-                            <button class="details-btn px-4 py-1.5 bg-white/10 hover:bg-white/20 rounded-full border border-white/10 text-[9px] font-black uppercase tracking-widest text-white transition-all">Details</button>
-                        </div>
+                <!-- Play Button Center Overlay -->
+                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 backdrop-blur-[2px]">
+                    <div class="w-18 h-18 bg-white/10 rounded-full flex items-center justify-center border border-white/20 shadow-2xl scale-50 group-hover:scale-100 transition-transform duration-500 backdrop-blur-xl">
+                        <i class="bi bi-play-circle-fill text-white text-4xl shadow-[0_0_20px_white]"></i>
                     </div>
-                </div>
-                
-                <div class="absolute top-4 left-4 z-10 flex flex-col gap-2">
-                    <span class="text-[9px] font-mono text-cyan-400/50 uppercase tracking-widest bg-zinc-950/80 px-2 py-0.5 rounded border border-cyan-500/20 w-fit">${nodeId}</span>
-                    ${ratingHTML}
                 </div>
             </div>
-            <div class="p-6 relative">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex flex-wrap gap-2">
-                        ${categories.map(cat => `
-                            <span class="text-[10px] font-black text-cyan-400/90 px-3 py-1 bg-cyan-400/5 border border-cyan-400/10 rounded-full uppercase tracking-widest font-mono shadow-[inset_0_0_10px_rgba(34,211,238,0.1)]">${cat}</span>
-                        `).join('')}
+
+            <div class="relative p-8 flex flex-col flex-1">
+                <div class="flex-1 min-w-0 mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-cyan-500/50 shadow-[0_0_5px_cyan]"></div>
+                        <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-black italic">INDEX_NODE_${item.id.slice(0,3).toUpperCase()}</span>
                     </div>
+                    <h3 class="text-2xl font-black text-white uppercase italic tracking-tighter truncate group-hover:text-cyan-400 transition-colors duration-500">${item.title}</h3>
+                    <p class="text-zinc-500 text-[11px] leading-relaxed font-medium mt-3 line-clamp-2 italic">
+                        ${item.description}
+                    </p>
                 </div>
-                <h3 class="text-zinc-100 font-black text-2xl tracking-tighter group-hover:text-cyan-400 transition-all duration-300 uppercase italic leading-none">${item.title || 'Untitled Game'}</h3>
-                <p class="text-zinc-500 text-sm line-clamp-2 mt-3 font-medium leading-relaxed opacity-80 transition-opacity">${item.description || 'No description available for this link.'}</p>
-                
-                <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-cyan-500/10 transition-colors pointer-events-none"></div>
+
+                <div class="flex items-center gap-3">
+                    <button onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openPlayer(g)" class="flex-1 py-4.5 bg-zinc-900 hover:bg-cyan-500 text-zinc-300 hover:text-black border border-white/5 hover:border-cyan-400 rounded-[1.4rem] transition-all duration-500 text-[9px] font-black uppercase tracking-[0.4em] shadow-lg active:scale-95 flex items-center justify-center gap-3 group/btn relative overflow-hidden">
+                        <span class="relative z-10">Initial Uplink</span>
+                        <i class="bi bi-chevron-right text-xs group-hover/btn:translate-x-1 transition-transform relative z-10"></i>
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shine"></div>
+                    </button>
+                    <button onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openDetails(g)" class="w-14 py-4.5 bg-zinc-900/50 hover:bg-zinc-800 border border-white/5 rounded-[1.4rem] transition-all text-zinc-500 hover:text-white flex items-center justify-center active:scale-95">
+                        <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </button>
+                </div>
             </div>
         `;
-        card.onclick = () => openPlayer(item);
-        
-        // Favorite button click
-        const favBtn = card.querySelector('.favorite-btn');
-        favBtn.onclick = (e) => toggleFavorite(e, item.id);
-
-        const detailsBtn = card.querySelector('.details-btn');
-        if (detailsBtn) {
-            detailsBtn.onclick = (e) => {
-                e.stopPropagation();
-                openDetails(item);
-            };
-        }
-
         grid.appendChild(card);
     });
 }
@@ -3373,8 +3440,38 @@ function initGameMetrics() {
             gameMetrics[doc.id] = doc.data();
         });
         renderItems();
+    }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'game_metrics');
     });
 }
+
+function initNewsRelay() {
+    const relay = document.getElementById('relay-news');
+    const text = document.getElementById('news-text');
+    if (!relay || !text) return;
+
+    // Show after initial sequence
+    setTimeout(() => {
+        relay.classList.remove('translate-y-full');
+    }, 5000);
+
+    // Listen for global messages to update marquee
+    const q = query(collection(db, 'global_messages'), orderBy('createdAt', 'desc'), limit(1));
+    onSnapshot(q, (snap) => {
+        if (!snap.empty) {
+            const data = snap.docs[0].data();
+            text.textContent = `CRITICAL BROADCAST: ${data.text.toUpperCase()} // AUTHORITY: ${data.from || 'SYSTEM'} // UPLINK SECURE`;
+            relay.classList.add('bg-rose-950/90', 'border-rose-500/30');
+            setTimeout(() => {
+                relay.classList.remove('bg-rose-950/90', 'border-rose-500/30');
+            }, 10000);
+        }
+    }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'global_messages');
+    });
+}
+window.initNewsRelay = initNewsRelay;
+
 
 async function openDetails(item) {
     if (!item) return;
@@ -3409,6 +3506,14 @@ async function openDetails(item) {
         <span class="text-[9px] font-black text-cyan-400 px-2 py-1 bg-cyan-400/5 border border-cyan-400/10 rounded-full uppercase tracking-widest">${cat}</span>
     `).join('');
     
+    const launchBtn = document.getElementById('launch-from-details');
+    if (launchBtn) {
+        launchBtn.onclick = () => {
+            closeDetails();
+            handleGameRelay(item);
+        };
+    }
+
     // Reset buttons
     likeBtn.classList.remove('bg-cyan-500', 'text-black');
     dislikeBtn.classList.remove('bg-red-500', 'text-white');

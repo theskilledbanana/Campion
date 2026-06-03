@@ -111,7 +111,12 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read: if true; // Query filtering by targetUid will happen in client
+      allow read: if isSignedIn() && (resource.data.targetUid == request.auth.uid || isCeo());
+      allow write: if isCeo();
+    }
+
+    match /global_messages/{msgId} {
+      allow read: if true;
       allow write: if isCeo();
     }
     
