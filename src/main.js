@@ -550,120 +550,9 @@ function checkBlockedStatus() {
 }
 
 function startSessionHeartbeat() {
-    let isUpdatingHeartbeat = false;
-    const updateHeartbeat = async () => {
-        if (isUpdatingHeartbeat) return;
-        isUpdatingHeartbeat = true;
-
-        const user = auth.currentUser;
-        const uid = user ? user.uid : (localStorage.getItem('vp_anon_id') || 'client_' + Math.random().toString(36).substr(2, 9));
-        const activeGame = allEntries.find(e => e.id === currentGameId);
-        
-        if (!localStorage.getItem('vp_anon_id')) localStorage.setItem('vp_anon_id', uid);
-
-        let screenshot = null;
-        let debugStatus = "Idle";
-        
-        // Only try to capture if the tab is visible to save resources and avoid stale shots
-        if (document.visibilityState === 'visible') {
-            if (typeof html2canvas !== 'undefined') {
-                try {
-                    debugStatus = "Capturing...";
-                    const canvas = await html2canvas(document.body, {
-                        scale: 0.15, 
-                        logging: false,
-                        useCORS: true,
-                        allowTaint: false,
-                        timeout: 3000, // Faster timeout
-                        onclone: (clonedDoc) => {
-                            // Fix for html2canvas failing on oklch() colors (common in Tailwind v4)
-                            const style = clonedDoc.createElement('style');
-                            style.innerHTML = `
-                                * { 
-                                    border-color: rgba(255, 255, 255, 0.1) !important; 
-                                    outline-color: rgba(255, 255, 255, 0.1) !important;
-                                }
-                                body { background-color: #050508 !important; }
-                                [class*="bg-cyan-"], [class*="text-cyan-"], [class*="border-cyan-"] {
-                                    color: #22d3ee !important;
-                                    background-color: #22d3ee !important;
-                                    border-color: #22d3ee !important;
-                                }
-                                [class*="bg-black"], [class*="bg-zinc-"] {
-                                    background-color: #0c0c0e !important;
-                                }
-                                /* Force color-mix and oklch fallbacks if the browser clone supports them but html2canvas doesn't */
-                                :root {
-                                    --color-cyan-500: #22d3ee !important;
-                                }
-                            `;
-                            clonedDoc.head.appendChild(style);
-                        },
-                        ignoreElements: (el) => {
-                            const id = el.id;
-                            const tag = el.tagName;
-                            return id === 'ceo-master-panel' || 
-                                   id === 'monitoring-modal' || 
-                                   id === 'inspection-overlay' ||
-                                   id === 'big-notification' ||
-                                   id === 'top-notification' ||
-                                   id === 'pork-easter-egg-1' ||
-                                   el.classList?.contains('no-monitor') ||
-                                   tag === 'SCRIPT' || tag === 'STYLE' ||
-                                   (tag === 'IFRAME' && el.src && !el.src.includes(window.location.hostname));
-                        }
-                    });
-                    if (canvas) {
-                        screenshot = canvas.toDataURL('image/jpeg', 0.2); // Lower quality for speed
-                        debugStatus = "Success";
-                    }
-                } catch (e) {
-                    console.warn("[Overseer] Heartbeat snapshot skipped:", e.message);
-                    debugStatus = "Snapshot Error";
-                }
-            } else {
-                debugStatus = "Lib Missing";
-            }
-        } else {
-            debugStatus = "Tab Background";
-        }
-
-        const sessionData = {
-            uid: uid,
-            email: user?.email || 'Guest Client',
-            username: userData.username || (user?.displayName || 'Guest User'),
-            lastPath: window.location.pathname,
-            currentGameId: currentGameId || 'Dashboard',
-            activeGameTitle: activeGame ? activeGame.title : 'Portal Shell',
-            activeGameThumb: activeGame ? activeGame.thumbnail : null,
-            isPlaying: !!currentGameId,
-            lastSeen: serverTimestamp(),
-            role: localStorage.getItem('vp_chat_role') || 'guest',
-            debugStatus: debugStatus,
-            tabActive: document.visibilityState === 'visible',
-            viewport: {
-                width: window.innerWidth,
-                height: window.innerHeight
-            }
-        };
-
-        if (screenshot) {
-            sessionData.screenPreview = screenshot;
-        }
-
-        try {
-            await setDoc(doc(db, 'sessions', uid), sessionData, { merge: true });
-        } catch (e) {
-            console.warn("[Overseer] Heartbeat persistence failed:", e.message);
-        } finally {
-            isUpdatingHeartbeat = false;
-        }
-    };
-
-    updateHeartbeat(); 
-    setInterval(updateHeartbeat, 10000); // Slightly more frequent
     setInterval(checkBlockedStatus, 30000);
 }
+
 
 function listenForNotifications() {
     const user = auth.currentUser;
@@ -713,199 +602,9 @@ function showGlobalPopup(message, from) {
     };
 }
 
-function initMonitoring() {
-    const list = document.getElementById('live-monitor-grid');
-    const countEl = document.getElementById('active-users-count');
-    
-    if (!list) return;
 
-    if (unsubscribeSessions) unsubscribeSessions();
 
-    const q = query(collection(db, 'sessions'), orderBy('lastSeen', 'desc'), limit(40));
-    unsubscribeSessions = onSnapshot(q, (snapshot) => {
-        list.innerHTML = '';
-        const currentUid = auth.currentUser ? auth.currentUser.uid : localStorage.getItem('vp_anon_id');
-        let onlineCount = 0;
-        const now = Date.now();
-        
-        snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            const lastSeen = data.lastSeen?.toMillis ? data.lastSeen.toMillis() : now;
-            const isOnline = (now - lastSeen) < 90000; // 90 second cutoff
-            const isSelf = data.uid === currentUid;
-            
-            if ((now - lastSeen) > 3600000) return; // Hide sessions older than 1 hour
-            if (isOnline) onlineCount++;
 
-            const statusColor = isOnline ? 'bg-cyan-500' : 'bg-zinc-700';
-            const statusText = isOnline ? 'Uplink Active' : 'Signal Lost';
-
-            const card = document.createElement('div');
-            card.className = `group relative flex flex-col bg-zinc-950 border rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:scale-[1.02] ${isSelf ? 'border-cyan-500/40 shadow-[0_0_40px_-10px_rgba(34,211,238,0.2)]' : 'border-white/5 hover:border-white/20'}`;
-            
-            card.innerHTML = `
-                <!-- Header -->
-                <div class="p-6 flex items-center justify-between bg-zinc-900/30">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-500 group-hover:text-cyan-400 transition-colors">
-                            <i class="bi ${isSelf ? 'bi-shield-lock-fill' : 'bi-person-fill'} text-xl"></i>
-                        </div>
-                        <div class="min-w-0">
-                            <h4 class="text-sm font-black text-white uppercase italic tracking-tighter truncate">${data.username || 'Unknown Citizen'} ${isSelf ? '<span class="text-xs text-cyan-500"> (HOST)</span>' : ''}</h4>
-                            <p class="text-[9px] font-mono text-zinc-500 uppercase tracking-widest truncate opacity-60">${data.email || 'Handshake Protocol Active'}</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        ${!isSelf ? `
-                            <button onclick="sendGlobalMessage('${data.uid}')" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-cyan-500 hover:text-black flex items-center justify-center transition-all"><i class="bi bi-chat-dots"></i></button>
-                            <button onclick="blockUser('${data.uid}')" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-rose-500/20 hover:text-rose-400 flex items-center justify-center transition-all"><i class="bi bi-slash-circle"></i></button>
-                        ` : ''}
-                    </div>
-                </div>
-
-                <!-- Preview Area -->
-                <div class="relative aspect-video bg-zinc-900 overflow-hidden group/screen cursor-zoom-in p-2" onclick="viewUserScreen('${data.uid}')">
-                    <div class="absolute inset-0 border-[10px] border-zinc-900 z-10 pointer-events-none"></div>
-                    ${data.screenPreview ? 
-                        `<img src="${data.screenPreview}" class="w-full h-full object-contain bg-black transition-all duration-700 group-hover:scale-105" style="object-position: top;">` : 
-                        `<div class="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950 p-8 text-center text-zinc-800">
-                            ${data.activeGameThumb ? `<img src="${data.activeGameThumb}" class="absolute inset-0 w-full h-full object-cover opacity-10 blur-2xl">` : ''}
-                            <div class="relative z-10 w-12 h-12 border-2 border-cyan-500/10 border-t-cyan-500/60 rounded-full animate-spin mb-4"></div>
-                            <p class="relative z-10 text-[9px] font-black uppercase tracking-[0.3em] text-cyan-500/40">${data.debugStatus || 'Awaiting Uplink'}</p>
-                            ${data.activeGameTitle ? `<p class="relative z-10 text-[7px] text-zinc-700 font-mono mt-2 uppercase tracking-widest">Target is in: ${data.activeGameTitle}</p>` : ''}
-                        </div>`
-                    }
-                    
-                    <!-- Overlay Grid -->
-                    <div class="absolute inset-0 pointer-events-none opacity-20 bg-[radial-gradient(rgba(34,211,238,0.1)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
-                    
-                    <!-- Badge Overlays -->
-                    <div class="absolute top-4 left-4 flex flex-col gap-2">
-                        ${data.isPlaying ? `
-                            <div class="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full scale-90 origin-left">
-                                <div class="w-1 h-4 bg-orange-500 rounded-full animate-pulse"></div>
-                                <span class="text-[8px] font-black text-white uppercase tracking-widest">${data.activeGameTitle}</span>
-                            </div>
-                        ` : `
-                            <div class="flex items-center gap-2 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full scale-90 origin-left">
-                                <div class="w-1 h-4 bg-blue-500 rounded-full"></div>
-                                <span class="text-[8px] font-black text-white uppercase tracking-widest italic">Shell Browser</span>
-                            </div>
-                        `}
-                    </div>
-
-                    <div class="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full flex items-center gap-2 scale-90 origin-right">
-                        <div class="w-1.5 h-1.5 rounded-full ${statusColor} ${isOnline ? 'animate-pulse' : ''}"></div>
-                        <span class="text-[7px] font-black text-white uppercase tracking-widest">${statusText}</span>
-                    </div>
-
-                    <div class="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black via-black/40 to-transparent">
-                        <div class="flex items-end justify-between">
-                            <div class="flex flex-col">
-                                <span class="text-[7px] font-mono text-zinc-500 uppercase tracking-widest opacity-60">Handshake: ${data.uid.slice(0,8).toUpperCase()}</span>
-                                <span class="text-[8px] font-black text-cyan-400 uppercase tracking-widest mt-0.5">${data.viewport ? `${data.viewport.width}x${data.viewport.height} RES` : 'AUTO_RES'}</span>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[7px] font-mono text-zinc-600 uppercase tracking-widest">${isOnline ? 'Latency: 24ms' : 'Last Relay: ' + new Date(lastSeen).toLocaleTimeString()}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Inspect Button -->
-                <button onclick="viewUserScreen('${data.uid}')" class="m-6 mt-4 py-4 bg-zinc-900 hover:bg-white/10 border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500 hover:text-white transition-all flex items-center justify-center gap-2 group/btn">
-                    <i class="bi bi-eye-fill transition-transform group-hover/btn:scale-125"></i>
-                    <span>Inspect Node Viewport</span>
-                </button>
-            `;
-            list.appendChild(card);
-        });
-
-        if (countEl) {
-            countEl.innerHTML = `<span class="text-cyan-400">${onlineCount}</span> Nodes Active`;
-        }
-    }, (error) => {
-        handleFirestoreError(error, OperationType.LIST, 'sessions');
-    });
-}
-
-let activeInspectionUid = null;
-let inspectionZoom = 1;
-let unsubscribeInspection = null;
-
-window.viewUserScreen = (uid) => {
-    const overlay = document.getElementById('inspection-overlay');
-    const img = document.getElementById('inspect-img');
-    const nameEl = document.getElementById('inspect-name');
-    if (!overlay || !img) return;
-
-    if (unsubscribeInspection) unsubscribeInspection();
-    activeInspectionUid = uid;
-
-    unsubscribeInspection = onSnapshot(doc(db, 'sessions', uid), (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            nameEl.innerText = `VIEWING: ${data.username.toUpperCase()}`;
-            if (data.screenPreview) {
-                img.src = data.screenPreview;
-            }
-        }
-    });
-
-    window.resetInspectZoom();
-};
-
-window.zoomInspect = (delta) => {
-    const img = document.getElementById('inspect-img');
-    inspectionZoom = Math.max(0.5, Math.min(3, inspectionZoom + delta));
-    img.style.transform = `scale(${inspectionZoom})`;
-};
-
-window.resetInspectZoom = () => {
-    const img = document.getElementById('inspect-img');
-    inspectionZoom = 1;
-    img.style.transform = `scale(1)`;
-};
-
-window.terminateInspectedUser = () => {
-    if (activeInspectionUid && confirm("CONFIRM TERMINATION?")) {
-        window.blockUser(activeInspectionUid);
-        document.getElementById('close-inspection').click();
-    }
-};
-
-window.sendGlobalMessage = async (uid) => {
-    const msg = prompt("ENTER MESSAGE FOR USER:");
-    if (!msg) return;
-    try {
-        await addDoc(collection(db, 'notifications'), {
-            targetUid: uid,
-            message: msg,
-            from: "CEO MASTER CONTROL",
-            timestamp: serverTimestamp()
-        });
-        alert("MESSAGE SENT TO UPLINK.");
-    } catch (e) {
-        alert("FAILED: " + e.message);
-    }
-};
-
-window.blockUser = async (uid) => {
-    if (confirm("PROTOCOL: PERMANENTLY BLOCK USER ACCESS?")) {
-        try {
-            await setDoc(doc(db, 'banned_clients', uid), {
-                uid: uid,
-                bannedAt: serverTimestamp(),
-                reason: "CEO DISCRETION"
-            });
-            alert("USER TERMINATED.");
-        } catch (e) {
-            alert("FAILED: " + e.message);
-        }
-    }
-};
 
 function toggleCleanUI() {
     document.body.classList.toggle('clean-ui-active');
@@ -940,7 +639,7 @@ function triggerJohnPorkScare(method, customMsg = null, subCaption = null) {
                 </div>
             </div>
 
-            <button id="close-pork" class="px-8 py-4 md:px-10 md:py-5 bg-white text-black font-black uppercase text-xs md:text-sm rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-[0_0_50px_rgba(255,255,255,0.3)] relative z-10 shrink-0">I accept the monitoring</button>
+            <button id="close-pork" class="px-8 py-4 md:px-10 md:py-5 bg-white text-black font-black uppercase text-xs md:text-sm rounded-2xl hover:scale-110 active:scale-95 transition-all shadow-[0_0_50px_rgba(255,255,255,0.3)] relative z-10 shrink-0">Acknowledge</button>
         </div>
     `;
     document.body.appendChild(scared);
@@ -967,7 +666,7 @@ function init() {
 
     const storedRole = localStorage.getItem('vp_chat_role');
     if (storedRole === 'ceo') {
-        initMonitoring();
+        // initMonitoring removed
     }
 
     const toggleCleanUiBtn = document.getElementById('toggle-clean-ui');
@@ -978,56 +677,7 @@ function init() {
         }
     }
     
-    // Initialize UI Selectors
-    const monitoringModal = document.getElementById('monitoring-modal');
-    const closeMonitoring = document.getElementById('close-monitoring');
-    const monitorBtn = document.getElementById('monitor-feature-btn');
-    const refreshMonitor = document.getElementById('refresh-monitor');
-
-    if (monitorBtn) {
-        monitorBtn.onclick = () => {
-            monitoringModal.classList.remove('hidden');
-            setTimeout(() => {
-                monitoringModal.classList.remove('opacity-0');
-                monitoringModal.firstElementChild.classList.remove('scale-95');
-                monitoringModal.firstElementChild.classList.add('scale-100');
-            }, 10);
-            initMonitoring();
-        };
-    }
-
-    if (closeMonitoring) {
-        closeMonitoring.onclick = () => {
-            monitoringModal.classList.add('opacity-0');
-            monitoringModal.firstElementChild.classList.add('scale-95');
-            monitoringModal.firstElementChild.classList.remove('scale-100');
-            setTimeout(() => monitoringModal.classList.add('hidden'), 500);
-        };
-    }
-
-    if (refreshMonitor) {
-        refreshMonitor.onclick = () => {
-            initMonitoring();
-        };
-    }
-
-    const closeInspection = document.getElementById('close-inspection');
-    if (closeInspection) {
-        closeInspection.onclick = () => {
-            const overlay = document.getElementById('inspection-overlay');
-            overlay.classList.add('opacity-0');
-            setTimeout(() => overlay.classList.add('hidden'), 500);
-            activeInspectionUid = null;
-            if (unsubscribeInspection) {
-                unsubscribeInspection();
-                unsubscribeInspection = null;
-            }
-        };
-    }
-
-    if (storedRole === 'ceo' && monitorBtn) {
-        monitorBtn.classList.remove('hidden');
-    }
+    // Monitoring UI interactions removed
 
     const closeObserver = document.getElementById('close-observer');
     if (closeObserver) {
@@ -1380,7 +1030,9 @@ function init() {
                 localStorage.setItem('vp_chat_passcode', code);
                 
                 if (panel) panel.classList.remove('hidden');
-                if (isCeo) initMonitoring();
+                if (isCeo) {
+                    // initMonitoring removed
+                }
 
                 // Differentiate UI in the panel if needed
                 const clearLogsBtn = document.getElementById('clear-logs-btn');
@@ -2532,9 +2184,7 @@ function setupEventListeners() {
             localStorage.setItem('vp_chat_authorized', 'true');
             localStorage.setItem('vp_chat_name', name);
             
-            const featureBtn = document.getElementById('monitor-feature-btn');
-            if (featureBtn) featureBtn.classList.remove('hidden');
-            
+            // Monitoring toggle logic removed
             const masterBtn = document.getElementById('master-control-btn');
             if (masterBtn) masterBtn.classList.remove('hidden');
 
@@ -2543,7 +2193,7 @@ function setupEventListeners() {
 
             if (currentRole !== 'ceo') {
                 console.log("Verified CEO Identity detected. Promoting to CEO status...");
-                if (typeof initMonitoring === 'function') initMonitoring();
+                // initMonitoring check removed
             }
         }
 
@@ -3482,7 +3132,7 @@ function initNewsRelay() {
     const updateTicker = () => {
         if (text.textContent.includes('CRITICAL BROADCAST')) return; // Don't override broadcasts
         const sys = systems[sysIdx];
-        text.innerHTML = `<span class="text-cyan-400 font-black">[OK]</span> ${sys.toUpperCase()} STATUS: <span class="text-white">SYNCHRONIZED</span> // <span class="text-cyan-400 font-black">[OK]</span> LATENCY: <span class="text-white">${(Math.random() * 20 + 5).toFixed(1)}MS</span> // MONITORING IN PROGRESS...`;
+        text.innerHTML = `<span class="text-cyan-400 font-black">[OK]</span> ${sys.toUpperCase()} STATUS: <span class="text-white">SYNCHRONIZED</span> // <span class="text-cyan-400 font-black">[OK]</span> LATENCY: <span class="text-white">${(Math.random() * 20 + 5).toFixed(1)}MS</span> // SECURE UPLINK ESTABLISHED...`;
         sysIdx = (sysIdx + 1) % systems.length;
     };
     setInterval(updateTicker, 8000);
