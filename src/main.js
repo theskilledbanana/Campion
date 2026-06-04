@@ -2513,11 +2513,11 @@ function renderItems() {
         card.innerHTML = `
             <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
             
-            <div class="relative w-full aspect-[16/10] overflow-hidden bg-zinc-950 group/thumb cursor-pointer border-b border-white/5" onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openDetails(g)">
+            <div class="relative w-full aspect-[16/10] overflow-hidden bg-zinc-900 group/thumb cursor-pointer" onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openDetails(g)">
                 <img 
                     src="${item.thumbnail || FALLBACK_IMAGE}" 
                     alt="${item.title}" 
-                    class="w-full h-full object-contain p-8 group-hover:p-4 transition-all duration-1000 group-hover:scale-105 group-hover:brightness-110"
+                    class="w-full h-full object-cover transition-all duration-1000 group-hover:scale-115 group-hover:rotate-1 group-hover:brightness-110"
                     referrerpolicy="no-referrer"
                     onerror="this.src='${FALLBACK_IMAGE}'"
                 >
@@ -3125,18 +3125,6 @@ function initNewsRelay() {
     const text = document.getElementById('news-text');
     if (!relay || !text) return;
 
-    // Pulse sequence for the news bar
-    const systems = ["Archive Uplink", "Satellite Link", "Quantum Encryption", "Pork Protection"];
-    let sysIdx = 0;
-    
-    const updateTicker = () => {
-        if (text.textContent.includes('CRITICAL BROADCAST')) return; // Don't override broadcasts
-        const sys = systems[sysIdx];
-        text.innerHTML = `<span class="text-cyan-400 font-black">[OK]</span> ${sys.toUpperCase()} STATUS: <span class="text-white">SYNCHRONIZED</span> // <span class="text-cyan-400 font-black">[OK]</span> LATENCY: <span class="text-white">${(Math.random() * 20 + 5).toFixed(1)}MS</span> // SECURE UPLINK ESTABLISHED...`;
-        sysIdx = (sysIdx + 1) % systems.length;
-    };
-    setInterval(updateTicker, 8000);
-
     // Show after initial sequence
     setTimeout(() => {
         relay.classList.remove('translate-y-full');
@@ -3147,11 +3135,10 @@ function initNewsRelay() {
     onSnapshot(q, (snap) => {
         if (!snap.empty) {
             const data = snap.docs[0].data();
-            text.innerHTML = `<span class="bg-rose-500 text-black px-2 py-0.5 rounded mr-3 animate-pulse">CRITICAL BROADCAST</span> <span class="text-rose-100 font-bold">${data.text.toUpperCase()}</span> // <span class="text-rose-400">AUTHORITY: ${data.from || 'SYSTEM'}</span> // UPLINK SECURE`;
+            text.textContent = `CRITICAL BROADCAST: ${data.text.toUpperCase()} // AUTHORITY: ${data.from || 'SYSTEM'} // UPLINK SECURE`;
             relay.classList.add('bg-rose-950/90', 'border-rose-500/30');
             setTimeout(() => {
                 relay.classList.remove('bg-rose-950/90', 'border-rose-500/30');
-                updateTicker();
             }, 10000);
         }
     }, (error) => {
@@ -3159,6 +3146,10 @@ function initNewsRelay() {
     });
 }
 window.initNewsRelay = initNewsRelay;
+window.allEntries = allEntries;
+window.openPlayer = openPlayer;
+window.openDetails = openDetails;
+window.toggleFavorite = toggleFavorite;
 
 
 async function openDetails(item) {
