@@ -2391,11 +2391,11 @@ function renderCategories() {
     const activeHeader = getEl('active-category-title');
     if (activeHeader) {
         if (currentCategory === 'All') {
-            activeHeader.innerHTML = 'Central <span class="text-cyan-400">Archive</span>';
+            activeHeader.innerHTML = 'All <span class="text-cyan-400">Games</span>';
         } else if (currentCategory === 'Favorites ⭐') {
-            activeHeader.innerHTML = 'Secure <span class="text-yellow-400">Bookmarks</span>';
+            activeHeader.innerHTML = 'Your <span class="text-yellow-400">Favorites</span>';
         } else {
-             activeHeader.innerHTML = `${currentCategory} <span class="text-cyan-400">Archive</span>`;
+             activeHeader.innerHTML = `${currentCategory} <span class="text-cyan-400">Collection</span>`;
         }
     }
 
@@ -2554,7 +2554,7 @@ function renderItems() {
                 <div class="flex-1 min-w-0 mb-6">
                     <div class="flex items-center gap-3 mb-2">
                         <div class="w-1.5 h-1.5 rounded-full bg-cyan-500/50 shadow-[0_0_5px_cyan]"></div>
-                        <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-black italic">INDEX_NODE_${item.id.slice(0,3).toUpperCase()}</span>
+                        <span class="text-[8px] font-mono text-zinc-600 uppercase tracking-widest font-black italic">NODE_${item.id.slice(0,3).toUpperCase()}</span>
                     </div>
                     <h3 class="text-2xl font-black text-white uppercase italic tracking-tighter truncate group-hover:text-cyan-400 transition-colors duration-500">${item.title}</h3>
                     <p class="text-zinc-500 text-[11px] leading-relaxed font-medium mt-3 line-clamp-2 italic">
@@ -2564,7 +2564,7 @@ function renderItems() {
 
                 <div class="flex items-center gap-3">
                     <button onclick="const g = window.allEntries.find(i=>i.id==='${item.id}'); if(g) window.openPlayer(g)" class="flex-1 py-4.5 bg-zinc-900 hover:bg-cyan-500 text-zinc-300 hover:text-black border border-white/5 hover:border-cyan-400 rounded-[1.4rem] transition-all duration-500 text-[9px] font-black uppercase tracking-[0.4em] shadow-lg active:scale-95 flex items-center justify-center gap-3 group/btn relative overflow-hidden">
-                        <span class="relative z-10">Initial Uplink</span>
+                        <span class="relative z-10">Play Game</span>
                         <i class="bi bi-chevron-right text-xs group-hover/btn:translate-x-1 transition-transform relative z-10"></i>
                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shine"></div>
                     </button>
@@ -2632,7 +2632,7 @@ function renderRecentlyPlayed() {
                 <div class="absolute top-4 left-4 z-10">
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,1)] animate-pulse"></div>
-                        <span class="text-[8px] font-black text-cyan-400 uppercase tracking-widest font-mono">Archive Active</span>
+                        <span class="text-[8px] font-black text-cyan-400 uppercase tracking-widest font-mono">Recent</span>
                     </div>
                 </div>
             </div>
