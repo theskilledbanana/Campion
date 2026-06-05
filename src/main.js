@@ -2513,11 +2513,11 @@ function renderItems() {
         card.innerHTML = `
             <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
             
-            <div class="relative w-full aspect-[16/10] overflow-hidden bg-zinc-900 group/thumb cursor-pointer" onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openDetails(g)">
+            <div class="relative w-full aspect-[16/10] overflow-hidden bg-zinc-950 group/thumb cursor-pointer border-b border-white/5" onclick="const g = window.allEntries.find(i=>i.id==='${item.id}'); if(g) window.openDetails(g)">
                 <img 
                     src="${item.thumbnail || FALLBACK_IMAGE}" 
                     alt="${item.title}" 
-                    class="w-full h-full object-cover transition-all duration-1000 group-hover:scale-115 group-hover:rotate-1 group-hover:brightness-110"
+                    class="w-full h-full object-contain p-8 group-hover:p-4 transition-all duration-1000 group-hover:scale-105 group-hover:brightness-110"
                     referrerpolicy="no-referrer"
                     onerror="this.src='${FALLBACK_IMAGE}'"
                 >
@@ -2538,7 +2538,7 @@ function renderItems() {
                 </div>
                 
                 <!-- Favorite Toggle -->
-                <button onclick="event.stopPropagation(); toggleFavorite(event, '${item.id}')" class="absolute top-6 right-6 w-11 h-11 rounded-3xl bg-black/60 backdrop-blur-xl border border-white/10 flex items-center justify-center transition-all hover:scale-110 active:scale-90 ${isFavorited ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-zinc-500 hover:text-white'}">
+                <button onclick="event.stopPropagation(); window.toggleFavorite(event, '${item.id}')" class="absolute top-6 right-6 w-11 h-11 rounded-3xl bg-black/60 backdrop-blur-xl border border-white/10 flex items-center justify-center transition-all hover:scale-110 active:scale-90 ${isFavorited ? 'text-rose-500 border-rose-500/30 bg-rose-500/10' : 'text-zinc-500 hover:text-white'}">
                     <i class="bi ${isFavorited ? 'bi-heart-fill' : 'bi-heart'} text-lg"></i>
                 </button>
 
@@ -2563,12 +2563,12 @@ function renderItems() {
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openPlayer(g)" class="flex-1 py-4.5 bg-zinc-900 hover:bg-cyan-500 text-zinc-300 hover:text-black border border-white/5 hover:border-cyan-400 rounded-[1.4rem] transition-all duration-500 text-[9px] font-black uppercase tracking-[0.4em] shadow-lg active:scale-95 flex items-center justify-center gap-3 group/btn relative overflow-hidden">
+                    <button onclick="const g = window.allEntries.find(i=>i.id==='${item.id}'); if(g) window.openPlayer(g)" class="flex-1 py-4.5 bg-zinc-900 hover:bg-cyan-500 text-zinc-300 hover:text-black border border-white/5 hover:border-cyan-400 rounded-[1.4rem] transition-all duration-500 text-[9px] font-black uppercase tracking-[0.4em] shadow-lg active:scale-95 flex items-center justify-center gap-3 group/btn relative overflow-hidden">
                         <span class="relative z-10">Initial Uplink</span>
                         <i class="bi bi-chevron-right text-xs group-hover/btn:translate-x-1 transition-transform relative z-10"></i>
                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:animate-shine"></div>
                     </button>
-                    <button onclick="const g = allEntries.find(i=>i.id==='${item.id}'); if(g) openDetails(g)" class="w-14 py-4.5 bg-zinc-900/50 hover:bg-zinc-800 border border-white/5 rounded-[1.4rem] transition-all text-zinc-500 hover:text-white flex items-center justify-center active:scale-95">
+                    <button onclick="const g = window.allEntries.find(i=>i.id==='${item.id}'); if(g) window.openDetails(g)" class="w-14 py-4.5 bg-zinc-900/50 hover:bg-zinc-800 border border-white/5 rounded-[1.4rem] transition-all text-zinc-500 hover:text-white flex items-center justify-center active:scale-95">
                         <i class="bi bi-grid-3x3-gap-fill"></i>
                     </button>
                 </div>
@@ -3150,6 +3150,10 @@ window.allEntries = allEntries;
 window.openPlayer = openPlayer;
 window.openDetails = openDetails;
 window.toggleFavorite = toggleFavorite;
+window.renderItems = renderItems;
+window.renderCategories = renderCategories;
+window.trackAndLaunch = trackAndLaunch;
+window.closeDetails = closeDetails;
 
 
 async function openDetails(item) {
@@ -3189,7 +3193,7 @@ async function openDetails(item) {
     if (launchBtn) {
         launchBtn.onclick = () => {
             closeDetails();
-            handleGameRelay(item);
+            openPlayer(item);
         };
     }
 
